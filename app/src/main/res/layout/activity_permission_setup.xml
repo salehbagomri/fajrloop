@@ -71,6 +71,13 @@
             android:id="@+id/row_full_screen"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 5. الظهور فوق التطبيقات الأخرى -->
+        <com.bagomri.fajrloop.ui.permissions.PermissionRowView
+            android:id="@+id/row_draw_overlays"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="32dp" />
 
         <!-- نصيحة تقنية -->

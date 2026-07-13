@@ -735,7 +735,10 @@ class MainActivity : BaseActivity() {
             nm.canUseFullScreenIntent()
         } else true
 
-        return notifGranted && exactAlarmGranted && batteryGranted && fullScreenGranted
+        // 5. الظهور فوق التطبيقات الأخرى (System Alert Window)
+        val overlaysGranted = android.provider.Settings.canDrawOverlays(this)
+
+        return notifGranted && exactAlarmGranted && batteryGranted && fullScreenGranted && overlaysGranted
     }
 
     private fun dpToPx(dp: Int): Int {

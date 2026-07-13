@@ -52,6 +52,9 @@ class PermissionSetupActivity : BaseActivity() {
 
             rowFullScreen.setTitle("الظهور فوق قفل الشاشة")
             rowFullScreen.setDescription("لفتح شاشة المنبه تلقائياً حتى لو كان الهاتف مقفلاً")
+
+            rowDrawOverlays.setTitle("الظهور فوق التطبيقات الأخرى")
+            rowDrawOverlays.setDescription("لمنع تجاوز المنبه وإظهار شاشة التحدي أثناء استخدام الهاتف")
         }
     }
 
@@ -80,8 +83,12 @@ class PermissionSetupActivity : BaseActivity() {
             } else true
             rowFullScreen.setStatus(fullScreenGranted)
 
+            // 5. الظهور فوق التطبيقات الأخرى (System Alert Window)
+            val overlaysGranted = Settings.canDrawOverlays(this@PermissionSetupActivity)
+            rowDrawOverlays.setStatus(overlaysGranted)
+
             // عرض زر "الانتهاء" فقط إذا كل الصلاحيات ممنوحة
-            btnDone.visibility = if (notifGranted && exactAlarmGranted && batteryGranted && fullScreenGranted) {
+            btnDone.visibility = if (notifGranted && exactAlarmGranted && batteryGranted && fullScreenGranted && overlaysGranted) {
                 View.VISIBLE
             } else {
                 View.GONE
@@ -119,6 +126,12 @@ class PermissionSetupActivity : BaseActivity() {
                         data = Uri.parse("package:$packageName")
                     })
                 }
+            }
+
+            rowDrawOverlays.setOnActionClick {
+                startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
+                    data = Uri.parse("package:$packageName")
+                })
             }
 
             btnDone.setOnClickListener {
