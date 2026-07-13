@@ -75,14 +75,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (uid != null) {
             userProfileListener = userRepository.observeUserProfile(uid) { profile ->
                 _userProfile.value = profile
-                if (profile != null) {
-                    _halqaId.value = if (profile.currentHalqaId.isNotEmpty()) profile.currentHalqaId else null
-                } else {
-                    _halqaId.value = null
-                }
+                val hId = if (profile != null && profile.currentHalqaId.isNotEmpty()) profile.currentHalqaId else null
+                _halqaId.value = hId
+
+                // مزامنة مع SharedPreferences
+                val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+                prefs.edit().putString("current_halqa_id", hId).apply()
             }
 
             halqaListener = halqaRepository.observeUserHalqa { snapshot ->
+                val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
                 if (snapshot == null || !snapshot.exists()) {
                     _halqaName.value = ""
                     _isCurrentUserAdmin.value = false
@@ -91,6 +93,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _awakeCountText.value = ""
                     _friendWakeAlert.value = null
                     stopObservingDailyRecords()
+
+                    // مسح المعرف في SharedPreferences
+                    prefs.edit().putString("current_halqa_id", null).apply()
                 } else {
                     val name = snapshot.child("name").value as? String ?: "حلقة"
                     _halqaName.value = name
@@ -103,7 +108,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val isAdmin = membersSnap.child(currentUid ?: "").child("role").value as? String == "admin"
                     _isCurrentUserAdmin.value = isAdmin
 
-                    startObservingDailyRecords(snapshot.key!!, chain, membersSnap)
+                    val halqaId = snapshot.key!!
+                    // حفظ المعرف في SharedPreferences
+                    prefs.edit().putString("current_halqa_id", halqaId).apply()
+
+                    startObservingDailyRecords(halqaId, chain, membersSnap)
                 }
             }
         }
