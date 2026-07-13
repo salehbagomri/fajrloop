@@ -19,3 +19,11 @@ old_app/build/
 .kotlin/
 keystore.properties
 *.jks
+
+fajrloop.jks
+
+keystore.properties
+
+KEYSTORE_INFO.txt
+
+mockkeystore.jks
