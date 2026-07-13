@@ -12,9 +12,9 @@
         <item name="android:colorBackground">@color/dark_bg</item>
         <item name="colorOnBackground">@color/text_primary</item>
 
-        <!-- الخط الافتراضي (Tajawal) -->
-        <item name="fontFamily">@font/tajawal</item>
-        <item name="android:fontFamily">@font/tajawal</item>
+        <!-- الخط الافتراضي (Noto Sans Arabic) -->
+        <item name="fontFamily">@font/noto_sans_arabic</item>
+        <item name="android:fontFamily">@font/noto_sans_arabic</item>
 
         <!-- شريط الحالة شفاف -->
         <item name="android:statusBarColor">@android:color/transparent</item>
