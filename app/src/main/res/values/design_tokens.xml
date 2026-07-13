@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+╔══════════════════════════════════════════════════════════════════════╗
+║              FAJRLOOP — DESIGN TOKENS (ملف التصميم المركزي)         ║
+║                                                                      ║
+║  ⚠️  هذا هو المكان الوحيد لتعديل أي قيمة تصميمية في التطبيق.       ║
+║     بتغيير قيمة هنا تتغير تلقائياً في كل شاشات التطبيق.            ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+  HOW TO USE:
+  - في XML:    android:textSize="@dimen/text_body"
+  - في Kotlin: resources.getDimension(R.dimen.text_body)
+  - الخط:      android:fontFamily="@font/app_font"
+               android:textStyle="bold" → يحمل تلقائياً الوزن المناسب
+-->
+<resources>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  🔤 TYPOGRAPHY — الخط والأحجام                                  -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <!--
+        الخط الرئيسي للتطبيق.
+        لتغيير الخط: غيّر قيمة هذا الـ string ليشير لملف XML في res/font/
+        الخطوط المتاحة: @font/pp_nm_arabic
+    -->
+    <string name="app_font_family">@font/pp_nm_arabic</string>
+
+    <!--
+        مضاعف حجم الخط العالمي (fontScale).
+        1.0  = الحجم الافتراضي لأندرويد
+        1.1  = تكبير 10%
+        1.3  = تكبير 30%
+        ملاحظة: يُطبَّق تلقائياً في BaseActivity.kt على جميع الشاشات.
+    -->
+    <item name="font_scale_factor" format="float" type="dimen">1.0</item>
+
+    <!-- ─────────── أحجام النصوص ─────────── -->
+    <!-- عنوان كبير جداً (أوقات الصلاة، الساعة الكبيرة) -->
+    <dimen name="text_display">72sp</dimen>
+
+    <!-- عنوان رئيسي للشاشات -->
+    <dimen name="text_headline_large">28sp</dimen>
+    <dimen name="text_headline">22sp</dimen>
+    <dimen name="text_headline_small">18sp</dimen>
+
+    <!-- العنوان الفرعي -->
+    <dimen name="text_title_large">17sp</dimen>
+    <dimen name="text_title">15sp</dimen>
+    <dimen name="text_title_small">13sp</dimen>
+
+    <!-- جسم النص الأساسي -->
+    <dimen name="text_body_large">16sp</dimen>
+    <dimen name="text_body">14sp</dimen>
+    <dimen name="text_body_small">13sp</dimen>
+
+    <!-- النصوص الصغيرة (تسميات، تواريخ، تلميحات) -->
+    <dimen name="text_label_large">12sp</dimen>
+    <dimen name="text_label">11sp</dimen>
+    <dimen name="text_caption">10sp</dimen>
+
+    <!-- أحجام خاصة للتحديات والمنبه -->
+    <dimen name="text_challenge_number">36sp</dimen>
+    <dimen name="text_challenge_letters">32sp</dimen>
+    <dimen name="text_challenge_input">20sp</dimen>
+    <dimen name="text_challenge_btn">15sp</dimen>
+
+    <!-- حجم أيقونات الإيموجي والزجاج -->
+    <dimen name="text_emoji_icon">52sp</dimen>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  📐 SPACING — المسافات والهوامش                                 -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">12dp</dimen>
+    <dimen name="spacing_lg">16dp</dimen>
+    <dimen name="spacing_xl">24dp</dimen>
+    <dimen name="spacing_xxl">32dp</dimen>
+    <dimen name="spacing_xxxl">48dp</dimen>
+
+    <!-- هامش الشاشة الجانبي -->
+    <dimen name="screen_padding_horizontal">20dp</dimen>
+    <dimen name="screen_padding_vertical">16dp</dimen>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  🟦 SHAPE — الأشكال والانحناءات                                 -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <dimen name="corner_radius_sm">8dp</dimen>
+    <dimen name="corner_radius_md">12dp</dimen>
+    <dimen name="corner_radius_lg">16dp</dimen>
+    <dimen name="corner_radius_xl">24dp</dimen>
+    <dimen name="corner_radius_pill">100dp</dimen>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  📏 COMPONENT SIZES — أحجام المكونات                            -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- أزرار -->
+    <dimen name="btn_height_lg">56dp</dimen>
+    <dimen name="btn_height_md">48dp</dimen>
+    <dimen name="btn_height_sm">40dp</dimen>
+
+    <!-- حقول الإدخال -->
+    <dimen name="input_height">52dp</dimen>
+    <dimen name="input_height_sm">48dp</dimen>
+
+    <!-- شريط التنقل السفلي -->
+    <dimen name="bottom_nav_height">64dp</dimen>
+
+    <!-- الصور الرمزية للمستخدمين -->
+    <dimen name="avatar_size_lg">56dp</dimen>
+    <dimen name="avatar_size_md">44dp</dimen>
+    <dimen name="avatar_size_sm">36dp</dimen>
+
+    <!-- أيقونة التطبيق في الشريط العلوي -->
+    <dimen name="toolbar_icon_size">24dp</dimen>
+
+    <!-- ارتفاع بطاقات المحتوى -->
+    <dimen name="card_elevation">4dp</dimen>
+
+    <!-- نقاط تقدم الأذكار -->
+    <dimen name="adhkar_dot_size">8dp</dimen>
+
+</resources>
