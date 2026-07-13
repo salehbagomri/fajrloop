@@ -700,30 +700,44 @@ class SettingsActivity : BaseActivity() {
     }
 
     private fun showLogoutConfirmationDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("تسجيل الخروج")
-            .setMessage("هل أنت متأكد من رغبتك في تسجيل الخروج من التطبيق؟")
-            .setPositiveButton("خروج") { _, _ ->
-                com.bagomri.fajrloop.auth.FcmTokenManager.unregisterToken()
-                // مسح جميع بيانات الحلقة والمستخدم المخزنة محلياً عند تسجيل الخروج
-                val prefs = getSharedPreferences(com.bagomri.fajrloop.alarm.AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-                prefs.edit()
-                    .remove("current_halqa_id")
-                    .remove("current_halqa_name")
-                    .remove("cached_user_display_name")
-                    .remove("cached_user_photo_url")
-                    .remove("cached_awake_count_text")
-                    .remove("cached_today_summary_text")
-                    .apply()
-                
-                AuthManager.signOut()
-                val intent = Intent(this, LoginActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
-            }
-            .setNegativeButton("إلغاء", null)
-            .show()
+        val dialog = android.app.Dialog(this)
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_logout_confirm)
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.9).toInt(),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        val btnCancel = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_cancel)
+        val btnConfirm = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_confirm)
+
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnConfirm.setOnClickListener {
+            dialog.dismiss()
+            com.bagomri.fajrloop.auth.FcmTokenManager.unregisterToken()
+            // مسح جميع بيانات الحلقة والمستخدم المخزنة محلياً عند تسجيل الخروج
+            val prefs = getSharedPreferences(com.bagomri.fajrloop.alarm.AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+            prefs.edit()
+                .remove("current_halqa_id")
+                .remove("current_halqa_name")
+                .remove("cached_user_display_name")
+                .remove("cached_user_photo_url")
+                .remove("cached_awake_count_text")
+                .remove("cached_today_summary_text")
+                .apply()
+            
+            AuthManager.signOut()
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
+        }
+
+        dialog.show()
     }
 
     private fun showToast(message: String) {

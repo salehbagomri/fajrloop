@@ -141,21 +141,23 @@
                     android:gravity="center"
                     android:layout_marginBottom="24dp" />
 
-                <!-- زر جوجل بالتصميم الحديث -->
+                 <!-- زر جوجل بالتصميم الحديث لمنع الالتفاف -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_google_signin"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:text="تسجيل الدخول بواسطة Google"
-                    android:textSize="15sp"
+                    android:text="الدخول باستخدام Google"
+                    android:textSize="14sp"
                     android:textColor="#07071B"
                     android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end"
                     android:fontFamily="sans-serif-medium"
                     app:icon="@drawable/ic_google"
                     app:iconTint="@null"
                     app:iconGravity="textStart"
                     app:iconSize="20dp"
-                    app:iconPadding="12dp"
+                    app:iconPadding="10dp"
                     app:backgroundTint="#FFFFFF"
                     app:cornerRadius="16dp"
                     android:stateListAnimator="@null" />
