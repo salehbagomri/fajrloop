@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "866668685561",
+    "firebase_url": "https://fajrloop-default-rtdb.firebaseio.com",
     "project_id": "fajrloop",
     "storage_bucket": "fajrloop.firebasestorage.app"
   },
@@ -19,6 +20,14 @@
           "android_info": {
             "package_name": "com.bagomri.fajrloop",
             "certificate_hash": "22d8ee8968c79334584a7090b6312aed6d3e7bce"
+          }
+        },
+        {
+          "client_id": "866668685561-ucf56k9c1hnb6e468sqt52dqu24cvcj2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bagomri.fajrloop",
+            "certificate_hash": "0f76aba6fc750e6a81d510882046967a0a082512"
           }
         },
         {
