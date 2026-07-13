@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    item_adhkar.xml — بطاقة ذكر واحدة (التصميم الاحترافي المُطوَّر)
+    item_adhkar.xml — بطاقة ذكر واحدة (التصميم المحسّن والمنسّق بشكل طبيعي)
 
     الهوية البصرية:
-    - بطاقة Glassmorphism كبيرة وواضحة
-    - نص الذكر كبير ومريح للقراءة
-    - عداد دائري تفاعلي بارز
+    - بطاقة Glassmorphism أنيقة
+    - نص الذكر بحجم طبيعي ومريح للقراءة
+    - عداد دائري تفاعلي بحجم متناسق وغير مبالغ فيه
     - ألوان ذهبية متسقة مع هوية التطبيق
 -->
 <LinearLayout
@@ -26,15 +26,15 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="28dp">
+            android:padding="24dp">
 
             <!-- ═══════ نص الذكر ═══════ -->
             <ScrollView
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_height="160dp"
                 android:scrollbarSize="0dp"
                 android:fadeScrollbars="true"
-                android:layout_marginBottom="20dp">
+                android:layout_marginBottom="16dp">
 
                 <TextView
                     android:id="@+id/text_dhikr_text"
@@ -42,18 +42,17 @@
                     android:layout_height="wrap_content"
                     android:text="اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ"
                     android:textColor="#F0FFFFFF"
-                    android:textSize="22sp"
+                    android:textSize="18sp"
                     android:gravity="center"
-                    android:lineSpacingExtra="10dp"
-                    android:lineSpacingMultiplier="1.4" />
+                    android:lineSpacingExtra="4dp" />
             </ScrollView>
 
             <!-- فاصل ذهبي -->
             <View
-                android:layout_width="60dp"
+                android:layout_width="40dp"
                 android:layout_height="1.5dp"
                 android:background="@color/gold"
-                android:alpha="0.5"
+                android:alpha="0.4"
                 android:layout_marginBottom="16dp" />
 
             <!-- عدد التكرار المطلوب -->
@@ -64,36 +63,29 @@
                 android:text="التكرار المطلوب: 3 مرات"
                 android:textColor="#80FFFFFF"
                 android:textSize="13sp"
-                android:layout_marginBottom="20dp" />
+                android:layout_marginBottom="16dp" />
 
             <!-- ═══════ العداد الدائري التفاعلي ═══════ -->
             <FrameLayout
                 android:id="@+id/btn_counter_tap"
-                android:layout_width="130dp"
-                android:layout_height="130dp"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
                 android:background="@drawable/bg_circle_icon"
                 android:backgroundTint="#22FFD700"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackgroundBorderless">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/text_counter_number"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:layout_gravity="center">
-
-                    <TextView
-                        android:id="@+id/text_counter_number"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="3"
-                        android:textColor="#FFD700"
-                        android:textSize="44sp"
-                        android:textStyle="bold"
-                        android:includeFontPadding="false" />
-                </LinearLayout>
+                    android:text="3"
+                    android:textColor="#FFD700"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="center"
+                    android:includeFontPadding="false" />
             </FrameLayout>
 
             <!-- تلميح النقر -->
@@ -102,20 +94,20 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginTop="14dp">
+                android:layout_marginTop="12dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="👆"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="  انقر على الدائرة لعد التكرار"
                     android:textColor="#50FFFFFF"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
             </LinearLayout>
 
         </LinearLayout>

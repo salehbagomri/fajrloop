@@ -1,65 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    activity_alarm_ringing.xml — شاشة رنين المنبه (التصميم الاحترافي المُطوَّر)
+    activity_alarm_ringing.xml — شاشة رنين المنبه (تصميم جديد كلياً متناسق 100% مع هوية التطبيق البصرية)
 
-    الهوية البصرية:
-    - خلفية بنفسجية-نيفي داكنة متدرجة
-    - لهجة ذهبية (#E8D5A3 / #FFD700)
-    - Glassmorphism للبطاقات
-    - تسلسل بصري واضح: الوقت → المسجد → التحدي → التأكيد
+    الهوية البصرية الموحدة:
+    - الخلفية الأساسية: #07071B
+    - تأثير الخلفية: AnimatedGradientView
+    - البطاقات: GlassCardView المخصص (بتأثير الزجاج المعتم والأطراف المنحنية 16dp)
+    - ألوان النصوص والرموز: أبيض، ذهبي (#FFD700)، ولون نصوص ثانوية (#B0B0C5)
 -->
-<androidx.constraintlayout.widget.ConstraintLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_alarm_gradient"
+    android:background="#07071B"
+    android:layoutDirection="rtl"
+    android:textDirection="rtl"
     tools:context=".ui.alarm.AlarmRingingActivity">
 
-    <!-- طبقة Glassmorphism الخلفية -->
-    <View
-        android:id="@+id/glassLayer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/bg_glass_overlay"
-        android:alpha="0.15"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+    <!-- ====== الخلفية المتحركة الموحدة للتطبيق ====== -->
+    <com.bagomri.fajrloop.ui.widget.AnimatedGradientView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
-    <!-- دوائر زخرفية في الخلفية -->
-    <View
-        android:layout_width="280dp"
-        android:layout_height="280dp"
-        android:background="@drawable/bg_mosque_glow"
-        android:alpha="0.06"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="-60dp"
-        android:layout_marginStart="-60dp" />
-
-    <View
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:background="@drawable/bg_mosque_glow"
-        android:alpha="0.04"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="-40dp"
-        android:layout_marginEnd="-40dp" />
-
+    <!-- ====== محتوى الشاشة فوق الخلفية المتحركة ====== -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll_view"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:fillViewport="true"
-        android:fitsSystemWindows="true"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:fitsSystemWindows="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -68,126 +39,114 @@
             android:gravity="center_horizontal"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
-            android:paddingTop="56dp"
+            android:paddingTop="48dp"
             android:paddingBottom="32dp">
 
-            <!-- ══════════════════════════════════════════════ -->
-            <!--  القسم العلوي: تسمية الصلاة + الوقت + الأيقونة -->
-            <!-- ══════════════════════════════════════════════ -->
-
-            <!-- شريط علوي: تسمية الصلاة -->
+            <!-- شريط علوي صغير: وسم المنبه -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:background="@drawable/bg_challenge_input"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
+                android:backgroundTint="#12FFD700"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
                 android:paddingTop="6dp"
-                android:paddingBottom="6dp">
+                android:paddingBottom="6dp"
+                android:layout_marginBottom="8dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🕌"
-                    android:textSize="14sp" />
+                    android:text="⏰"
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/text_alarm_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="صلاة الفجر"
-                    android:textSize="14sp"
-                    android:textColor="#CCE8D5A3"
-                    android:letterSpacing="0.05"
+                    android:textSize="13sp"
+                    android:textColor="#FFD700"
+                    android:textStyle="bold"
                     android:layout_marginStart="6dp"
                     tools:text="صلاة الفجر" />
             </LinearLayout>
 
-            <!-- عرض الوقت الكبير -->
+            <!-- عرض الوقت الكبير المهيب -->
             <TextView
                 android:id="@+id/text_alarm_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="88sp"
+                android:textSize="72sp"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
                 android:includeFontPadding="false"
-                android:layout_marginTop="8dp"
-                android:letterSpacing="-0.03"
+                android:letterSpacing="-0.02"
                 tools:text="04:32" />
 
-            <!-- نص توجيهي -->
             <TextView
                 android:id="@+id/text_subheading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="حان وقت صلاة الفجر"
-                android:textSize="14sp"
-                android:textColor="#66FFFFFF"
+                android:text="حان وقت الاستيقاظ والوقوف بين يدي الله"
+                android:textSize="13sp"
+                android:textColor="#B0B0C5"
                 android:gravity="center"
-                android:layout_marginTop="2dp" />
+                android:layout_marginTop="4dp" />
 
-            <!-- حاوية الأيقونة مع الهالة -->
+            <!-- أيقونة المسجد مع هالتها الروحانية المريحة -->
             <FrameLayout
                 android:id="@+id/container_mosque"
-                android:layout_width="140dp"
-                android:layout_height="140dp"
-                android:layout_marginTop="16dp">
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp">
 
                 <View
                     android:id="@+id/view_mosque_glow"
-                    android:layout_width="140dp"
-                    android:layout_height="140dp"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
                     android:layout_gravity="center"
                     android:background="@drawable/bg_mosque_glow" />
 
                 <ImageView
                     android:id="@+id/image_mosque"
-                    android:layout_width="76dp"
-                    android:layout_height="76dp"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_mosque"
                     android:contentDescription="أيقونة الفجر" />
             </FrameLayout>
 
-            <!-- ══════════════════════════════════════════════ -->
-            <!--  بطاقة التحدي الرئيسية                        -->
-            <!-- ══════════════════════════════════════════════ -->
-            <LinearLayout
+            <!-- ═══════════════════ بطاقة التحدي بالزجاج المعتم (GlassCardView) ═══════════════════ -->
+            <com.bagomri.fajrloop.ui.widget.GlassCardView
                 android:id="@+id/card_challenge_panel"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_challenge_card"
-                android:padding="24dp"
-                android:layout_marginTop="20dp">
+                android:layout_height="wrap_content">
 
-                <!-- رأس البطاقة -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:gravity="center"
-                    android:layout_marginBottom="4dp">
+                    android:padding="20dp">
 
                     <TextView
                         android:id="@+id/text_challenge_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="تحدي الاستيقاظ"
-                        android:textSize="18sp"
-                        android:textColor="@color/gold"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.02" />
+                        android:textSize="16sp"
+                        android:textColor="#FFD700"
+                        android:textStyle="bold" />
 
                     <View
-                        android:layout_width="48dp"
-                        android:layout_height="2dp"
-                        android:background="@color/gold"
-                        android:alpha="0.5"
+                        android:layout_width="40dp"
+                        android:layout_height="1dp"
+                        android:background="#FFD700"
+                        android:alpha="0.3"
                         android:layout_marginTop="8dp"
                         android:layout_marginBottom="8dp" />
 
@@ -195,223 +154,176 @@
                         android:id="@+id/text_challenge_subtitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="حل التحدي لتفعيل إيقاف الرنين"
+                        android:text="حل التحدي لتأكيد استيقاظك وإيقاف المنبه"
                         android:textSize="12sp"
-                        android:textColor="#80FFFFFF"
-                        android:gravity="center" />
-                </LinearLayout>
+                        android:textColor="#B0B0C5"
+                        android:gravity="center"
+                        android:layout_marginBottom="16dp" />
 
-                <!-- ─── 1. تحدي الحساب ─── -->
-                <LinearLayout
-                    android:id="@+id/layout_challenge_math"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:layout_marginTop="16dp"
-                    android:visibility="gone">
-
-                    <!-- إطار المسألة -->
+                    <!-- ─── 1. تحدي الرياضيات ─── -->
                     <LinearLayout
+                        android:id="@+id/layout_challenge_math"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_challenge_input"
+                        android:orientation="vertical"
                         android:gravity="center"
-                        android:padding="20dp"
-                        android:layout_marginBottom="16dp">
+                        android:visibility="gone">
 
                         <TextView
                             android:id="@+id/text_math_question"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="24 + 13 = ?"
-                            android:textSize="38sp"
+                            android:textSize="32sp"
                             android:textColor="#FFFFFF"
                             android:textStyle="bold"
-                            android:letterSpacing="-0.01"
-                            tools:text="24 + 13 = ?" />
+                            android:layout_marginBottom="16dp" />
+
+                        <EditText
+                            android:id="@+id/input_math_answer"
+                            android:layout_width="140dp"
+                            android:layout_height="48dp"
+                            android:inputType="numberSigned"
+                            android:background="@drawable/bg_challenge_input"
+                            android:textColor="#FFFFFF"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:gravity="center"
+                            android:hint="الإجابة"
+                            android:textColorHint="#40FFFFFF"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:layout_marginBottom="16dp" />
+
+                        <Button
+                            android:id="@+id/btn_submit_math"
+                            android:layout_width="140dp"
+                            android:layout_height="46dp"
+                            android:text="تحقق ✓"
+                            android:textSize="14sp"
+                            android:textColor="#07071B"
+                            android:textStyle="bold"
+                            android:backgroundTint="#FFD700"
+                            app:cornerRadius="12dp"
+                            android:stateListAnimator="@null" />
                     </LinearLayout>
 
-                    <EditText
-                        android:id="@+id/input_math_answer"
-                        android:layout_width="180dp"
-                        android:layout_height="56dp"
-                        android:inputType="numberSigned"
-                        android:background="@drawable/bg_challenge_input"
-                        android:textColor="#FFFFFF"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:gravity="center"
-                        android:hint="الإجابة"
-                        android:textColorHint="#40FFFFFF"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
-                        android:layout_marginBottom="16dp" />
-
-                    <Button
-                        android:id="@+id/btn_submit_math"
-                        android:layout_width="180dp"
-                        android:layout_height="52dp"
-                        android:text="تحقق ✓"
-                        android:textSize="16sp"
-                        android:textColor="#0A0520"
-                        android:textStyle="bold"
-                        android:background="@drawable/bg_btn_gold_capsule"
-                        android:stateListAnimator="@null" />
-                </LinearLayout>
-
-                <!-- ─── 2. تحدي الهز ─── -->
-                <LinearLayout
-                    android:id="@+id/layout_challenge_shake"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:layout_marginTop="16dp"
-                    android:visibility="gone">
-
-                    <ImageView
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        android:src="@drawable/ic_shake"
-                        android:contentDescription="هز الهاتف"
-                        android:layout_marginBottom="12dp" />
-
-                    <TextView
-                        android:id="@+id/text_shake_count"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0 / 30"
-                        android:textSize="48sp"
-                        android:textColor="#FFFFFF"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="16dp" />
-
-                    <ProgressBar
-                        android:id="@+id/progress_shake"
-                        style="@android:style/Widget.ProgressBar.Horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="8dp"
-                        android:max="30"
-                        android:progress="0"
-                        android:progressTint="@color/gold"
-                        android:progressBackgroundTint="#1AFFFFFF" />
-                </LinearLayout>
-
-                <!-- ─── 3. تحدي الكلمات ─── -->
-                <LinearLayout
-                    android:id="@+id/layout_challenge_word"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:layout_marginTop="16dp"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="رتّب الحروف لتكوين كلمة"
-                        android:textSize="12sp"
-                        android:textColor="#66FFFFFF"
-                        android:layout_marginBottom="12dp" />
-
-                    <!-- إطار الحروف المبعثرة -->
+                    <!-- ─── 2. تحدي الهز ─── -->
                     <LinearLayout
+                        android:id="@+id/layout_challenge_shake"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_challenge_input"
+                        android:orientation="vertical"
                         android:gravity="center"
-                        android:padding="16dp"
-                        android:layout_marginBottom="16dp">
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_shake"
+                            android:contentDescription="هز الهاتف"
+                            android:layout_marginBottom="12dp" />
+
+                        <TextView
+                            android:id="@+id/text_shake_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 / 30"
+                            android:textSize="36sp"
+                            android:textColor="#FFFFFF"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="12dp" />
+
+                        <ProgressBar
+                            android:id="@+id/progress_shake"
+                            style="@android:style/Widget.ProgressBar.Horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="6dp"
+                            android:max="30"
+                            android:progress="0"
+                            android:progressTint="#FFD700"
+                            android:progressBackgroundTint="#20FFFFFF" />
+                    </LinearLayout>
+
+                    <!-- ─── 3. تحدي الكلمات ─── -->
+                    <LinearLayout
+                        android:id="@+id/layout_challenge_word"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:visibility="gone">
 
                         <TextView
                             android:id="@+id/text_scrambled_letters"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="ج ر ف"
-                            android:textSize="36sp"
-                            android:textColor="@color/gold_glow"
+                            android:textSize="32sp"
+                            android:textColor="#FFD700"
                             android:textStyle="bold"
-                            android:letterSpacing="0.3" />
+                            android:letterSpacing="0.2"
+                            android:layout_marginBottom="16dp" />
+
+                        <EditText
+                            android:id="@+id/input_word_answer"
+                            android:layout_width="180dp"
+                            android:layout_height="48dp"
+                            android:inputType="text"
+                            android:background="@drawable/bg_challenge_input"
+                            android:textColor="#FFFFFF"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:gravity="center"
+                            android:hint="الكلمة الصحيحة"
+                            android:textColorHint="#40FFFFFF"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:layout_marginBottom="16dp" />
+
+                        <Button
+                            android:id="@+id/btn_submit_word"
+                            android:layout_width="140dp"
+                            android:layout_height="46dp"
+                            android:text="تحقق ✓"
+                            android:textSize="14sp"
+                            android:textColor="#07071B"
+                            android:textStyle="bold"
+                            android:backgroundTint="#FFD700"
+                            app:cornerRadius="12dp"
+                            android:stateListAnimator="@null" />
                     </LinearLayout>
 
-                    <EditText
-                        android:id="@+id/input_word_answer"
-                        android:layout_width="220dp"
-                        android:layout_height="56dp"
-                        android:inputType="text"
-                        android:background="@drawable/bg_challenge_input"
-                        android:textColor="#FFFFFF"
-                        android:textSize="22sp"
-                        android:textStyle="bold"
-                        android:gravity="center"
-                        android:hint="أدخل الكلمة"
-                        android:textColorHint="#40FFFFFF"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
-                        android:layout_marginBottom="16dp" />
-
+                    <!-- زر الغفوة (Snooze) -->
                     <Button
-                        android:id="@+id/btn_submit_word"
-                        android:layout_width="180dp"
-                        android:layout_height="52dp"
-                        android:text="تحقق ✓"
-                        android:textSize="16sp"
-                        android:textColor="#0A0520"
+                        android:id="@+id/btn_snooze"
+                        android:layout_width="match_parent"
+                        android:layout_height="46dp"
+                        android:layout_marginTop="12dp"
+                        android:text="غفوة ⏰"
+                        android:textSize="13sp"
+                        android:textColor="#FFD700"
                         android:textStyle="bold"
-                        android:background="@drawable/bg_btn_gold_capsule"
-                        android:stateListAnimator="@null" />
-                </LinearLayout>
+                        android:background="@drawable/bg_challenge_input"
+                        android:backgroundTint="#05FFFFFF"
+                        android:stateListAnimator="@null"
+                        android:visibility="gone" />
 
-                <!-- ─── زر الغفوة ─── -->
-                <Button
-                    android:id="@+id/btn_snooze"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="16dp"
-                    android:text="غفوة (متبقي: 2) ⏰"
-                    android:textSize="14sp"
-                    android:textColor="@color/gold"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_challenge_input"
-                    android:stateListAnimator="@null"
-                    android:visibility="gone" />
-
-                <!-- ══════════════════════════════════════════════ -->
-                <!--  قسم تأكيد الاستيقاظ (يظهر بعد حل التحدي)   -->
-                <!-- ══════════════════════════════════════════════ -->
-                <LinearLayout
-                    android:id="@+id/layout_waiting_confirmation"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:visibility="gone">
-
-                    <!-- بطاقة النجاح العلوية -->
+                    <!-- ─── 4. قسم تأكيد الاستيقاظ وسير العمل ─── -->
                     <LinearLayout
+                        android:id="@+id/layout_waiting_confirmation"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:gravity="center"
-                        android:background="@drawable/bg_challenge_input"
-                        android:padding="20dp"
-                        android:layout_marginBottom="16dp">
+                        android:visibility="gone">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🎉"
-                            android:textSize="40sp"
-                            android:layout_marginBottom="8dp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="تم حل التحدي بنجاح!"
-                            android:textSize="18sp"
-                            android:textColor="@color/green"
+                            android:text="تم تجاوز التحدي بنجاح 🎉"
+                            android:textSize="15sp"
+                            android:textColor="#2ECC71"
                             android:textStyle="bold"
                             android:layout_marginBottom="4dp" />
 
@@ -420,108 +332,108 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="بانتظار تأكيد استيقاظك من زميلك المسؤول..."
-                            android:textSize="13sp"
-                            android:textColor="#AAFFFFFF"
+                            android:textSize="12sp"
+                            android:textColor="#B0B0C5"
                             android:gravity="center"
-                            android:lineSpacingExtra="4dp" />
+                            android:lineSpacingExtra="3dp"
+                            android:layout_marginBottom="16dp" />
 
                         <ProgressBar
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:indeterminateTint="@color/gold"
-                            android:layout_marginTop="12dp" />
-                    </LinearLayout>
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:indeterminateTint="#FFD700"
+                            android:layout_marginBottom="16dp" />
 
-                    <!-- زر اتصل بالمسؤول -->
-                    <Button
-                        android:id="@+id/btn_call_partner"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:text="📞  اتصل بالمسؤول للحصول على الرمز"
-                        android:textSize="14sp"
-                        android:textColor="@color/gold"
-                        android:textStyle="bold"
-                        android:background="@drawable/bg_challenge_input"
-                        android:stateListAnimator="@null"
-                        android:layout_marginBottom="12dp" />
-
-                    <!-- فاصل -->
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#20FFFFFF"
-                        android:layout_marginBottom="16dp" />
-
-                    <!-- تعليمات TOTP -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="أدخل رمز الاستيقاظ الاحتياطي (TOTP):"
-                        android:textSize="12sp"
-                        android:textColor="#AAFFFFFF"
-                        android:layout_marginBottom="8dp" />
-
-                    <!-- حقل TOTP + زر -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center"
-                        android:layout_marginBottom="16dp">
-
-                        <EditText
-                            android:id="@+id/input_totp_code"
-                            android:layout_width="0dp"
-                            android:layout_weight="1"
-                            android:layout_height="52dp"
-                            android:inputType="number"
-                            android:maxLength="7"
-                            android:background="@drawable/bg_challenge_input"
-                            android:textColor="#FFFFFF"
-                            android:textSize="20sp"
-                            android:textStyle="bold"
-                            android:gravity="center"
-                            android:hint="123 456"
-                            android:textColorHint="#40FFFFFF"
-                            android:layout_marginEnd="8dp" />
-
+                        <!-- زر اتصل بالمسؤول -->
                         <Button
-                            android:id="@+id/btn_submit_totp"
-                            android:layout_width="100dp"
-                            android:layout_height="52dp"
-                            android:text="تحقق"
-                            android:textSize="14sp"
-                            android:textColor="#0A0520"
+                            android:id="@+id/btn_call_partner"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="📞  اتصل بالمسؤول لتأكيد الاستيقاظ"
+                            android:textSize="13sp"
+                            android:textColor="#FFD700"
                             android:textStyle="bold"
-                            android:background="@drawable/bg_btn_gold_capsule"
+                            android:background="@drawable/bg_challenge_input"
+                            android:backgroundTint="#05FFFFFF"
+                            android:stateListAnimator="@null"
+                            android:layout_marginBottom="16dp" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#15FFFFFF"
+                            android:layout_marginBottom="16dp" />
+
+                        <!-- حقل كود TOTP الاحتياطي -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="أدخل رمز الاستيقاظ الاحتياطي (TOTP):"
+                            android:textSize="11sp"
+                            android:textColor="#B0B0C5"
+                            android:layout_marginBottom="8dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:layout_marginBottom="16dp">
+
+                            <EditText
+                                android:id="@+id/input_totp_code"
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="46dp"
+                                android:inputType="number"
+                                android:maxLength="7"
+                                android:background="@drawable/bg_challenge_input"
+                                android:textColor="#FFFFFF"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:gravity="center"
+                                android:hint="123 456"
+                                android:textColorHint="#40FFFFFF"
+                                android:layout_marginEnd="8dp" />
+
+                            <Button
+                                android:id="@+id/btn_submit_totp"
+                                android:layout_width="88dp"
+                                android:layout_height="46dp"
+                                android:text="تحقق"
+                                android:textSize="13sp"
+                                android:textColor="#07071B"
+                                android:textStyle="bold"
+                                android:backgroundTint="#FFD700"
+                                app:cornerRadius="12dp"
+                                android:stateListAnimator="@null" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#15FFFFFF"
+                            android:layout_marginBottom="12dp" />
+
+                        <!-- زر SOS للاستغاثة -->
+                        <Button
+                            android:id="@+id/btn_sos"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="🚨  لا أستطيع الاستيقاظ — استغاثة"
+                            android:textSize="13sp"
+                            android:textColor="#FFFFFF"
+                            android:textStyle="bold"
+                            android:backgroundTint="#E74C3C"
+                            app:cornerRadius="12dp"
                             android:stateListAnimator="@null" />
+
                     </LinearLayout>
-
-                    <!-- فاصل -->
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#20FF6B6B"
-                        android:layout_marginBottom="12dp" />
-
-                    <!-- زر SOS -->
-                    <Button
-                        android:id="@+id/btn_sos"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:text="🚨  لا أستطيع الاستيقاظ — استغاثة"
-                        android:textSize="14sp"
-                        android:textColor="@color/red"
-                        android:textStyle="bold"
-                        android:background="@drawable/bg_btn_sos"
-                        android:stateListAnimator="@null" />
 
                 </LinearLayout>
-
-            </LinearLayout>
-            <!-- نهاية card_challenge_panel -->
+            </com.bagomri.fajrloop.ui.widget.GlassCardView>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</FrameLayout>
