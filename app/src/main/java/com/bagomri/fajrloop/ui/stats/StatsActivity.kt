@@ -8,7 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import com.bagomri.fajrloop.ui.BaseActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bagomri.fajrloop.R
 import com.bagomri.fajrloop.alarm.AlarmPreferences
@@ -19,7 +19,7 @@ import com.google.firebase.database.*
 import java.text.SimpleDateFormat
 import java.util.*
 
-class StatsActivity : AppCompatActivity() {
+class StatsActivity : BaseActivity() {
 
     private lateinit var binding: ActivityStatsBinding
     private var halqaId: String? = null

@@ -16,7 +16,7 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import com.bagomri.fajrloop.ui.BaseActivity
 import androidx.lifecycle.ViewModelProvider
 import com.bagomri.fajrloop.R
 import com.bagomri.fajrloop.alarm.AlarmScheduler
@@ -31,7 +31,7 @@ import java.util.*
 /**
  * SettingsActivity — إعدادات التطبيق (MVVM Refactored)
  */
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : BaseActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var prefs: SharedPreferences

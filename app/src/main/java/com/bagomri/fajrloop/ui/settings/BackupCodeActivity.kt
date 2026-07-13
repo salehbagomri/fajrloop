@@ -6,14 +6,14 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
+import com.bagomri.fajrloop.ui.BaseActivity
 import com.bagomri.fajrloop.R
 import com.bagomri.fajrloop.databinding.ActivityBackupCodeBinding
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.absoluteValue
 
-class BackupCodeActivity : AppCompatActivity() {
+class BackupCodeActivity : BaseActivity() {
 
     private lateinit var binding: ActivityBackupCodeBinding
     private lateinit var prefs: SharedPreferences

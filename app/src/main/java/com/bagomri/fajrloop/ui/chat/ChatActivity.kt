@@ -9,7 +9,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import com.bagomri.fajrloop.ui.BaseActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bagomri.fajrloop.R
 import com.bagomri.fajrloop.alarm.AlarmPreferences
@@ -20,7 +20,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import java.util.*
 
-class ChatActivity : AppCompatActivity() {
+class ChatActivity : BaseActivity() {
 
     private lateinit var binding: ActivityChatBinding
     private lateinit var databaseRef: DatabaseReference

@@ -1,10 +1,10 @@
 package com.bagomri.fajrloop.ui.settings
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import com.bagomri.fajrloop.ui.BaseActivity
 import com.bagomri.fajrloop.databinding.ActivityGuideBinding
 
-class GuideActivity : AppCompatActivity() {
+class GuideActivity : BaseActivity() {
 
     private lateinit var binding: ActivityGuideBinding
 

@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import com.bagomri.fajrloop.ui.BaseActivity
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.bagomri.fajrloop.R
@@ -17,7 +17,7 @@ import com.bagomri.fajrloop.databinding.ActivityMorningAdhkarBinding
 /**
  * MorningAdhkarActivity — شاشة أذكار الصباح التفاعلية بعد تأكيد الاستيقاظ
  */
-class MorningAdhkarActivity : AppCompatActivity() {
+class MorningAdhkarActivity : BaseActivity() {
 
     private lateinit var binding: ActivityMorningAdhkarBinding
 

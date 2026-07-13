@@ -8,7 +8,7 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
+import com.bagomri.fajrloop.ui.BaseActivity
 import androidx.core.app.NotificationManagerCompat
 import com.bagomri.fajrloop.databinding.ActivityPermissionSetupBinding
 
@@ -21,7 +21,7 @@ import com.bagomri.fajrloop.databinding.ActivityPermissionSetupBinding
  * 3. REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
  * 4. USE_FULL_SCREEN_INTENT (Android 14+)
  */
-class PermissionSetupActivity : AppCompatActivity() {
+class PermissionSetupActivity : BaseActivity() {
 
     private lateinit var binding: ActivityPermissionSetupBinding
 

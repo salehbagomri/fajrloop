@@ -4,7 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import com.bagomri.fajrloop.ui.BaseActivity
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.lifecycleScope
@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 /**
  * LoginActivity — شاشة تسجيل الدخول الموحدة باستخدام Credential Manager
  */
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : BaseActivity() {
 
     private lateinit var binding: ActivityLoginBinding
 

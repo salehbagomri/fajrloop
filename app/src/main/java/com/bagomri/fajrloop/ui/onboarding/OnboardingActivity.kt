@@ -9,7 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import com.bagomri.fajrloop.ui.BaseActivity
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.bagomri.fajrloop.R
@@ -20,7 +20,7 @@ import com.bagomri.fajrloop.ui.auth.LoginActivity
 /**
  * OnboardingActivity — شاشات الترحيب والتعريف بالتطبيق عند أول تشغيل
  */
-class OnboardingActivity : AppCompatActivity() {
+class OnboardingActivity : BaseActivity() {
 
     private lateinit var binding: ActivityOnboardingBinding
     private val onboardingItems = listOf(

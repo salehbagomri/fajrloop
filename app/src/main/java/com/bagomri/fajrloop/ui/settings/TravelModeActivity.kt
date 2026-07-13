@@ -7,12 +7,12 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import com.bagomri.fajrloop.ui.BaseActivity
 import com.bagomri.fajrloop.databinding.ActivityTravelModeBinding
 import java.text.SimpleDateFormat
 import java.util.*
 
-class TravelModeActivity : AppCompatActivity() {
+class TravelModeActivity : BaseActivity() {
 
     private lateinit var binding: ActivityTravelModeBinding
     private lateinit var prefs: SharedPreferences

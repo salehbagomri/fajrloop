@@ -20,7 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AppCompatActivity
+import com.bagomri.fajrloop.ui.BaseActivity
 import androidx.lifecycle.ViewModelProvider
 import com.bagomri.fajrloop.R
 import com.bagomri.fajrloop.alarm.AlarmPreferences
@@ -30,7 +30,7 @@ import com.bagomri.fajrloop.databinding.ActivityAlarmRingingBinding
 /**
  * AlarmRingingActivity — شاشة رنين المنبه (MVVM Refactored)
  */
-class AlarmRingingActivity : AppCompatActivity() {
+class AlarmRingingActivity : BaseActivity() {
 
     companion object {
         const val EXTRA_ALARM_LABEL = "extra_alarm_label"
