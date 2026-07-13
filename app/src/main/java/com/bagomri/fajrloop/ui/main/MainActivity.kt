@@ -367,6 +367,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupQuickActionsUI() {
+        binding.btnSettings.setOnClickListener {
+            startActivity(Intent(this, com.bagomri.fajrloop.ui.settings.SettingsActivity::class.java))
+        }
         binding.cardActionHalqaDetails.setOnClickListener {
             showHalqaDetailsBottomSheet()
         }
