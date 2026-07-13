@@ -81,23 +81,74 @@ class AlarmRingingActivity : BaseActivity() {
         }
     }
 
+    /**
+     * 🔒 نظام القفل الذكي أثناء المكالمة:
+     *
+     * المنطق:
+     *  1. عند فتح تطبيق الهاتف → فترة سماح 3 ثوانٍ (لفتح الـ Dialer)
+     *  2. بعد فترة السماح: هل المكالمة نشطة؟
+     *     - نعم → انتظر حتى تنتهي (تحقق كل 2 ثانية)
+     *     - لا  → أعد المستخدم فوراً لشاشة التحدي
+     *  3. عند انتهاء المكالمة → أعد فوراً
+     *
+     * النتيجة: المستخدم يستطيع الاتصال فقط، لا يستطيع الهروب لأي تطبيق آخر.
+     */
+    private var dialerLaunchTime = 0L
+    private var wasInActiveCall = false
+    private val DIALER_GRACE_PERIOD_MS = 3000L  // 3 ثوانٍ سماح لفتح الـ Dialer
+    private val WATCHDOG_INTERVAL_MS = 2000L     // تحقق كل 2 ثانية
+
     private val dialerWatchdog = object : Runnable {
         override fun run() {
-            if (isLaunchingDialer && !isAlarmDismissed) {
+            if (isAlarmDismissed) return
+
+            if (isLaunchingDialer) {
                 val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                val isCallActive = audioManager.mode == AudioManager.MODE_IN_CALL || 
+                val isCallActive = audioManager.mode == AudioManager.MODE_IN_CALL ||
                                    audioManager.mode == AudioManager.MODE_IN_COMMUNICATION
-                
-                if (!isCallActive) {
-                    isLaunchingDialer = false
-                    val relaunchIntent = Intent(this@AlarmRingingActivity, AlarmRingingActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+
+                val elapsed = System.currentTimeMillis() - dialerLaunchTime
+
+                when {
+                    isCallActive -> {
+                        // مكالمة نشطة → سجّل وانتظر انتهاءها
+                        wasInActiveCall = true
+                        handler.postDelayed(this, WATCHDOG_INTERVAL_MS)
                     }
-                    startActivity(relaunchIntent)
-                } else {
-                    handler.postDelayed(this, 1500)
+                    wasInActiveCall -> {
+                        // المكالمة انتهت للتو → أعد المستخدم فوراً
+                        android.util.Log.d(TAG, "Call ended — bringing user back to alarm screen")
+                        isLaunchingDialer = false
+                        wasInActiveCall = false
+                        bringActivityToFront()
+                    }
+                    elapsed > DIALER_GRACE_PERIOD_MS -> {
+                        // فترة السماح انتهت بدون مكالمة → أعد فوراً
+                        android.util.Log.d(TAG, "Dialer grace period expired — bringing user back")
+                        isLaunchingDialer = false
+                        bringActivityToFront()
+                    }
+                    else -> {
+                        // لا زلنا في فترة السماح → انتظر
+                        handler.postDelayed(this, WATCHDOG_INTERVAL_MS)
+                    }
                 }
             }
+        }
+    }
+
+    /**
+     * يُعيد شاشة المنبه للمقدمة بشكل موثوق
+     */
+    private fun bringActivityToFront() {
+        try {
+            val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+            activityManager.moveTaskToFront(taskId, android.app.ActivityManager.MOVE_TASK_WITH_HOME)
+        } catch (e: Exception) {
+            val relaunchIntent = Intent(this@AlarmRingingActivity, AlarmRingingActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            }
+            startActivity(relaunchIntent)
         }
     }
 
@@ -492,6 +543,9 @@ class AlarmRingingActivity : BaseActivity() {
     private fun launchDialer(phoneNumber: String) {
         try {
             isLaunchingDialer = true
+            dialerLaunchTime = System.currentTimeMillis()
+            wasInActiveCall = false
+
             val dialIntent = if (phoneNumber.isNotEmpty()) {
                 Intent(Intent.ACTION_DIAL, android.net.Uri.parse("tel:$phoneNumber"))
             } else {
@@ -520,8 +574,9 @@ class AlarmRingingActivity : BaseActivity() {
                 startActivity(dialIntent)
             }
 
+            // بدء المراقب الذكي — يبدأ بعد ثانية واحدة ويتحقق كل 2 ثانية
             handler.removeCallbacks(dialerWatchdog)
-            handler.postDelayed(dialerWatchdog, 4000)
+            handler.postDelayed(dialerWatchdog, 1000)
         } catch (e: Exception) {
             isLaunchingDialer = false
             showToast("❌ تعذر فتح تطبيق الاتصال")
@@ -554,7 +609,9 @@ class AlarmRingingActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
+        // المستخدم عاد لشاشة المنبه — أوقف مراقبة المكالمة
         isLaunchingDialer = false
+        wasInActiveCall = false
         handler.removeCallbacks(dialerWatchdog)
         if (challengeType == "shake" && !viewModel.isChallengeSolved.value!!) {
             registerShakeSensor()
@@ -589,15 +646,7 @@ class AlarmRingingActivity : BaseActivity() {
     override fun onStop() {
         super.onStop()
         if (!isAlarmDismissed && !isLaunchingDialer && !isFinishing) {
-            try {
-                val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
-                activityManager.moveTaskToFront(taskId, android.app.ActivityManager.MOVE_TASK_WITH_HOME)
-            } catch (e: Exception) {
-                val relaunchIntent = Intent(this, AlarmRingingActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                }
-                startActivity(relaunchIntent)
-            }
+            bringActivityToFront()
         }
     }
 

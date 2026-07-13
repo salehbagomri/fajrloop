@@ -79,12 +79,12 @@
         <activity
             android:name=".ui.alarm.AlarmRingingActivity"
             android:exported="false"
-            android:noHistory="true"
             android:showOnLockScreen="true"
             android:turnScreenOn="true"
             android:theme="@style/Theme.FajrLoop.AlarmRinging"
             android:windowSoftInputMode="adjustResize|stateVisible"
             android:launchMode="singleInstance"
+            android:taskAffinity="com.bagomri.fajrloop.alarm"
             android:excludeFromRecents="true" />
 
         <!-- شاشة الترحيب والتعريف -->
