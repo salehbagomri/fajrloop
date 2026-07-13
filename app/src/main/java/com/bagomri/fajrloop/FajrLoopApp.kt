@@ -16,6 +16,11 @@ class FajrLoopApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        try {
+            com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().log("FajrLoop App Initialized successfully")
+        } catch (e: Exception) {
+            Log.e("FajrLoopApp", "Failed to initialize Crashlytics logging", e)
+        }
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
             override fun onActivityStarted(activity: Activity) {}

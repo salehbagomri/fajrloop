@@ -119,6 +119,14 @@ class AlarmSoundService : Service() {
         val notification = buildAlarmNotification(label, triggerTime)
         startForeground(NOTIFICATION_ID_ALARM, notification)
 
+        try {
+            val timeStr = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(triggerTime))
+            val cityStr = getSharedPreferences(AlarmPreferences.PREFS_NAME, MODE_PRIVATE).getString("user_city", "مكة المكرمة") ?: "مكة المكرمة"
+            com.bagomri.fajrloop.data.AnalyticsHelper.logAlarmTriggered(timeStr, cityStr)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to log alarm_triggered event", e)
+        }
+
         // تحرير WakeLock الخاص بـ AlarmReceiver بعد أن الخدمة استلمت السيطرة
         AlarmReceiver.releaseWakeLock()
 

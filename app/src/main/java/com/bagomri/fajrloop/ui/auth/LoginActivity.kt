@@ -4,55 +4,28 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.lifecycle.lifecycleScope
 import com.bagomri.fajrloop.auth.AuthManager
 import com.bagomri.fajrloop.databinding.ActivityLoginBinding
 import com.bagomri.fajrloop.ui.main.MainActivity
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.launch
 
 /**
- * LoginActivity — شاشة تسجيل الدخول الموحدة
- *
- * يعتمد بالكامل على Google Sign-In فقط.
- * عند نجاح تسجيل الدخول، يتم إنشاء ملف للمستخدم في قاعدة البيانات السحابية (Realtime Database).
+ * LoginActivity — شاشة تسجيل الدخول الموحدة باستخدام Credential Manager
  */
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
-    private lateinit var googleSignInClient: GoogleSignInClient
 
     // معرّف الويب العميل الافتراضي لـ Firebase المأخوذ من google-services.json
     private val WEB_CLIENT_ID = "866668685561-iaftbovc44m135k8pg14o40p3jvirekv.apps.googleusercontent.com"
-
-    private val googleSignInLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                account?.idToken?.let { idToken ->
-                    firebaseAuthWithGoogle(idToken)
-                } ?: run {
-                    setLoading(false)
-                    showToast("فشل في الحصول على رمز Google ID Token")
-                }
-            } catch (e: ApiException) {
-                setLoading(false)
-                showToast("فشل تسجيل الدخول بواسطة جوجل: ${e.localizedMessage}")
-            }
-        } else {
-            setLoading(false)
-            showToast("تم إلغاء تسجيل الدخول")
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,29 +39,41 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupGoogleSignIn()
-
         binding.btnGoogleSignin.setOnClickListener {
             startGoogleSignInFlow()
         }
     }
 
-    private fun setupGoogleSignIn() {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(WEB_CLIENT_ID)
-            .requestEmail()
-            .requestProfile()
-            .build()
-
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
-    }
-
     private fun startGoogleSignInFlow() {
         setLoading(true)
-        // تسجيل الخروج المسبق لتسجيل مستخدم جديد أو اختيار حساب
-        googleSignInClient.signOut().addOnCompleteListener {
-            val signInIntent = googleSignInClient.signInIntent
-            googleSignInLauncher.launch(signInIntent)
+        val credentialManager = CredentialManager.create(this)
+
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(false)
+            .setServerClientId(WEB_CLIENT_ID)
+            .setAutoSelectEnabled(false)
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+
+        lifecycleScope.launch {
+            try {
+                val result = credentialManager.getCredential(this@LoginActivity, request)
+                val credential = result.credential
+
+                if (credential is GoogleIdTokenCredential) {
+                    val idToken = credential.idToken
+                    firebaseAuthWithGoogle(idToken)
+                } else {
+                    setLoading(false)
+                    showToast("نوع تفويض غير مدعوم")
+                }
+            } catch (e: Exception) {
+                setLoading(false)
+                showToast("فشل تسجيل الدخول: ${e.localizedMessage}")
+            }
         }
     }
 

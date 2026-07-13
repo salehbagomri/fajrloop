@@ -216,6 +216,22 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnLogout.setOnClickListener {
             showLogoutConfirmationDialog()
         }
+
+        var versionClickCount = 0
+        binding.textVersionName.setOnClickListener {
+            versionClickCount++
+            if (versionClickCount >= 5) {
+                binding.btnTestCrash.visibility = View.VISIBLE
+                showToast("🔓 تم تفعيل خيارات المطور مؤقتاً")
+            }
+        }
+
+        binding.btnTestCrash.setOnClickListener {
+            showToast("💥 محاكاة انهيار للتطبيق خلال ثانيتين...")
+            binding.btnTestCrash.postDelayed({
+                throw RuntimeException("Test Crash for Firebase Crashlytics")
+            }, 2000)
+        }
     }
 
     private fun showCalcMethodDialog() {

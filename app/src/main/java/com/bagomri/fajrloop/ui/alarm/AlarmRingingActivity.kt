@@ -50,6 +50,7 @@ class AlarmRingingActivity : AppCompatActivity() {
     private var isVolumeEnforced = true
     private var isLaunchingDialer = false
     private var isSnoozed = false
+    private var startRingingTime = 0L
 
     private val homeButtonReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -141,6 +142,7 @@ class AlarmRingingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         applyLockScreenFlags()
         super.onCreate(savedInstanceState)
+        startRingingTime = System.currentTimeMillis()
 
         binding = ActivityAlarmRingingBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -247,6 +249,7 @@ class AlarmRingingActivity : AppCompatActivity() {
 
             btnSos.setOnClickListener {
                 viewModel.triggerEmergencySos()
+                com.bagomri.fajrloop.data.AnalyticsHelper.logEmergencyPanic()
             }
 
             btnSubmitTotp.setOnClickListener {
@@ -270,6 +273,12 @@ class AlarmRingingActivity : AppCompatActivity() {
         viewModel.isChallengeSolved.observe(this) { solved ->
             if (solved) {
                 showToast("🎉 تم تجاوز التحدي بنجاح!")
+                try {
+                    val duration = (System.currentTimeMillis() - startRingingTime) / 1000
+                    com.bagomri.fajrloop.data.AnalyticsHelper.logChallengeSolved(challengeType ?: "unknown", "normal", duration)
+                } catch (e: Exception) {
+                    android.util.Log.e(TAG, "Failed to log challenge_solved", e)
+                }
                 startService(Intent(this, AlarmSoundService::class.java).apply {
                     action = AlarmSoundService.ACTION_SOFTEN_ALARM
                 })
@@ -338,6 +347,13 @@ class AlarmRingingActivity : AppCompatActivity() {
                 })
 
                 if (!isSnoozed) {
+                    try {
+                        val duration = (System.currentTimeMillis() - startRingingTime) / 1000
+                        com.bagomri.fajrloop.data.AnalyticsHelper.logWakeConfirmed(duration)
+                    } catch (e: Exception) {
+                        android.util.Log.e(TAG, "Failed to log wake_confirmed", e)
+                    }
+
                     val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
                     val showAdhkar = prefs.getBoolean("show_adhkar_after_alarm", true)
                     if (showAdhkar) {

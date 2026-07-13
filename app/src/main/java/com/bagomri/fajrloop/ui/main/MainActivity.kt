@@ -434,8 +434,12 @@ class MainActivity : AppCompatActivity() {
                     return@setPositiveButton
                 }
                 com.bagomri.fajrloop.data.HalqaManager.createHalqa(name) { success, result ->
-                    if (success) showToast("تم إنشاء الحلقة بنجاح! 🎉")
-                    else showToast("خطأ: $result")
+                    if (success) {
+                        showToast("تم إنشاء الحلقة بنجاح! 🎉")
+                        com.bagomri.fajrloop.data.AnalyticsHelper.logHalqaCreated()
+                    } else {
+                        showToast("خطأ: $result")
+                    }
                 }
             }
             .setNegativeButton("إلغاء", null)
@@ -461,8 +465,12 @@ class MainActivity : AppCompatActivity() {
                     return@setPositiveButton
                 }
                 com.bagomri.fajrloop.data.HalqaManager.joinHalqa(code) { success, result ->
-                    if (success) showToast("تم الانضمام بنجاح! 🎉")
-                    else showToast("خطأ: $result")
+                    if (success) {
+                        showToast("تم الانضمام بنجاح! 🎉")
+                        com.bagomri.fajrloop.data.AnalyticsHelper.logHalqaJoined()
+                    } else {
+                        showToast("خطأ: $result")
+                    }
                 }
             }
             .setNegativeButton("إلغاء", null)

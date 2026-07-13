@@ -899,6 +899,32 @@
                 </LinearLayout>
             </com.bagomri.fajrloop.ui.widget.GlassCardView>
 
+            <!-- رقم الإصدار -->
+            <TextView
+                android:id="@+id/text_version_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="حلقة الفجر — إصدار 1.0.0"
+                android:textColor="#40FFFFFF"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <!-- زر اختبار الانهيار المطور -->
+            <Button
+                android:id="@+id/btn_test_crash"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="المطور: محاكاة انهيار (Test Crash) 💥"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#E74C3C"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp" />
+
         </LinearLayout>
     </ScrollView>
 </FrameLayout>

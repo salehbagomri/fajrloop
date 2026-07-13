@@ -12,6 +12,7 @@ lifecycleRuntimeKtx = "2.10.0"
 lifecycleViewmodelKtx = "2.10.0"
 googleServices = "4.4.2"
 firebaseBom = "33.1.2"
+firebaseCrashlyticsPlugin = "3.0.2"
 playServicesAuth = "21.2.0"
 credentials = "1.2.2"
 googleid = "1.1.1"
@@ -31,6 +32,8 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx" }
 firebase-database = { group = "com.google.firebase", name = "firebase-database-ktx" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging-ktx" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
@@ -41,3 +44,4 @@ adhan = { group = "com.batoulapps.adhan", name = "adhan", version.ref = "adhan" 
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+google-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }
