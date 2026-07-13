@@ -532,17 +532,31 @@ class MainActivity : BaseActivity() {
 
         btnLeave.setOnClickListener {
             dialog.dismiss()
-            AlertDialog.Builder(this)
-                .setTitle("تأكيد المغادرة")
-                .setMessage("هل أنت متأكد من رغبتك في مغادرة هذه الحلقة؟ سيتم إعادة ترتيب مسؤوليات الاستيقاظ بين بقية الأعضاء تلقائياً.")
-                .setPositiveButton("مغادرة") { _, _ ->
-                    com.bagomri.fajrloop.data.HalqaManager.leaveHalqa { success, result ->
-                        if (success) showToast("لقد غادرت الحلقة بنجاح 🚪")
-                        else showToast("فشل مغادرة الحلقة: $result")
-                    }
+            val leaveDialog = android.app.Dialog(this)
+            leaveDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+            leaveDialog.setContentView(R.layout.dialog_leave_halqa)
+            leaveDialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+            leaveDialog.window?.setLayout(
+                (resources.displayMetrics.widthPixels * 0.9).toInt(),
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+
+            val btnCancelLeave = leaveDialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_cancel)
+            val btnConfirmLeave = leaveDialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_confirm)
+
+            btnCancelLeave.setOnClickListener {
+                leaveDialog.dismiss()
+            }
+
+            btnConfirmLeave.setOnClickListener {
+                leaveDialog.dismiss()
+                com.bagomri.fajrloop.data.HalqaManager.leaveHalqa { success, result ->
+                    if (success) showToast("لقد غادرت الحلقة بنجاح 🚪")
+                    else showToast("فشل مغادرة الحلقة: $result")
                 }
-                .setNegativeButton("إلغاء", null)
-                .show()
+            }
+
+            leaveDialog.show()
         }
 
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
