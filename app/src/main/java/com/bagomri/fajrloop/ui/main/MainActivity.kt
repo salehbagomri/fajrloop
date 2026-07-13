@@ -77,6 +77,9 @@ class MainActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
+        // تسجيل رمز الـ FCM للحصول على إشعارات الاستغاثة والدردشة
+        com.bagomri.fajrloop.auth.FcmTokenManager.registerToken()
+
         setupObservers()
         checkAndRequestPermissions()
         setupSpiritualContent()

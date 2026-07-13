@@ -140,6 +140,15 @@
                 android:value="alarm" />
         </service>
 
+        <!-- خدمة استقبال رسائل الـ FCM السحابية -->
+        <service
+            android:name=".alarm.FajrLoopMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <!-- ===================================================== -->
         <!--  المستقبلات (Broadcast Receivers)                     -->
         <!-- ===================================================== -->

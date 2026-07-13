@@ -671,6 +671,7 @@ class SettingsActivity : AppCompatActivity() {
             .setTitle("تسجيل الخروج")
             .setMessage("هل أنت متأكد من رغبتك في تسجيل الخروج من التطبيق؟")
             .setPositiveButton("خروج") { _, _ ->
+                com.bagomri.fajrloop.auth.FcmTokenManager.unregisterToken()
                 AuthManager.signOut()
                 val intent = Intent(this, LoginActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

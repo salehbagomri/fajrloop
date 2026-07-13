@@ -123,7 +123,7 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
                     val status = snapshot.child("status").value as? String
-                    if (status == "awake" && _isChallengeSolved.value == true) {
+                    if (status == "awake") {
                         dismissAlarm("awake")
                     }
                 }
