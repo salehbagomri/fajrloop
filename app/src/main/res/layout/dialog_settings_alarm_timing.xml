@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_glass"
+    android:padding="20dp"
+    android:layoutDirection="rtl">
+
+    <!-- مقبض السحب السفلي للـ BottomSheet -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:background="#33FFFFFF"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp" />
+
+    <!-- عنوان رئيسي -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="توقيت رنين المنبه"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="حدد متى ترغب في أن يرن المنبه بالنسبة لأذان الفجر:"
+        android:textColor="#B0B0C5"
+        android:textSize="12sp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- أزرار الاختيار الثلاثية (تطابق تصميم التبويبات الفاخرة) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="20dp"
+        android:weightSum="3">
+
+        <LinearLayout
+            android:id="@+id/btn_timing_before"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_code_container"
+            android:padding="10dp"
+            android:gravity="center"
+            android:layout_marginEnd="4dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⏰"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/text_timing_before"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="قبل الأذان"
+                android:textColor="#B0B0C5"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btn_timing_with"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_code_container"
+            android:padding="10dp"
+            android:gravity="center"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🕌"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/text_timing_with"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="مع الأذان"
+                android:textColor="#B0B0C5"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btn_timing_after"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_code_container"
+            android:padding="10dp"
+            android:gravity="center"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⏱️"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/text_timing_after"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="بعد الأذان"
+                android:textColor="#B0B0C5"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- منطقة خيارات تعديل الدقائق (تظهر عند اختيار قبل أو بعد) -->
+    <LinearLayout
+        android:id="@+id/layout_minutes_picker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="20dp"
+        android:visibility="visible">
+
+        <TextView
+            android:id="@+id/text_offset_summary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="قبل الأذان بـ 10 دقائق ⏰"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <!-- الـ SeekBar المخصص -->
+        <SeekBar
+            android:id="@+id/seek_minutes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="59"
+            android:progress="9"
+            android:progressTint="#FFD700"
+            android:thumbTint="#FFD700"
+            android:layout_marginBottom="16dp" />
+
+        <!-- أزرار الاختيار السريع للدقائق -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:weightSum="5">
+
+            <TextView
+                android:id="@+id/btn_quick_5"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:text="5 د"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_quick_chip_white"
+                android:textSize="11sp"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btn_quick_10"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:text="10 د"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_quick_chip_white"
+                android:textSize="11sp"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btn_quick_15"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:text="15 د"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_quick_chip_white"
+                android:textSize="11sp"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btn_quick_30"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:text="30 د"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_quick_chip_white"
+                android:textSize="11sp"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btn_quick_45"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:text="45 د"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_quick_chip_white"
+                android:textSize="11sp"
+                android:clickable="true"
+                android:focusable="true" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- منطقة الإشعار في حال "مع الأذان" -->
+    <TextView
+        android:id="@+id/text_timing_with_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="سيرن المنبه مع أذان الفجر مباشرة 🕌"
+        android:textColor="#2ECC71"
+        android:textSize="13sp"
+        android:gravity="center"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="24dp"
+        android:visibility="gone" />
+
+    <!-- زر حفظ التعديل -->
+    <Button
+        android:id="@+id/btn_save_alarm_timing"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="حفظ التعديل"
+        android:textColor="#07071B"
+        android:textStyle="bold"
+        android:backgroundTint="#FFD700"
+        android:layout_marginBottom="12dp"
+        app:cornerRadius="12dp" />
+
+    <!-- زر إغلاق -->
+    <TextView
+        android:id="@+id/btn_close_timing"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:gravity="center"
+        android:text="تراجع"
+        android:textColor="#6B6B8A"
+        android:textSize="14sp"
+        android:background="?attr/selectableItemBackgroundBorderless" />
+
+</LinearLayout>

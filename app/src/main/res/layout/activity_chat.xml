@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#07071B">
+
+    <!-- الخلفية المتحركة الفاخرة -->
+    <com.bagomri.fajrloop.ui.widget.AnimatedGradientView
+        android:id="@+id/animated_gradient_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- الطبقة الكاملة فوق الخلفية -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:fitsSystemWindows="true"
+        android:layoutDirection="rtl"
+        android:textDirection="rtl">
+
+        <!-- 1. شريط العنوان بدون أي خلفية (شفاف بالكامل) مع الإبقاء على الخط السفلي الذهبي فقط -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:background="@android:color/transparent">
+
+            <ImageView
+                android:id="@+id/btn_back"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:src="@drawable/ic_arrow_back"
+                android:padding="10dp"
+                android:contentDescription="رجوع"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="#FFFFFF" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="8dp">
+
+                <TextView
+                    android:id="@+id/text_chat_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="شات الحلقة"
+                    android:textSize="16sp"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium" />
+
+                <TextView
+                    android:id="@+id/text_members_online"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="• حلقة نشطة"
+                    android:textSize="11sp"
+                    android:textColor="#2ECC71" />
+            </LinearLayout>
+
+            <!-- زر إرسال رسالة تحفيزية (أيقونة نجمة متوهجة) -->
+            <LinearLayout
+                android:id="@+id/btn_send_motivational"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:gravity="center"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="رسالة تحفيزية خارقة">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✨"
+                    android:textSize="22sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- الخط الفاصل الذهبي السفلي تحت العنوان (مُبقى عليه) -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#1AFFD700" />
+
+        <!-- 2. منطقة الرسائل -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_messages"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                tools:listitem="@layout/item_chat_bubble_normal_me" />
+
+            <!-- الحالة الفارغة -->
+            <LinearLayout
+                android:id="@+id/layout_empty_chat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone"
+                tools:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💬"
+                    android:textSize="52sp"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="لا توجد رسائل بعد"
+                    android:textSize="15sp"
+                    android:textColor="#B0B0C5"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="كن أول من يشجع أصدقاءه 🙌"
+                    android:textSize="12sp"
+                    android:textColor="#6B6B8A"
+                    android:layout_marginTop="4dp" />
+
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- 3. شريط التحفيز السريع بدون أي خلفية (شفاف بالكامل) -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:background="@android:color/transparent"
+            android:scrollbars="none"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:overScrollMode="never">
+
+            <LinearLayout
+                android:id="@+id/layout_quick_chips"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/chip_prayer_better"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="الصلاة خير من النوم ⏰"
+                    android:textColor="#FFD700"
+                    android:background="@drawable/bg_quick_chip_gold"
+                    android:textSize="12sp"
+                    android:gravity="center"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/chip_heroes_strength"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="همّتكم يا أبطال الفجر! 💪"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/bg_quick_chip_white"
+                    android:textSize="12sp"
+                    android:gravity="center"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/chip_blessed_fajr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="فجر مبارك للجميع 🌅"
+                    android:textColor="#2ECC71"
+                    android:background="@drawable/bg_quick_chip_green"
+                    android:textSize="12sp"
+                    android:gravity="center"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/chip_morning_adhkar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="لا تنسوا أذكار الصباح 📖"
+                    android:textColor="#B57CFF"
+                    android:background="@drawable/bg_quick_chip_purple"
+                    android:textSize="12sp"
+                    android:gravity="center"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:layout_gravity="center_vertical" />
+
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- تم حذف الخط الفاصل هنا بناءً على الطلب -->
+
+        <!-- 4. صندوق الإدخال السفلي بدون أي خلفية (شفاف بالكامل) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:background="@android:color/transparent">
+
+            <!-- حقل الإدخال الكبسولي بحدود شفافة وحواف منحنية بالكامل -->
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/bg_chat_input_border"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:layout_marginEnd="8dp">
+
+                <EditText
+                    android:id="@+id/edit_message_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:hint="اكتب رسالة..."
+                    android:textColorHint="#4DB0B0C5"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:maxLines="4"
+                    android:minHeight="38dp"
+                    android:textAlignment="viewStart"
+                    android:gravity="start|center_vertical"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:imeOptions="actionSend" />
+
+            </FrameLayout>
+
+            <!-- زر الإرسال الدائري (شفاف بدون خلفية ملونة، يظهر الرمز فقط بشكل نظيف) -->
+            <FrameLayout
+                android:layout_width="46dp"
+                android:layout_height="46dp">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btn_send_message"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_send"
+                    app:tint="#FFFFFF"
+                    app:backgroundTint="@android:color/transparent"
+                    app:fabCustomSize="46dp"
+                    app:maxImageSize="22dp"
+                    app:elevation="0dp"
+                    android:contentDescription="إرسال" />
+
+                <ProgressBar
+                    android:id="@+id/progress_sending"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:visibility="gone"
+                    android:indeterminateTint="#FFD700" />
+
+            </FrameLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</FrameLayout>

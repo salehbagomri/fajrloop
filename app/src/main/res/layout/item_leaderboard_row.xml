@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:background="@drawable/bg_code_container"
+    android:layout_marginBottom="8dp">
+
+    <!-- 1. بادج الترتيب الرقمي -->
+    <TextView
+        android:id="@+id/text_rank_position"
+        android:layout_width="48dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="#FFD700"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:text="👑 1" />
+
+    <!-- 2. صورة العضو -->
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/image_member_avatar"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/ic_default_avatar"
+        app:civ_border_color="#4DFFD700"
+        app:civ_border_width="1dp" />
+
+    <!-- 3. اسم العضو ومؤشر (أنت) -->
+    <TextView
+        android:id="@+id/text_member_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:layout_marginStart="12dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        tools:text="عبدالرحمن (أنت)" />
+
+    <!-- 4. سلسلة الاستيقاظ الحالية (لهيب برتقالي) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginEnd="16dp">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_shake"
+            app:tint="#FF8C00"
+            android:layout_marginStart="4dp" />
+
+        <TextView
+            android:id="@+id/text_member_streak"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FF8C00"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            tools:text="7" />
+    </LinearLayout>
+
+    <!-- 5. عدد عمليات الإنقاذ -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginEnd="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🦸"
+            android:textSize="14sp"
+            android:layout_marginStart="4dp" />
+
+        <TextView
+            android:id="@+id/text_member_rescues"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#3498DB"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            tools:text="12" />
+    </LinearLayout>
+
+</LinearLayout>

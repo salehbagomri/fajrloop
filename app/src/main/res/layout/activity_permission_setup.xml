@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    activity_permission_setup.xml — شاشة فحص الصلاحيات
+    تستخدم PermissionRowView كـ custom view لكل صلاحية
+-->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0E17">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- أيقونة وعنوان -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔐"
+            android:textSize="40sp"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="الصلاحيات الإلزامية"
+            android:textSize="26sp"
+            android:textColor="#E8D5A3"
+            android:fontFamily="sans-serif-medium"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="يحتاج التطبيق هذه الصلاحيات لضمان عمل المنبه بشكل موثوق حتى في وضع توفير البطارية"
+            android:textSize="14sp"
+            android:textColor="#8B949E"
+            android:fontFamily="sans-serif"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginBottom="32dp" />
+
+        <!-- 1. الإشعارات -->
+        <com.bagomri.fajrloop.ui.permissions.PermissionRowView
+            android:id="@+id/row_notifications"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 2. المنبه الدقيق -->
+        <com.bagomri.fajrloop.ui.permissions.PermissionRowView
+            android:id="@+id/row_exact_alarm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 3. البطارية -->
+        <com.bagomri.fajrloop.ui.permissions.PermissionRowView
+            android:id="@+id/row_battery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 4. Full Screen Intent -->
+        <com.bagomri.fajrloop.ui.permissions.PermissionRowView
+            android:id="@+id/row_full_screen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp" />
+
+        <!-- نصيحة تقنية -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="#131B2A"
+            app:cardCornerRadius="16dp"
+            app:strokeColor="#1E293B"
+            app:strokeWidth="1.5dp"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="💡 نصيحة: إذا كان جهازك من Honor أو Huawei أو Xiaomi، ابحث عن خيار «التشغيل التلقائي» في إعدادات التطبيق وفعّله يدوياً."
+                android:textSize="13sp"
+                android:textColor="#8B949E"
+                android:fontFamily="sans-serif"
+                android:padding="16dp"
+                android:lineSpacingExtra="4dp" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- زر الانتهاء -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_done"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="جميع الصلاحيات ممنوحة ✓"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif-medium"
+            app:backgroundTint="#2ECC71"
+            app:cornerRadius="12dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</ScrollView>
+

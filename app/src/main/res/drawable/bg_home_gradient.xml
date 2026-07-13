@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- خلفية الشاشة الرئيسية بالألوان من design_tokens.md
+     background: #07071B → #1A1A3E → #4A1A6B → #07071B
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:startColor="#1A1A3E"
+        android:centerColor="#07071B"
+        android:endColor="#4A1A6B"
+        android:angle="135"
+        android:type="linear" />
+</shape>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- layout_halqa_details_bottom_sheet.xml — تفاصيل الحلقة والمجموعة في نافذة سفلية منبثقة -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://tools.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#0D0D2B"
+    android:padding="20dp"
+    android:layoutDirection="rtl"
+    android:textDirection="rtl">
+
+    <!-- مقبض النافذة السفلية (BottomSheet handle) -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:background="#25254A"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="20dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="تفاصيل الحلقة أو المجموعة 👥"
+        android:textSize="18sp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="عرض وإعادة ترتيب السلسلة الدائرية للاستيقاظ ومغادرة الحلقة"
+        android:textSize="12sp"
+        android:textColor="#B0B0C5"
+        android:fontFamily="sans-serif"
+        android:layout_marginBottom="16dp" />
+
+    <!-- حاوي قائمة الأعضاء الرأسية -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="360dp"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:id="@+id/list_members_container_sheet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <!-- زر مغادرة الحلقة -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_leave_halqa_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="🚪 مغادرة الحلقة"
+        android:textSize="15sp"
+        android:textColor="#E74C3C"
+        app:strokeColor="#4DE74C3C"
+        app:strokeWidth="1.5dp"
+        app:backgroundTint="@android:color/transparent"
+        app:cornerRadius="16dp"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+</LinearLayout>

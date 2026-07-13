@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">حلقة الفجر</string>
+    <string name="alarm_channel_name">منبه الفجر</string>
+    <string name="alarm_channel_description">قناة رنين منبه صلاة الفجر</string>
+    <string name="alarm_notification_title">🌅 حان وقت الفجر</string>
+    <string name="alarm_notification_text">المنبه يرن — انقر للاستيقاظ</string>
+    <string name="btn_dismiss">استيقظتُ ✓</string>
+    <string name="btn_sos">لا أستطيع الاستيقاظ</string>
+    <string name="btn_stop_alarm">إيقاف المنبه</string>
+    <string name="perm_notifications_title">إشعارات التطبيق</string>
+    <string name="perm_notifications_desc">لعرض إشعار المنبه على شاشة القفل</string>
+    <string name="perm_exact_alarm_title">المنبه الدقيق</string>
+    <string name="perm_exact_alarm_desc">لضمان رنين المنبه في الوقت المحدد بدقة</string>
+    <string name="perm_battery_title">تجاهل تحسين البطارية</string>
+    <string name="perm_battery_desc">لحماية المنبه من القتل في الخلفية</string>
+    <string name="perm_full_screen_title">الظهور فوق قفل الشاشة</string>
+    <string name="perm_full_screen_desc">لفتح شاشة المنبه فوق قفل الهاتف تلقائياً</string>
+</resources>

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ======================================================= -->
+    <!--  الصلاحيات المطلوبة (القسم 8 من الوثيقة التقنية)        -->
+    <!-- ======================================================= -->
+
+    <!-- صلاحية الاتصال بالإنترنت للتحقق الفوري -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- حماية الخدمة الأمامية للرنين من القتل المفاجئ -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <!-- تشغيل شاشة الرنين فوق شاشة القفل وتنبيه المعالج -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- إعادة جدولة المنبهات تلقائياً عند إعادة تشغيل الهاتف -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- حجز منبهات دقيقة بالثانية (إلزامي في أنظمة Android 12+) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- إظهار النشاط فوق قفل الشاشة (Full Screen Intent) -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
+    <!-- إظهار النوافذ فوق التطبيقات الأخرى -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- إظهار الإشعارات على أجهزة Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- استثناء التطبيق من قائمة توفير الطاقة والبطارية -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- تحديد الموقع الجغرافي لحساب أوقات الصلاة بدقة -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- الاهتزاز -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.FajrLoop"
+        tools:targetApi="36">
+
+        <!-- ===================================================== -->
+        <!--  النشاطات (Activities)                                -->
+        <!-- ===================================================== -->
+
+        <!-- النشاط الرئيسي — نقطة الدخول للتطبيق -->
+        <activity
+            android:name=".ui.main.MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            شاشة رنين المنبه:
+            - showOnLockScreen=true لإظهارها فوق قفل الشاشة
+            - turnScreenOn=true لإيقاظ الشاشة تلقائياً
+            - noHistory=true لمنع تراكم الشاشات في Stack
+        -->
+        <activity
+            android:name=".ui.alarm.AlarmRingingActivity"
+            android:exported="false"
+            android:noHistory="true"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
+            android:windowSoftInputMode="adjustResize"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true" />
+
+        <!-- نشاط طلب الصلاحيات (يُعرض عند أول تشغيل) -->
+        <activity
+            android:name=".ui.permissions.PermissionSetupActivity"
+            android:exported="false" />
+
+        <!-- شاشة تسجيل الدخول بواسطة Google -->
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
+
+        <!-- شاشات الإعدادات والخيارات -->
+        <activity
+            android:name=".ui.settings.SettingsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.settings.TravelModeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.settings.GuideActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.settings.BackupCodeActivity"
+            android:exported="false" />
+
+        <!-- شات الحلقة -->
+        <activity
+            android:name=".ui.chat.ChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- سجل الإحصائيات والإنجازات -->
+        <activity
+            android:name=".ui.stats.StatsActivity"
+            android:exported="false" />
+
+        <!-- ===================================================== -->
+        <!--  الخدمات (Services)                                   -->
+        <!-- ===================================================== -->
+
+        <!--
+            خدمة الرنين الأمامية:
+            - foregroundServiceType="specialUse" لدعم Android 14+
+            - هذه الخدمة تحمي صوت المنبه من القتل بواسطة النظام
+        -->
+        <service
+            android:name=".alarm.AlarmSoundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:stopWithTask="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="alarm" />
+        </service>
+
+        <!-- ===================================================== -->
+        <!--  المستقبلات (Broadcast Receivers)                     -->
+        <!-- ===================================================== -->
+
+        <!-- مستقبل تشغيل المنبه (يُشغَّل من AlarmManager) -->
+        <receiver
+            android:name=".alarm.AlarmReceiver"
+            android:exported="false" />
+
+        <!--
+            مستقبل إعادة التشغيل:
+            يُعيد جدولة المنبهات تلقائياً بعد إعادة تشغيل الجهاز
+        -->
+        <receiver
+            android:name=".alarm.BootReceiver"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter android:priority="1000">
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <!-- دعم أجهزة HTC -->
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+                <!-- دعم أجهزة Samsung -->
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- مستقبل إيقاف المنبه (عبر زر الإشعار) -->
+        <receiver
+            android:name=".alarm.AlarmDismissReceiver"
+            android:exported="false" />
+
+        <!-- مستقبل تأجيل المنبه (Snooze - للمستقبل) -->
+        <receiver
+            android:name=".alarm.AlarmSnoozeReceiver"
+            android:exported="false" />
+
+    </application>
+
+</manifest>

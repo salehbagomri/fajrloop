@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "866668685561",
+    "project_id": "fajrloop",
+    "storage_bucket": "fajrloop.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:866668685561:android:f63664cd9c516447499a28",
+        "android_client_info": {
+          "package_name": "com.bagomri.fajrloop"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "866668685561-ivpn03uhi4dfgc08sfg5fa56lbnogkfs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bagomri.fajrloop",
+            "certificate_hash": "22d8ee8968c79334584a7090b6312aed6d3e7bce"
+          }
+        },
+        {
+          "client_id": "866668685561-iaftbovc44m135k8pg14o40p3jvirekv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMLa3Xl2JadN93RxlpAjHkmqT4axotCgI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "866668685561-iaftbovc44m135k8pg14o40p3jvirekv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

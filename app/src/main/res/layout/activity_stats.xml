@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#07071B">
+
+    <!-- الخلفية المتحركة الفاخرة -->
+    <com.bagomri.fajrloop.ui.widget.AnimatedGradientView
+        android:id="@+id/animated_gradient_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:fitsSystemWindows="true"
+        android:layoutDirection="rtl"
+        android:textDirection="rtl">
+
+        <!-- 1. شريط العنوان -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:background="#0D0D2B">
+
+            <ImageView
+                android:id="@+id/btn_back"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_arrow_back"
+                android:padding="8dp"
+                android:contentDescription="رجوع"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="#FFFFFF" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="الإحصائيات والإنجازات"
+                android:textSize="18sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginStart="12dp" />
+
+            <ImageView
+                android:id="@+id/btn_share_report"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_link"
+                android:padding="8dp"
+                android:contentDescription="مشاركة التقرير"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="#FFD700" />
+        </LinearLayout>
+
+        <!-- 2. شريط التبويبات الزجاجي المخصص -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_layout"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_margin="12dp"
+            android:background="@drawable/bg_code_container"
+            app:tabBackground="@android:color/transparent"
+            app:tabSelectedTextColor="#FFD700"
+            app:tabTextColor="#B0B0C5"
+            app:tabIndicatorColor="#FFD700"
+            app:tabIndicatorHeight="2dp"
+            app:tabRippleColor="@android:color/transparent"
+            app:tabGravity="fill"
+            app:tabMode="fixed">
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="نشاطي وسلسلي" />
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="لوحة الصدارة" />
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="أوسمتي" />
+        </com.google.android.material.tabs.TabLayout>
+
+        <!-- 3. مساحة المحتوى المبدل -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <!-- أ. تبويب نشاطي وسلسلي -->
+            <ScrollView
+                android:id="@+id/scroll_my_activity"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- كارت السلسلة الرئيسية (Streak) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_chat_bubble_motivational"
+                        android:padding="20dp"
+                        android:gravity="center"
+                        android:layout_marginBottom="16dp">
+
+                        <ImageView
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:src="@drawable/ic_shake"
+                            app:tint="#FFD700"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="سلسلة الاستيقاظ الحالية"
+                            android:textColor="#B0B0C5"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/text_current_streak"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 أيام"
+                            android:textColor="#FFD700"
+                            android:textSize="36sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/text_streak_motivation"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="«استمر، فجر جديد وسلسلة أطول!»"
+                            android:textColor="#6B6B8A"
+                            android:textSize="12sp"
+                            android:textStyle="italic"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+
+                    <!-- إحصائيات ثنائية (أطول سلسلة وإجمالي الفجر) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="16dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:background="@drawable/bg_code_container"
+                            android:padding="12dp"
+                            android:gravity="center"
+                            android:layout_marginEnd="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="أطول سلسلة 🏆"
+                                android:textColor="#B0B0C5"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/text_longest_streak"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                        android:text="0 يوم"
+                                android:textColor="#FFFFFF"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:layout_marginTop="4dp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:background="@drawable/bg_code_container"
+                            android:padding="12dp"
+                            android:gravity="center"
+                            android:layout_marginStart="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="إجمالي الفجر 🌅"
+                                android:textColor="#B0B0C5"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/text_total_fajr"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                        android:text="0 يوم"
+                                android:textColor="#FFFFFF"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:layout_marginTop="4dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- بطاقة عمليات الإنقاذ (Rescues) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:background="@drawable/bg_code_container"
+                        android:padding="14dp"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:src="@drawable/ic_shield"
+                            app:tint="#FFD700" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="نقاط حماية الحلقة (إنقاذ الأصدقاء)"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="كم مرة أكدت استيقاظ صديقك وأوقفت منبهه"
+                                android:textColor="#6B6B8A"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/text_total_rescues"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 🦸"
+                            android:textColor="#3498DB"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- مخطط الأيام السبعة الأخيرة -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_code_container"
+                        android:padding="16dp"
+                        android:layout_marginBottom="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="الالتزام في الـ 7 أيام الأخيرة"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="16dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="180dp"
+                            android:orientation="horizontal"
+                            android:gravity="bottom"
+                            android:weightSum="7">
+
+                            <!-- الأعمدة السبعة (سيتم تهيئتها برمجياً أو ثابتة المظهر للتبسيط) -->
+                            <!-- كل عمود يمثل يوماً -->
+                            <include
+                                layout="@layout/view_weekly_bar"
+                                android:id="@+id/bar_day_1" />
+                            <include
+                                layout="@layout/view_weekly_bar"
+                                android:id="@+id/bar_day_2" />
+                            <include
+                                layout="@layout/view_weekly_bar"
+                                android:id="@+id/bar_day_3" />
+                            <include
+                                layout="@layout/view_weekly_bar"
+                                android:id="@+id/bar_day_4" />
+                            <include
+                                layout="@layout/view_weekly_bar"
+                                android:id="@+id/bar_day_5" />
+                            <include
+                                layout="@layout/view_weekly_bar"
+                                android:id="@+id/bar_day_6" />
+                            <include
+                                layout="@layout/view_weekly_bar"
+                                android:id="@+id/bar_day_7" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- تقويم النشاط الشهري -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_code_container"
+                        android:padding="16dp"
+                        android:layout_marginBottom="24dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="تقويم الالتزام الشهري"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="12dp" />
+
+                        <!-- هيدر أسماء الأيام للتقويم -->
+                        <GridLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:columnCount="7"
+                            android:rowCount="1"
+                            android:layout_marginBottom="8dp">
+
+                            <TextView android:layout_width="0dp" android:layout_columnWeight="1" android:gravity="center" android:text="سبت" android:textColor="#6B6B8A" android:textSize="11sp" />
+                            <TextView android:layout_width="0dp" android:layout_columnWeight="1" android:gravity="center" android:text="أحد" android:textColor="#6B6B8A" android:textSize="11sp" />
+                            <TextView android:layout_width="0dp" android:layout_columnWeight="1" android:gravity="center" android:text="إثنين" android:textColor="#6B6B8A" android:textSize="11sp" />
+                            <TextView android:layout_width="0dp" android:layout_columnWeight="1" android:gravity="center" android:text="ثلاثاء" android:textColor="#6B6B8A" android:textSize="11sp" />
+                            <TextView android:layout_width="0dp" android:layout_columnWeight="1" android:gravity="center" android:text="أربعاء" android:textColor="#6B6B8A" android:textSize="11sp" />
+                            <TextView android:layout_width="0dp" android:layout_columnWeight="1" android:gravity="center" android:text="خميس" android:textColor="#6B6B8A" android:textSize="11sp" />
+                            <TextView android:layout_width="0dp" android:layout_columnWeight="1" android:gravity="center" android:text="جمعة" android:textColor="#6B6B8A" android:textSize="11sp" />
+                        </GridLayout>
+
+                        <!-- شبكة التقويم الفعلية -->
+                        <GridView
+                            android:id="@+id/grid_calendar"
+                            android:layout_width="match_parent"
+                            android:layout_height="220dp"
+                            android:numColumns="7"
+                            android:verticalSpacing="6dp"
+                            android:horizontalSpacing="6dp"
+                            android:scrollbars="none" />
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
+
+            <!-- ب. تبويب لوحة الصدارة (Leaderboard) -->
+            <LinearLayout
+                android:id="@+id/layout_leaderboard"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone"
+                tools:visibility="gone">
+
+                <!-- إحصائيات التميز الرأسية -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_code_container"
+                        android:padding="10dp"
+                        android:gravity="center"
+                        android:layout_marginEnd="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="أسرع استيقاظ ⚡"
+                            android:textColor="#B0B0C5"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/text_fastest_member"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="لا أحد"
+                            android:textColor="#FFD700"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="2dp"
+                            android:maxLines="1"
+                            android:ellipsize="end" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_code_container"
+                        android:padding="10dp"
+                        android:gravity="center"
+                        android:layout_marginStart="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="البطل المنقذ 🦸"
+                            android:textColor="#B0B0C5"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/text_top_rescuer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="لا أحد"
+                            android:textColor="#3498DB"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="2dp"
+                            android:maxLines="1"
+                            android:ellipsize="end" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ترتيب التزام أعضاء الحلقة"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- قائمة الصدارة التفاعلية -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_leaderboard"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    tools:listitem="@layout/item_leaderboard_row" />
+            </LinearLayout>
+
+            <!-- ج. تبويب أوسمتي (Achievements) -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_achievements"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:padding="16dp"
+                android:visibility="gone"
+                tools:listitem="@layout/item_achievement_card"
+                tools:visibility="gone" />
+
+        </FrameLayout>
+    </LinearLayout>
+</FrameLayout>

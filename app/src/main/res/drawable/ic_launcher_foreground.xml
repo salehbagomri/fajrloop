@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- أيقونة واجهة المشغّل (foreground) — هلال وقبة مسجد -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- خلفية دائرية -->
+    <path
+        android:fillColor="#1A0A2E"
+        android:pathData="M0,0 L108,0 L108,108 L0,108 Z" />
+
+    <!-- قبة المسجد -->
+    <path
+        android:fillColor="#E8D5A3"
+        android:pathData="M54,25 C47,25 41,31 41,38 L41,42 L34,42 L34,83 L74,83 L74,42 L67,42 L67,38 C67,31 61,25 54,25 Z" />
+
+    <!-- باب -->
+    <path
+        android:fillColor="#0D1117"
+        android:pathData="M49,83 L59,83 L59,65 C59,61.7 56.7,59 54,59 C51.3,59 49,61.7 49,65 Z" />
+
+    <!-- الهلال -->
+    <path
+        android:fillColor="#E8D5A3"
+        android:pathData="M54,16 C50,16 47,19 46,22 C47,21 49,20 51,20 C55,20 58,23 58,27 C58,29 57,31 56,32 C59,30 61,27 61,23 C61,19 58,16 54,16 Z" />
+
+</vector>

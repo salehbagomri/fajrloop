@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="8dp"
+    android:clipToPadding="false">
+
+    <!-- 1. تخطيط الرسالة النظامية (System Message) -->
+    <TextView
+        android:id="@+id/text_system_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_chat_bubble_system"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:textSize="11sp"
+        android:textColor="#FFD700"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:gravity="center"
+        tools:text="انضم أحمد إلى الحلقة 🎉"
+        tools:visibility="visible" />
+
+    <!-- 2. تخطيط رسالة التحفيز الخارقة (Motivational Card) -->
+    <LinearLayout
+        android:id="@+id/layout_motivational"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_chat_bubble_motivational"
+        android:padding="12dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:visibility="gone"
+        tools:visibility="gone">
+
+        <!-- الهيدر -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="6dp">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_mosque"
+                app:tint="#FFD700"
+                android:layout_marginEnd="6dp" />
+
+            <TextView
+                android:id="@+id/text_motivational_header"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFD700"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="رسالة تحفيزية من خالد 🌅" />
+
+        </LinearLayout>
+
+        <!-- نص الرسالة التحفيزية -->
+        <TextView
+            android:id="@+id/text_motivational_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#E0E0E0"
+            android:textSize="13sp"
+            android:textStyle="italic"
+            android:textDirection="rtl"
+            android:textAlignment="viewStart"
+            tools:text="«الصلاة خير من النوم، همتكم يا أبطال الفجر لتدركوا تكبيرة الإحرام!»" />
+
+    </LinearLayout>
+
+    <!-- 3. تخطيط الرسالة العادية (Normal Message - Me/Other) -->
+    <LinearLayout
+        android:id="@+id/layout_normal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="start"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:visibility="gone"
+        tools:visibility="visible"
+        tools:ignore="RtlSymmetry">
+
+        <!-- صورة العضو (تظهر فقط للمستخدمين الآخرين) -->
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/image_chat_avatar"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="bottom"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="2dp"
+            android:src="@drawable/ic_default_avatar"
+            app:civ_border_color="#4DFFD700"
+            app:civ_border_width="1dp" />
+
+        <!-- حاوية فقاعة المحادثة الفعليّة -->
+        <LinearLayout
+            android:id="@+id/layout_normal_bubble"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:background="@drawable/bg_chat_bubble_other"
+            tools:ignore="UselessParent">
+
+            <!-- اسم المرسل (يظهر فقط للمستخدمين الآخرين) -->
+            <TextView
+                android:id="@+id/text_chat_sender_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFD700"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"
+                tools:text="محمد علي" />
+
+            <!-- نص الرسالة -->
+            <TextView
+                android:id="@+id/text_chat_message_body"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.3"
+                android:textDirection="rtl"
+                android:textAlignment="viewStart"
+                tools:text="السلام عليكم ورحمة الله وبركاته، هل جهزتم منبهاتكم يا إخوة؟" />
+
+            <!-- وقت الرسالة -->
+            <TextView
+                android:id="@+id/text_chat_message_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginTop="4dp"
+                android:textColor="#80FFFFFF"
+                android:textSize="9sp"
+                tools:text="05:12 ص" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

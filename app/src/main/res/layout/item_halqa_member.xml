@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- item_halqa_member.xml — عنصر عرض عضو الحلقة الدائرية بتأثير الزجاج المعتم (GlassCard) -->
+<com.bagomri.fajrloop.ui.widget.GlassCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:layoutDirection="rtl"
+    android:textDirection="rtl">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <!-- رقم الترتيب الدائري مع تأثير مذهب دائري (في اليمين) -->
+        <TextView
+            android:id="@+id/text_member_position"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_circle_number"
+            android:text="1"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginEnd="14dp" />
+
+        <!-- تفاصيل الاسم والمسؤولية والحالة اليومية (محاذية لليمين) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="start">
+
+            <TextView
+                android:id="@+id/text_member_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="اسم العضو"
+                android:textSize="16sp"
+                android:textColor="#FFFFFF"
+                android:textAlignment="viewStart"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/text_member_desc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="مكلف بإيقاظ: -\nالحالة اليومية: لم يستيقظ بعد ⏳"
+                android:textSize="12sp"
+                android:textColor="#B0B0C5"
+                android:layout_marginTop="4dp"
+                android:textAlignment="viewStart"
+                android:lineSpacingExtra="3dp" />
+
+        </LinearLayout>
+
+        <!-- شارات التمييز (المسؤول) -->
+        <TextView
+            android:id="@+id/badge_admin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="المسؤول 👑"
+            android:textSize="9sp"
+            android:textColor="#FFD700"
+            android:background="#1A4A1A6B"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:layout_marginEnd="8dp"
+            android:fontFamily="sans-serif-medium"
+            android:visibility="gone" />
+
+        <!-- أزرار الترتيب (للمسؤول فقط) -->
+        <LinearLayout
+            android:id="@+id/layout_reorder_buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone">
+
+            <ImageButton
+                android:id="@+id/btn_move_up"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_arrow_up"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="لأعلى"
+                android:tint="#FFD700"
+                android:padding="6dp" />
+
+            <ImageButton
+                android:id="@+id/btn_move_down"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_arrow_down"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="لأسفل"
+                android:tint="#FFD700"
+                android:padding="6dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.bagomri.fajrloop.ui.widget.GlassCardView>

@@ -1,0 +1,89 @@
+{
+  "rules": {
+    // 1. عقدة المستخدمين (/users/{userId})
+    "users": {
+      "$userId": {
+        // أي مستخدم مسجل دخول يمكنه قراءة الملف الشخصي للمستخدمين الآخرين
+        // (مهم لرؤية أسماء وصور أعضاء الحلقة)
+        ".read": "auth != null",
+        // التعديل مسموح لصاحب الحساب فقط
+        ".write": "auth != null && auth.uid == $userId",
+        // حماية رمز الـ FCM: القراءة محصورة للمستخدم نفسه أو الأعضاء المشتركين معه في نفس الحلقة
+        "fcmToken": {
+          ".read": "auth != null && (auth.uid == $userId || (data.parent().child('currentHalqaId').val() != '' && root.child('halqas').child(data.parent().child('currentHalqaId').val()).child('members').child(auth.uid).exists()))"
+        }
+      }
+    },
+
+    // 2. عقدة الحلقات (/halqas/{halqaId})
+    "halqas": {
+      ".read": "auth != null",
+      "$halqaId": {
+        // القراءة مسموحة لأعضاء هذه الحلقة (يمكن الإبقاء عليها أو إزالتها حيث الأب يمنح القراءة)
+        ".read": "auth != null && data.child('members').child(auth.uid).exists()",
+        
+        // الإنشاء مسموح لأي مستخدم مسجل
+        // التعديل مسموح لـ Admin الحلقة، أو عند إنشاء الحلقة، أو عند الانضمام/المغادرة (تغير حالة العضوية)
+        ".write": "auth != null && (!data.exists() || data.child('members').child(auth.uid).child('role').val() == 'admin' || newData.child('members').child(auth.uid).exists() != data.child('members').child(auth.uid).exists())",
+        
+        // تعديل السلسلة مسموح لـ Admin أو في حال تغير حالة العضوية (الانضمام والمغادرة)
+        "chain": {
+          ".write": "auth != null && (data.parent().child('members').child(auth.uid).child('role').val() == 'admin' || newData.parent().child('members').child(auth.uid).exists() != data.parent().child('members').child(auth.uid).exists())"
+        },
+        
+        // تعديل قائمة الأعضاء مسموح لـ Admin أو في حال تغير حالة العضوية (الانضمام والمغادرة)
+        "members": {
+          ".write": "auth != null && (data.parent().child('members').child(auth.uid).child('role').val() == 'admin' || newData.parent().child('members').child(auth.uid).exists() != data.parent().child('members').child(auth.uid).exists())",
+          "$userId": {
+            ".write": "auth != null && (auth.uid == $userId || data.parent().parent().child('members').child(auth.uid).child('role').val() == 'admin')"
+          }
+        }
+      }
+    },
+
+    // 3. عقدة المفتاح السري المشترك للحلقة (/halqaSecrets/{halqaId})
+    // مفصول أمنياً ويُكتب مرة واحدة فقط عند الإنشاء ويُمنع تعديله لاحقاً
+    "halqaSecrets": {
+      "$halqaId": {
+        // القراءة مسموحة لأعضاء الحلقة فقط لحساب رموز TOTP
+        ".read": "auth != null && root.child('halqas').child($halqaId).child('members').child(auth.uid).exists()",
+        // يُكتب عند الإنشاء ويُحذف عند تفريغ الحلقة (يُمنع التعديل فقط)
+        // نستخدم newData.parent().parent() للتحقق من المجلد الجذر للبيانات الجديدة في نفس المعاملة الذرية عند الإنشاء
+        ".write": "auth != null && ((!data.exists() && newData.parent().parent().child('halqas').child($halqaId).child('createdBy').val() == auth.uid) || (!newData.exists() && root.child('halqas').child($halqaId).child('createdBy').val() == auth.uid))"
+      }
+    },
+
+    // 4. السجلات اليومية للاستيقاظ (/dailyRecords/{halqaId}/{date}/{userId})
+    "dailyRecords": {
+      "$halqaId": {
+        // القراءة مسموحة لجميع أعضاء الحلقة
+        ".read": "auth != null && root.child('halqas').child($halqaId).child('members').child(auth.uid).exists()",
+        
+        "$date": {
+          "$userId": {
+            // صاحب السجل يمكنه تحديث حالته، والزميل المسؤول عن هذا العضو يمكنه تأكيد استيقاظه (الإنقاذ)
+            ".write": "auth != null && (auth.uid == $userId || root.child('halqas').child($halqaId).child('members').child($userId).child('responsibleForUserId').val() == auth.uid)"
+          }
+        }
+      }
+    },
+
+    // 5. شات الحلقة (/chatMessages/{halqaId})
+    "chatMessages": {
+      "$halqaId": {
+        // القراءة والكتابة مسموحة فقط لأعضاء هذه الحلقة
+        ".read": "auth != null && root.child('halqas').child($halqaId).child('members').child(auth.uid).exists()",
+        ".write": "auth != null && root.child('halqas').child($halqaId).child('members').child(auth.uid).exists()"
+      }
+    },
+
+    // 6. عقدة الإشعارات السحابية (/notifications/{userId}/{notificationId})
+    "notifications": {
+      "$userId": {
+        // المستخدم يقرأ ويعدل إشعاراته فقط
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- خلفية السطح الداكن بشفافية 80% -->
+    <solid android:color="#CC0D0D2B"/>
+    <!-- حد داكن خفيف بشفافية 40% -->
+    <stroke android:width="1.2dp" android:color="#6625254A"/>
+    <!-- زوايا دائرية 16dp عدا أسفل اليسار (0dp) لفقاعة المستلمين الآخرين -->
+    <corners
+        android:topLeftRadius="16dp"
+        android:topRightRadius="16dp"
+        android:bottomLeftRadius="0dp"
+        android:bottomRightRadius="16dp" />
+</shape>

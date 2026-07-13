@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- أيقونة المستخدم الافتراضية -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="44dp"
+    android:height="44dp"
+    android:viewportWidth="44"
+    android:viewportHeight="44">
+    <!-- دائرة خلفية -->
+    <path
+        android:fillColor="#25254A"
+        android:pathData="M22,22m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0" />
+    <!-- رأس وجسم المستخدم -->
+    <path
+        android:fillColor="#6B6B8A"
+        android:pathData="M22,12c-2.76,0 -5,2.24 -5,5s2.24,5 5,5s5,-2.24 5,-5S24.76,12 22,12zM22,30c-6.67,0 -10,3.34 -10,5v1h20v-1c0,-1.66 -3.33,-5 -10,-5z" />
+</vector>

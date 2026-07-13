@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/bg_code_container"
+    android:padding="16dp"
+    android:layout_marginBottom="12dp">
+
+    <!-- 1. أيقونة الوسام الدائرية المتوهجة (شمال/يسار) -->
+    <FrameLayout
+        android:id="@+id/layout_badge_circle"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_circle_icon"
+        android:layout_marginEnd="12dp">
+
+        <TextView
+            android:id="@+id/text_badge_emoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textSize="28sp"
+            tools:text="🏆" />
+    </FrameLayout>
+
+    <!-- 2. تفاصيل الوسام بالمنتصف -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/text_badge_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="بطل الشهر" />
+
+        <TextView
+            android:id="@+id/text_badge_desc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#B0B0C5"
+            android:textSize="11sp"
+            android:layout_marginTop="2dp"
+            tools:text="الالتزام بصلاة الفجر 30 يوماً متتالية دون انقطاع" />
+
+        <TextView
+            android:id="@+id/text_badge_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#6B6B8A"
+            android:textSize="9sp"
+            android:layout_marginTop="4dp"
+            tools:text="حصلت عليه في: 2026/07/06" />
+    </LinearLayout>
+
+    <!-- 3. زر المشاركة اليميني -->
+    <ImageView
+        android:id="@+id/btn_share_badge"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@drawable/ic_link"
+        android:padding="8dp"
+        android:contentDescription="مشاركة الوسام"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:tint="#FFD700" />
+
+</LinearLayout>

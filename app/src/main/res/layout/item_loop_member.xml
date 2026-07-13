@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- item_loop_member.xml — عنصر العضو في السلسلة الدائرية الأفقية على الشاشة الرئيسية -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="8dp">
+
+    <!-- الصورة الدائرية مع شارة الحالة في الأسفل -->
+    <RelativeLayout
+        android:layout_width="64dp"
+        android:layout_height="64dp">
+
+        <!-- الأفاتار الدائري للـ Loop -->
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/image_loop_avatar"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_default_avatar"
+            app:civ_border_width="2.5dp"
+            app:civ_border_color="#B0B0C5" />
+
+        <!-- شارة الحالة الصغيرة (توضع في أسفل يسار/يمين الصورة) -->
+        <ImageView
+            android:id="@+id/image_loop_status_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:src="@drawable/ic_circle_warning"
+            android:background="@android:color/transparent"
+            app:tint="#B0B0C5" />
+
+    </RelativeLayout>
+
+    <!-- اسم العضو -->
+    <TextView
+        android:id="@+id/text_loop_member_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="عبدالرحمن"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center" />
+
+    <!-- الحالة اليومية للعضو (نائم، مستيقظ، يرن، إلخ) -->
+    <TextView
+        android:id="@+id/text_loop_member_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="نائم"
+        android:textColor="#B0B0C5"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif"
+        android:gravity="center" />
+
+</LinearLayout>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.FajrLoop" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- ألوان أساسية -->
+        <item name="colorPrimary">@color/gold</item>
+        <item name="colorPrimaryVariant">@color/gold_dark</item>
+        <item name="colorOnPrimary">@color/dark_bg</item>
+        <item name="colorSecondary">@color/teal</item>
+        <item name="colorOnSecondary">@color/dark_bg</item>
+        <item name="colorSurface">@color/card_bg</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="android:colorBackground">@color/dark_bg</item>
+        <item name="colorOnBackground">@color/text_primary</item>
+
+        <!-- شريط الحالة شفاف -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/dark_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- نص RTL -->
+        <item name="android:supportsRtl">true</item>
+    </style>
+
+    <!-- ثيم شاشة الرنين (بدون ActionBar، ملء الشاشة) -->
+    <style name="Theme.FajrLoop.AlarmRinging" parent="Theme.FajrLoop">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/dark_bg</item>
+    </style>
+
+    <!-- نمط مخصص للمفاتيح التفاعلية (Switches) بألوان التطبيق الهندسية -->
+    <style name="Theme.FajrLoop.Switch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="colorControlActivated">#FFD700</item>
+        <item name="colorSwitchThumbNormal">#B0B0C5</item>
+        <item name="android:colorForeground">#25254A</item>
+    </style>
+
+    <!-- ثيم BottomSheetDialog الداكن الزجاجي لنافذة الرسائل التحفيزية -->
+    <style name="DarkBottomSheetTheme" parent="Theme.MaterialComponents.BottomSheetDialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.7</item>
+        <item name="bottomSheetStyle">@style/DarkBottomSheetStyle</item>
+    </style>
+
+    <style name="DarkBottomSheetStyle" parent="Widget.MaterialComponents.BottomSheet.Modal">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+    </style>
+</resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- تدرج خلفية شاشة رنين المنبه: من بنفسجي عميق إلى أزرق فجري -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- الطبقة الأساسية: تدرج بنفسجي-أزرق عميق -->
+    <item>
+        <shape>
+            <gradient
+                android:startColor="#0A0520"
+                android:centerColor="#0F0D30"
+                android:endColor="#061428"
+                android:angle="160"
+                android:type="linear" />
+        </shape>
+    </item>
+    <!-- هالة مركزية خفيفة لتأثير ضوء فجري -->
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#18E8D5A3"
+                android:endColor="#00000000"
+                android:gradientRadius="320dp"
+                android:centerX="50%"
+                android:centerY="30%"
+                android:type="radial" />
+        </shape>
+    </item>
+</layer-list>
