@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    activity_morning_adhkar.xml — شاشة أذكار الصباح (التصميم الاحترافي المُطوَّر)
+
+    الهوية البصرية:
+    - خلفية داكنة روحانية مع تدرج ذهبي-بنفسجي خفيف
+    - بطاقة كل ذكر واسعة وقابلة للقراءة بتصميم Glassmorphism
+    - مؤشر صفحة واضح
+    - زر إنهاء ذهبي
+-->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,66 +16,139 @@
     android:background="#07071B"
     android:layoutDirection="rtl">
 
+    <!-- خلفية متحركة -->
     <com.bagomri.fajrloop.ui.widget.AnimatedGradientView
         android:id="@+id/animated_gradient_bg"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- عنوان علوي -->
-    <TextView
-        android:id="@+id/text_adhkar_header"
-        android:layout_width="wrap_content"
+    <!-- دوائر زخرفية -->
+    <View
+        android:layout_width="320dp"
+        android:layout_height="320dp"
+        android:background="@drawable/bg_mosque_glow"
+        android:alpha="0.05"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="-80dp"
+        android:layout_marginEnd="-80dp" />
+
+    <!-- ══════════════ رأس الشاشة ══════════════ -->
+
+    <!-- رمز الصباح + العنوان -->
+    <LinearLayout
+        android:id="@+id/header_layout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🌅 أذكار الصباح"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:textStyle="bold"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingTop="52dp"
+        android:paddingBottom="12dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp" />
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- مؤشر الصفحة (مثال: 1 / 10) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🌅"
+            android:textSize="32sp"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/text_adhkar_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="أذكار الصباح"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.02" />
+
+        <!-- خط فاصل تحت العنوان -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="2dp"
+            android:background="@color/gold"
+            android:alpha="0.6"
+            android:layout_marginTop="8dp" />
+    </LinearLayout>
+
+    <!-- مؤشر الصفحة -->
     <TextView
         android:id="@+id/text_page_indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="1 / 10"
-        android:textColor="#80FFFFFF"
-        android:textSize="14sp"
-        app:layout_constraintTop_toBottomOf="@id/text_adhkar_header"
+        android:textColor="#60FFFFFF"
+        android:textSize="13sp"
+        android:background="@drawable/bg_challenge_input"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        app:layout_constraintTop_toBottomOf="@id/header_layout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="4dp" />
 
+    <!-- ══════════════ ViewPager للأذكار ══════════════ -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager_adhkar"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/text_page_indicator"
-        app:layout_constraintBottom_toTopOf="@id/btn_close_adhkar"
+        app:layout_constraintBottom_toTopOf="@id/footer_layout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="8dp" />
 
-    <!-- زر الإغلاق -->
-    <Button
-        android:id="@+id/btn_close_adhkar"
+    <!-- ══════════════ الفوتر: زر الإنهاء ══════════════ -->
+    <LinearLayout
+        android:id="@+id/footer_layout"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:text="إنهاء الأذكار 🌅"
-        android:textColor="#07071B"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:backgroundTint="#FFD700"
-        app:cornerRadius="12dp"
-        android:stateListAnimator="@null"
-        android:layout_marginStart="24dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="24dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="28dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- تلميح السحب -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="← اسحب للتنقل بين الأذكار →"
+                android:textColor="#40FFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_close_adhkar"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:text="إنهاء الأذكار 🌅"
+            android:textColor="#0A0520"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="#FFD700"
+            app:cornerRadius="14dp"
+            android:stateListAnimator="@null" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

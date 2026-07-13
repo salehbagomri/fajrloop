@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    item_adhkar.xml — بطاقة ذكر واحدة (التصميم الاحترافي المُطوَّر)
+
+    الهوية البصرية:
+    - بطاقة Glassmorphism كبيرة وواضحة
+    - نص الذكر كبير ومريح للقراءة
+    - عداد دائري تفاعلي بارز
+    - ألوان ذهبية متسقة مع هوية التطبيق
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -16,70 +26,97 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="24dp">
+            android:padding="28dp">
 
-            <!-- نص الذكر الكبير -->
+            <!-- ═══════ نص الذكر ═══════ -->
             <ScrollView
                 android:layout_width="match_parent"
-                android:layout_height="180dp"
-                android:layout_marginBottom="16dp"
-                android:scrollbarSize="0dp">
+                android:layout_height="200dp"
+                android:scrollbarSize="0dp"
+                android:fadeScrollbars="true"
+                android:layout_marginBottom="20dp">
 
                 <TextView
                     android:id="@+id/text_dhikr_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ"
-                    android:textColor="#FFFFFF"
-                    android:textSize="18sp"
+                    android:textColor="#F0FFFFFF"
+                    android:textSize="22sp"
                     android:gravity="center"
-                    android:lineSpacingExtra="8dp" />
+                    android:lineSpacingExtra="10dp"
+                    android:lineSpacingMultiplier="1.4" />
             </ScrollView>
 
+            <!-- فاصل ذهبي -->
             <View
                 android:layout_width="60dp"
-                android:layout_height="1dp"
-                android:background="#40E8D5A3"
+                android:layout_height="1.5dp"
+                android:background="@color/gold"
+                android:alpha="0.5"
                 android:layout_marginBottom="16dp" />
 
-            <!-- عدد التكرار الإجمالي -->
+            <!-- عدد التكرار المطلوب -->
             <TextView
                 android:id="@+id/text_dhikr_target"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="التكرار المطلوب: 3 مرات"
-                android:textColor="#B0B0C5"
+                android:textColor="#80FFFFFF"
                 android:textSize="13sp"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="20dp" />
 
-            <!-- العداد الدائري التفاعلي -->
+            <!-- ═══════ العداد الدائري التفاعلي ═══════ -->
             <FrameLayout
                 android:id="@+id/btn_counter_tap"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
+                android:layout_width="130dp"
+                android:layout_height="130dp"
                 android:background="@drawable/bg_circle_icon"
-                android:backgroundTint="#20FFD700"
+                android:backgroundTint="#22FFD700"
                 android:clickable="true"
-                android:focusable="true">
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackgroundBorderless">
 
-                <TextView
-                    android:id="@+id/text_counter_number"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="3"
-                    android:textColor="#FFD700"
-                    android:textSize="36sp"
-                    android:textStyle="bold"
-                    android:layout_gravity="center" />
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_gravity="center">
+
+                    <TextView
+                        android:id="@+id/text_counter_number"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="3"
+                        android:textColor="#FFD700"
+                        android:textSize="44sp"
+                        android:textStyle="bold"
+                        android:includeFontPadding="false" />
+                </LinearLayout>
             </FrameLayout>
 
-            <TextView
+            <!-- تلميح النقر -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="انقر على الدائرة للعد"
-                android:textColor="#60B0B0C5"
-                android:textSize="11sp"
-                android:layout_marginTop="12dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="👆"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="  انقر على الدائرة لعد التكرار"
+                    android:textColor="#50FFFFFF"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
         </LinearLayout>
     </com.bagomri.fajrloop.ui.widget.GlassCardView>
