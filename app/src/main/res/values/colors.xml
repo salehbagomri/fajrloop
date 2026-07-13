@@ -35,4 +35,11 @@
     <!-- ألوان الحالة -->
     <color name="status_active_bg">#0D2A1A</color>
     <color name="status_inactive_bg">#2A0D0D</color>
+
+    <!-- الألوان المضافة للتصميم المتناسق وتعديل الكود -->
+    <color name="accent_gold">#FFD700</color>
+    <color name="success_green">#2ECC71</color>
+    <color name="danger_red">#E74C3C</color>
+    <color name="surface_dark">#07071B</color>
+    <color name="text_secondary_alt">#B0B0C5</color>
 </resources>

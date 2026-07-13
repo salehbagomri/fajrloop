@@ -3,70 +3,48 @@ package com.bagomri.fajrloop.ui.main
 import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.bagomri.fajrloop.R
 import com.bagomri.fajrloop.alarm.AlarmPreferences
-import com.bagomri.fajrloop.alarm.AlarmScheduler
 import com.bagomri.fajrloop.auth.AuthManager
 import com.bagomri.fajrloop.databinding.ActivityMainBinding
 import com.bagomri.fajrloop.ui.auth.LoginActivity
 import com.bagomri.fajrloop.ui.permissions.PermissionSetupActivity
 import com.bumptech.glide.Glide
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 /**
- * MainActivity — الشاشة الرئيسية لحلقة الفجر
- *
- * تعرض:
- * - رأس الصفحة: السلام عليكم + اسم المستخدم + صورته + أيقونة الإعدادات
- * - بطاقة عداد الفجر التنازلي (وقت الفجر + الشروق)
- * - ملخص اليوم (مستيقظين X/Y)
- * - تنبيه استيقاظ صديق (للمسؤول فقط)
- * - شبكة الإجراءات السريعة (4 أزرار)
- * - قسم الحلقة الدائرية مع الأعضاء
- * - المحتوى الروحي (آية/حديث)
- * - أدوات اختبار المنبه (للتطوير)
+ * MainActivity — الشاشة الرئيسية لحلقة الفجر (MVVM Refactored)
  */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var prefs: SharedPreferences
-
-    // خصائص إدارة الحلقة
-    private var halqaObserver: com.google.firebase.database.ValueEventListener? = null
+    private lateinit var viewModel: MainViewModel
     private var currentActiveHalqaId: String? = null
     private var isCurrentUserAdmin: Boolean = false
-
-    private var dailyRecordsObserver: com.google.firebase.database.ValueEventListener? = null
-    private var dailyRecordsRef: com.google.firebase.database.DatabaseReference? = null
-    private var lastMembersSnap: com.google.firebase.database.DataSnapshot? = null
-    private var lastChain: List<String> = emptyList()
-
-    // عداد الفجر
-    private val countdownHandler = Handler(Looper.getMainLooper())
-    private var countdownRunnable: Runnable? = null
 
     // تبويب المحتوى الروحي (0=آية, 1=حديث)
     private var currentSpiritualTab = 0
 
-    // بيانات المحتوى الروحي من content_strings.md
     private val ayat = listOf(
         Pair("أَقِمِ الصَّلَاةَ لِدُلُوكِ الشَّمْسِ إِلَىٰ غَسَقِ اللَّيْلِ وَقُرْآنَ الْفَجْرِ ۖ إِنَّ قُرْآنَ الْفَجْرِ كَانَ مَشْهُودًا", "سورة الإسراء: 78"),
         Pair("وَسَبِّحْ بِحَمْدِ رَبِّكَ قَبْلَ طُلُوعِ الشَّمْسِ وَقَبْلَ غُرُوبِهَا", "سورة طه: 130"),
@@ -93,122 +71,234 @@ class MainActivity : AppCompatActivity() {
         // تخصيص لون خلفية وحدود كرت إحصائيات المستيقظين باللون الأخضر الشفاف وتقليل زواياه لـ 12dp
         binding.cardAwakeBadge.setCornerRadiusDp(12f)
         binding.cardAwakeBadge.setCustomBgAndBorder(
-            Color.argb(30, 0x2E, 0xCC, 0x71), // خلفية خضراء بـ 12% شفافية
-            Color.argb(102, 0x2E, 0xCC, 0x71) // حدود خضراء بـ 40% شفافية
+            Color.argb(30, 0x2E, 0xCC, 0x71),
+            Color.argb(102, 0x2E, 0xCC, 0x71)
         )
 
-        prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
+        setupObservers()
         checkAndRequestPermissions()
-        updateUserProfileUI()
         setupSpiritualContent()
         setupQuickActionsUI()
-        setupHalqaUI()
-        startFajrCountdown()
     }
 
     override fun onResume() {
         super.onResume()
         checkAndRequestPermissions()
+        viewModel.startFajrCountdown()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        countdownRunnable?.let { countdownHandler.removeCallbacks(it) }
-        halqaObserver?.let {
-            com.bagomri.fajrloop.data.HalqaManager.removeObserver(it)
-        }
-        stopObservingDailyRecords()
-    }
-
-    // ==================== عداد الفجر التنازلي ====================
-
-    /**
-     * يبدأ عداد يتجدد كل ثانية ويحسب الوقت المتبقي على صلاة الفجر.
-     * يستخدم وقت الفجر المحفوظ محلياً (أو وقتاً تجريبياً للآن).
-     */
-    private fun startFajrCountdown() {
-        // حساب وقت الفجر المقدر لليوم (الساعة 3:56 صباحاً كقيمة افتراضية لمكة)
-        val fajrCal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 3)
-            set(Calendar.MINUTE, 56)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val sunriseCal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 5)
-            set(Calendar.MINUTE, 18)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-
-        // إذا مضى وقت الفجر، انتقل للغد
-        if (fajrCal.timeInMillis < System.currentTimeMillis()) {
-            fajrCal.add(Calendar.DAY_OF_YEAR, 1)
-            sunriseCal.add(Calendar.DAY_OF_YEAR, 1)
-        }
-
-        val arLocale = Locale.forLanguageTag("ar")
-        val fajrTimeStr = SimpleDateFormat("hh:mm a", arLocale).format(fajrCal.time)
-        val sunriseTimeStr = SimpleDateFormat("hh:mm a", arLocale).format(sunriseCal.time)
-        binding.textFajrTime.text = fajrTimeStr
-        binding.textSunriseTime.text = sunriseTimeStr
-
-
-        countdownRunnable = object : Runnable {
-            override fun run() {
-                val remaining = fajrCal.timeInMillis - System.currentTimeMillis()
-                if (remaining > 0) {
-                    val hours   = TimeUnit.MILLISECONDS.toHours(remaining)
-                    val minutes = TimeUnit.MILLISECONDS.toMinutes(remaining) % 60
-                    val seconds = TimeUnit.MILLISECONDS.toSeconds(remaining) % 60
-                    binding.textFajrCountdown.text = String.format("%02d:%02d:%02d", hours, minutes, seconds)
-
-                    val totalMinutes = TimeUnit.MILLISECONDS.toMinutes(remaining)
-
-                    // ── لون العداد حسب الوقت المتبقي (design_tokens.md: FajrCountdownWidget) ──
-                    val textColor = when {
-                        totalMinutes >= 60 -> "#2ECC71"   // successGreen — وقت كافٍ
-                        totalMinutes in 15..59 -> "#FFD700" // accentGold — اقتراب
-                        else -> "#E74C3C"                  // dangerRed  — أقل من 15 دقيقة
-                    }
-                    binding.textFajrCountdown.setTextColor(Color.parseColor(textColor))
-
-                    // ── لون حد بطاقة الفجر الديناميكي ──
-                    val glassCard = binding.cardFajrCountdown as? com.bagomri.fajrloop.ui.widget.GlassCardView
-                    when {
-                        totalMinutes < 5  -> {
-                            // أقل من 5 دقائق: حد أحمر 50% + نبض scale
-                            glassCard?.setBorderColor(Color.argb(128, 0xE7, 0x4C, 0x3C))
-                            glassCard?.startPulse()
-                        }
-                        totalMinutes < 15 -> {
-                            // أقل من 15 دقيقة: حد أحمر 50% بدون نبض
-                            glassCard?.setBorderColor(Color.argb(128, 0xE7, 0x4C, 0x3C))
-                            glassCard?.stopPulse()
-                        }
-                        totalMinutes < 60 -> {
-                            // أقل من 60 دقيقة: حد ذهبي
-                            glassCard?.setBorderColor(Color.argb(100, 0xFF, 0xD7, 0x00))
-                            glassCard?.stopPulse()
-                        }
-                        else -> {
-                            // وقت كافٍ: حد افتراضي
-                            glassCard?.resetBorderColor()
-                            glassCard?.stopPulse()
-                        }
-                    }
+    private fun setupObservers() {
+        viewModel.userProfile.observe(this) { profile ->
+            if (profile != null) {
+                binding.textUserName.text = profile.displayName
+                if (profile.photoUrl.isNotEmpty()) {
+                    Glide.with(this)
+                        .load(profile.photoUrl)
+                        .circleCrop()
+                        .placeholder(R.drawable.ic_default_avatar)
+                        .into(binding.imageUserAvatar)
                 } else {
-                    binding.textFajrCountdown.text = "00:00:00"
-                    binding.textFajrCountdown.setTextColor(Color.parseColor("#E74C3C"))
+                    binding.imageUserAvatar.setImageResource(R.drawable.ic_default_avatar)
                 }
-                countdownHandler.postDelayed(this, 1000)
             }
         }
-        countdownHandler.post(countdownRunnable!!)
+
+        viewModel.halqaId.observe(this) { hId ->
+            currentActiveHalqaId = hId
+            if (hId == null) {
+                binding.layoutHasHalqa.visibility = View.GONE
+                binding.cardNoHalqa.visibility = View.VISIBLE
+                binding.layoutQuickActionsInHalqa.visibility = View.GONE
+                binding.layoutQuickActionsNoHalqa.visibility = View.VISIBLE
+                binding.cardTodaySummary.visibility = View.GONE
+                binding.cardFriendWakeAlert.visibility = View.GONE
+            } else {
+                binding.layoutHasHalqa.visibility = View.VISIBLE
+                binding.cardNoHalqa.visibility = View.GONE
+                binding.layoutQuickActionsInHalqa.visibility = View.VISIBLE
+                binding.layoutQuickActionsNoHalqa.visibility = View.GONE
+                binding.cardTodaySummary.visibility = View.VISIBLE
+            }
+        }
+
+        viewModel.halqaName.observe(this) { name ->
+            binding.textHalqaName.text = "حلقة: $name"
+        }
+
+        viewModel.isCurrentUserAdmin.observe(this) { isAdmin ->
+            isCurrentUserAdmin = isAdmin
+            binding.btnReorderChain.visibility = if (isAdmin) View.VISIBLE else View.GONE
+        }
+
+        viewModel.loopMembers.observe(this) { members ->
+            populateHorizontalLoopChain(members)
+        }
+
+        viewModel.todaySummaryText.observe(this) { summary ->
+            binding.textTodaySummary.text = summary
+        }
+
+        viewModel.awakeCountText.observe(this) { count ->
+            binding.textAwakeCount.text = count
+        }
+
+        viewModel.friendWakeAlert.observe(this) { alert ->
+            if (alert != null) {
+                binding.cardFriendWakeAlert.visibility = View.VISIBLE
+                binding.textFriendWakeMessage.text = alert.message
+                binding.btnConfirmFriendWake.text = "تأكيد استيقاظ ${alert.displayName} وإيقاف منبهه"
+                binding.btnConfirmFriendWake.setOnClickListener {
+                    viewModel.confirmFriendWake(alert.uid) { success, error ->
+                        if (success) {
+                            showToast("تم إيقاف منبه صديقك بنجاح. كتب الله أجرك! 🟢")
+                        } else {
+                            showToast("فشل تأكيد الاستيقاظ: $error")
+                        }
+                    }
+                }
+            } else {
+                binding.cardFriendWakeAlert.visibility = View.GONE
+            }
+        }
+
+        viewModel.fajrTimeStr.observe(this) { time ->
+            binding.textFajrTime.text = time
+        }
+
+        viewModel.sunriseTimeStr.observe(this) { time ->
+            binding.textSunriseTime.text = time
+        }
+
+        viewModel.countdownText.observe(this) { text ->
+            binding.textFajrCountdown.text = text
+        }
+
+        viewModel.countdownColor.observe(this) { color ->
+            binding.textFajrCountdown.setTextColor(Color.parseColor(color))
+        }
+
+        viewModel.countdownCardBorderMode.observe(this) { mode ->
+            val glassCard = binding.cardFajrCountdown as? com.bagomri.fajrloop.ui.widget.GlassCardView
+            when (mode) {
+                3 -> {
+                    glassCard?.setBorderColor(Color.argb(128, 0xE7, 0x4C, 0x3C))
+                    glassCard?.startPulse()
+                }
+                2 -> {
+                    glassCard?.setBorderColor(Color.argb(128, 0xE7, 0x4C, 0x3C))
+                    glassCard?.stopPulse()
+                }
+                1 -> {
+                    glassCard?.setBorderColor(Color.argb(100, 0xFF, 0xD7, 0x00))
+                    glassCard?.stopPulse()
+                }
+                else -> {
+                    glassCard?.resetBorderColor()
+                    glassCard?.stopPulse()
+                }
+            }
+        }
     }
 
-    // ==================== المحتوى الروحي ====================
+    private fun populateHorizontalLoopChain(members: List<LoopMemberItem>) {
+        binding.layoutLoopChain.removeAllViews()
+        val n = members.size
+        val currentUid = AuthManager.getUserId() ?: ""
+
+        for (i in 0 until n) {
+            val item = members[i]
+            val statusColor: String
+            val statusText: String
+            val statusIconRes: Int
+
+            when (item.status) {
+                "travel" -> {
+                    statusColor = "#3498DB"
+                    statusText = "مسافر ✈️"
+                    statusIconRes = R.drawable.ic_travel
+                }
+                "awake" -> {
+                    statusColor = "#2ECC71"
+                    statusText = "مستيقظ"
+                    statusIconRes = R.drawable.ic_circle_check
+                }
+                "challenge_done" -> {
+                    statusColor = "#FFD700"
+                    statusText = "حل التحدي"
+                    statusIconRes = R.drawable.ic_circle_warning
+                }
+                "panic" -> {
+                    statusColor = "#E74C3C"
+                    statusText = "استغاثة"
+                    statusIconRes = R.drawable.ic_circle_warning
+                }
+                "ringing" -> {
+                    statusColor = "#B57CFF"
+                    statusText = "يرن المنبه"
+                    statusIconRes = R.drawable.ic_alarm_notification
+                }
+                "missed" -> {
+                    statusColor = "#6B6B8A"
+                    statusText = "فاته الفجر"
+                    statusIconRes = R.drawable.ic_alarm_off
+                }
+                else -> {
+                    statusColor = "#B0B0C5"
+                    statusText = "نائم"
+                    statusIconRes = R.drawable.ic_circle_warning
+                }
+            }
+
+            val itemView = layoutInflater.inflate(R.layout.item_loop_member, binding.layoutLoopChain, false)
+            val imgAvatar = itemView.findViewById<de.hdodenhof.circleimageview.CircleImageView>(R.id.image_loop_avatar)
+            val imgStatus = itemView.findViewById<android.widget.ImageView>(R.id.image_loop_status_icon)
+            val txtName = itemView.findViewById<android.widget.TextView>(R.id.text_loop_member_name)
+            val txtStatus = itemView.findViewById<android.widget.TextView>(R.id.text_loop_member_status)
+
+            txtName.text = item.displayName.split(" ").first()
+            txtStatus.text = statusText
+            txtStatus.setTextColor(Color.parseColor(statusColor))
+            imgAvatar.borderColor = Color.parseColor(statusColor)
+
+            if (item.photoUrl.isNotEmpty()) {
+                Glide.with(this)
+                    .load(item.photoUrl)
+                    .circleCrop()
+                    .placeholder(R.drawable.ic_default_avatar)
+                    .into(imgAvatar)
+            } else {
+                imgAvatar.setImageResource(R.drawable.ic_default_avatar)
+            }
+
+            imgStatus.setImageResource(statusIconRes)
+            imgStatus.imageTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(statusColor))
+
+            if (item.userId == currentUid) {
+                txtName.setTextColor(Color.parseColor("#FFD700"))
+            } else {
+                txtName.setTextColor(Color.WHITE)
+            }
+
+            binding.layoutLoopChain.addView(itemView)
+
+            if (i < n - 1) {
+                val arrowView = android.widget.ImageView(this).apply {
+                    setImageResource(R.drawable.ic_loop_arrow)
+                    layoutParams = LinearLayout.LayoutParams(
+                        dpToPx(20),
+                        dpToPx(20)
+                    ).apply {
+                        gravity = Gravity.CENTER_VERTICAL
+                        marginStart = dpToPx(6)
+                        marginEnd = dpToPx(6)
+                    }
+                }
+                binding.layoutLoopChain.addView(arrowView)
+            }
+        }
+    }
 
     private fun setupSpiritualContent() {
         val dayIndex = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
@@ -231,7 +321,6 @@ class MainActivity : AppCompatActivity() {
             binding.textSpiritualContent.text = "» ${item.first} «"
             binding.textSpiritualSource.text = item.second
 
-            // تحديث مظهر التبويبات (ذهبي شفاف 10% وبوردر 30%)
             binding.btnTabAya.apply {
                 setTextColor(Color.parseColor("#FFD700"))
                 backgroundTintList = android.content.res.ColorStateList.valueOf(Color.argb(26, 0xFF, 0xD7, 0x00))
@@ -266,7 +355,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupQuickActionsUI() {
-        // داخل حلقة
         binding.cardActionHalqaDetails.setOnClickListener {
             showHalqaDetailsBottomSheet()
         }
@@ -280,19 +368,16 @@ class MainActivity : AppCompatActivity() {
             shareInviteCode()
         }
 
-        // أزرار في بطاقة لا توجد حلقة (card_no_halqa)
         binding.btnCreateHalqa.setOnClickListener { showCreateHalqaDialog() }
         binding.btnJoinHalqa.setOnClickListener { showJoinHalqaDialog() }
 
-        // خارج حلقة
-        binding.cardActionCreateHalqa.setOnClickListener {
-            showCreateHalqaDialog()
-        }
-        binding.cardActionJoinHalqa.setOnClickListener {
-            showJoinHalqaDialog()
-        }
+        binding.cardActionCreateHalqa.setOnClickListener { showCreateHalqaDialog() }
+        binding.cardActionJoinHalqa.setOnClickListener { showJoinHalqaDialog() }
         binding.cardActionStatsAlone.setOnClickListener {
             startActivity(Intent(this, com.bagomri.fajrloop.ui.stats.StatsActivity::class.java))
+        }
+        binding.btnReorderChain.setOnClickListener {
+            showHalqaDetailsBottomSheet()
         }
     }
 
@@ -301,10 +386,10 @@ class MainActivity : AppCompatActivity() {
             showToast("يرجى الانضمام لحلقة أولاً")
             return
         }
-        com.google.firebase.database.FirebaseDatabase.getInstance()
+        FirebaseDatabase.getInstance()
             .getReference("halqas").child(halqaId)
-            .addListenerForSingleValueEvent(object : com.google.firebase.database.ValueEventListener {
-                override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
                     val name = snapshot.child("name").value as? String ?: "حلقة الفجر"
                     val code = snapshot.child("inviteCode").value as? String ?: ""
                     val shareText = "🌙 انضم لحلقة الفجر!\nاسم الحلقة: $name\nكود الدعوة: $code\nحمّل التطبيق لتستيقظ للفجر معي!"
@@ -314,7 +399,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     startActivity(Intent.createChooser(shareIntent, "مشاركة الكود"))
                 }
-                override fun onCancelled(error: com.google.firebase.database.DatabaseError) {}
+                override fun onCancelled(error: DatabaseError) {}
             })
     }
 
@@ -372,8 +457,6 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    // ==================== صلاحيات المنبه ====================
-
     private fun checkAndRequestPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
@@ -391,284 +474,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-
-    // ==================== الملف الشخصي ====================
-
-    private fun updateUserProfileUI() {
-        val user = AuthManager.currentUser
-        binding.textUserName.text = user?.displayName ?: "المستخدم"
-
-        // تحميل صورة المستخدم من Google
-        val photoUrl = user?.photoUrl
-        if (photoUrl != null) {
-            Glide.with(this)
-                .load(photoUrl)
-                .circleCrop()
-                .placeholder(R.drawable.ic_default_avatar)
-                .into(binding.imageUserAvatar)
-        }
-
-        binding.btnSettings.setOnClickListener {
-            startActivity(Intent(this, com.bagomri.fajrloop.ui.settings.SettingsActivity::class.java))
-        }
-    }
-
-    // ==================== إدارة الحلقة ====================
-
-    private fun stopObservingDailyRecords() {
-        dailyRecordsObserver?.let { dailyRecordsRef?.removeEventListener(it) }
-        dailyRecordsObserver = null
-        dailyRecordsRef = null
-    }
-
-    private fun setupHalqaUI() {
-        halqaObserver = com.bagomri.fajrloop.data.HalqaManager.observeUserHalqa { snapshot ->
-            if (snapshot == null || !snapshot.exists()) {
-                currentActiveHalqaId = null
-                prefs.edit().putString("current_halqa_id", null).apply()
-                isCurrentUserAdmin = false
-                // حالة خارج حلقة
-                binding.layoutHasHalqa.visibility = View.GONE
-                binding.cardNoHalqa.visibility = View.VISIBLE
-                binding.layoutQuickActionsInHalqa.visibility = View.GONE
-                binding.layoutQuickActionsNoHalqa.visibility = View.VISIBLE
-                binding.cardTodaySummary.visibility = View.GONE
-                binding.cardFriendWakeAlert.visibility = View.GONE
-                stopObservingDailyRecords()
-            } else {
-                currentActiveHalqaId = snapshot.key
-                prefs.edit().putString("current_halqa_id", currentActiveHalqaId).apply()
-                // حالة داخل حلقة
-                binding.layoutHasHalqa.visibility = View.VISIBLE
-                binding.cardNoHalqa.visibility = View.GONE
-                binding.layoutQuickActionsInHalqa.visibility = View.VISIBLE
-                binding.layoutQuickActionsNoHalqa.visibility = View.GONE
-                binding.cardTodaySummary.visibility = View.VISIBLE
-
-                val name = snapshot.child("name").value as? String ?: "حلقة"
-                binding.textHalqaName.text = "حلقة: $name"
-
-                val chain = (snapshot.child("chain").value as? List<*>)
-                    ?.filterIsInstance<String>() ?: emptyList()
-                lastChain = chain
-
-                val membersSnap = snapshot.child("members")
-                lastMembersSnap = membersSnap
-
-                val currentUid = AuthManager.getUserId()
-                isCurrentUserAdmin = membersSnap.child(currentUid ?: "").child("role").value as? String == "admin"
-
-                // عرض/إخفاء زر إعادة الترتيب للمسؤول
-                binding.btnReorderChain.visibility = if (isCurrentUserAdmin) View.VISIBLE else View.GONE
-
-                startObservingDailyRecords(currentActiveHalqaId!!)
-            }
-        }
-    }
-
-    private fun startObservingDailyRecords(halqaId: String) {
-        stopObservingDailyRecords()
-        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-        dailyRecordsRef = com.google.firebase.database.FirebaseDatabase.getInstance()
-            .getReference("dailyRecords")
-            .child(halqaId)
-            .child(currentDate)
-
-        dailyRecordsObserver = dailyRecordsRef?.addValueEventListener(object : com.google.firebase.database.ValueEventListener {
-            override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
-                lastMembersSnap?.let { mSnap ->
-                    populateHorizontalLoopChain(lastChain, mSnap, snapshot)
-                    updateTodaySummary(lastChain, snapshot)
-                    checkFriendWakeAlert(lastChain, mSnap, snapshot)
-                }
-            }
-            override fun onCancelled(error: com.google.firebase.database.DatabaseError) {}
-        })
-    }
-
-    private fun updateTodaySummary(chain: List<String>, recordsSnap: com.google.firebase.database.DataSnapshot) {
-        val total = chain.size
-        val awake = chain.count { uid ->
-            val status = recordsSnap.child(uid).child("status").value as? String
-            status == "awake"
-        }
-        binding.textAwakeCount.text = "$awake / $total"
-        if (awake == total && total > 0) {
-            binding.textTodaySummary.text = "ما شاء الله! استيقظت الحلقة بالكامل 🎉"
-        } else {
-            binding.textTodaySummary.text = "استيقظ $awake من أصل $total أعضاء حتى الآن."
-        }
-    }
-
-    private fun checkFriendWakeAlert(
-        chain: List<String>,
-        membersSnap: com.google.firebase.database.DataSnapshot,
-        recordsSnap: com.google.firebase.database.DataSnapshot
-    ) {
-        val currentUid = AuthManager.getUserId() ?: return
-        // البحث عن صديق حل التحدي ونحن مسؤولون عن إيقاظه
-        for (uid in chain) {
-            val memberSnap = membersSnap.child(uid)
-            val responsibleForUserId = memberSnap.child("responsibleForUserId").value as? String
-            val status = recordsSnap.child(uid).child("status").value as? String
-            if (status == "challenge_done" && responsibleForUserId == currentUid) {
-                val firstName = (memberSnap.child("displayName").value as? String ?: "صديقك").split(" ").first()
-                binding.cardFriendWakeAlert.visibility = View.VISIBLE
-                binding.textFriendWakeMessage.text = "صديقك $firstName حل تحدي الاستيقاظ وبانتظار تأكيدك لإيقاف منبهه."
-                binding.btnConfirmFriendWake.text = "تأكيد استيقاظ $firstName وإيقاف منبهه"
-                binding.btnConfirmFriendWake.setOnClickListener {
-                    val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-                    currentActiveHalqaId?.let { hId ->
-                        com.google.firebase.database.FirebaseDatabase.getInstance()
-                            .getReference("dailyRecords")
-                            .child(hId)
-                            .child(currentDate)
-                            .child(uid)
-                            .updateChildren(mapOf(
-                                "status" to "awake",
-                                "confirmedBy" to currentUid
-                            ))
-                            .addOnSuccessListener {
-                                showToast("تم إيقاف منبه صديقك بنجاح. كتب الله أجرك! 🟢")
-                                binding.cardFriendWakeAlert.visibility = View.GONE
-                            }
-                            .addOnFailureListener { e ->
-                                showToast("فشل تأكيد الاستيقاظ: ${e.message}")
-                            }
-                    }
-                }
-                return
-            }
-        }
-        binding.cardFriendWakeAlert.visibility = View.GONE
-    }
-
-    private fun populateHorizontalLoopChain(
-        chain: List<String>,
-        membersSnap: com.google.firebase.database.DataSnapshot,
-        recordsSnap: com.google.firebase.database.DataSnapshot
-    ) {
-        binding.layoutLoopChain.removeAllViews()
-        val n = chain.size
-        val currentUid = AuthManager.getUserId() ?: ""
-
-        for (i in 0 until n) {
-            val mId = chain[i]
-            val mSnap = membersSnap.child(mId)
-            if (!mSnap.exists()) continue
-
-            val displayName = mSnap.child("displayName").value as? String ?: "عضو"
-            val photoUrl = mSnap.child("photoUrl").value as? String
-
-            var status = "pending"
-            val profileStatus = mSnap.child("status").value as? String
-            if (profileStatus == "travel" || profileStatus == "traveling") {
-                status = "travel"
-            } else if (recordsSnap.child(mId).exists()) {
-                status = recordsSnap.child(mId).child("status").value as? String ?: "pending"
-            }
-
-            // نفخ عنصر العضو الأفقي
-            val itemView = layoutInflater.inflate(R.layout.item_loop_member, binding.layoutLoopChain, false)
-            val imgAvatar = itemView.findViewById<de.hdodenhof.circleimageview.CircleImageView>(R.id.image_loop_avatar)
-            val imgStatus = itemView.findViewById<android.widget.ImageView>(R.id.image_loop_status_icon)
-            val txtName = itemView.findViewById<android.widget.TextView>(R.id.text_loop_member_name)
-            val txtStatus = itemView.findViewById<android.widget.TextView>(R.id.text_loop_member_status)
-
-            // تخصيص الألوان والشارات حسب الحالة اليومية
-            val statusColor: String
-            val statusText: String
-            val statusIconRes: Int
-
-            when (status) {
-                "travel" -> {
-                    statusColor = "#3498DB" // أزرق سفر
-                    statusText = "مسافر ✈️"
-                    statusIconRes = R.drawable.ic_travel
-                }
-                "awake" -> {
-                    statusColor = "#2ECC71" // أخضر
-                    statusText = "مستيقظ"
-                    statusIconRes = R.drawable.ic_circle_check
-                }
-                "challenge_done" -> {
-                    statusColor = "#FFD700" // ذهبي
-                    statusText = "حل التحدي"
-                    statusIconRes = R.drawable.ic_circle_warning
-                }
-                "panic" -> {
-                    statusColor = "#E74C3C" // أحمر
-                    statusText = "استغاثة"
-                    statusIconRes = R.drawable.ic_circle_warning
-                }
-                "ringing" -> {
-                    statusColor = "#B57CFF" // بنفسجي
-                    statusText = "يرن المنبه"
-                    statusIconRes = R.drawable.ic_alarm_notification
-                }
-                "missed" -> {
-                    statusColor = "#6B6B8A" // رمادي
-                    statusText = "فاته الفجر"
-                    statusIconRes = R.drawable.ic_alarm_off
-                }
-                else -> {
-                    statusColor = "#B0B0C5" // رمادي فاتح
-                    statusText = "نائم"
-                    statusIconRes = R.drawable.ic_circle_warning
-                }
-            }
-
-            txtName.text = displayName.split(" ").first()
-            txtStatus.text = statusText
-            txtStatus.setTextColor(Color.parseColor(statusColor))
-            imgAvatar.borderColor = Color.parseColor(statusColor)
-
-            // تحميل الصورة
-            if (!photoUrl.isNullOrEmpty()) {
-                Glide.with(this)
-                    .load(photoUrl)
-                    .circleCrop()
-                    .placeholder(R.drawable.ic_default_avatar)
-                    .into(imgAvatar)
-            } else {
-                imgAvatar.setImageResource(R.drawable.ic_default_avatar)
-            }
-
-            // تعيين أيقونة الحالة وتلوينها
-            imgStatus.setImageResource(statusIconRes)
-            imgStatus.imageTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(statusColor))
-
-            // تمييز اسم المستخدم الحالي
-            if (mId == currentUid) {
-                txtName.setTextColor(Color.parseColor("#FFD700"))
-            } else {
-                txtName.setTextColor(Color.WHITE)
-            }
-
-            binding.layoutLoopChain.addView(itemView)
-
-            // إذا لم يكن العضو الأخير، نضيف سهماً لليسار
-            if (i < n - 1) {
-                val arrowView = android.widget.ImageView(this).apply {
-                    setImageResource(R.drawable.ic_loop_arrow)
-                    layoutParams = LinearLayout.LayoutParams(
-                        dpToPx(20),
-                        dpToPx(20)
-                    ).apply {
-                        gravity = Gravity.CENTER_VERTICAL
-                        marginStart = dpToPx(6)
-                        marginEnd = dpToPx(6)
-                    }
-                }
-                binding.layoutLoopChain.addView(arrowView)
-            }
-        }
-    }
-
     private fun showHalqaDetailsBottomSheet() {
         val halqaId = currentActiveHalqaId ?: return
-        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this)
         val sheetView = layoutInflater.inflate(R.layout.layout_halqa_details_bottom_sheet, null)
         dialog.setContentView(sheetView)
 
@@ -690,19 +498,25 @@ class MainActivity : AppCompatActivity() {
                 .show()
         }
 
-        // قراءة البيانات من Firebase وتعبئة القائمة
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-        com.google.firebase.database.FirebaseDatabase.getInstance()
+        FirebaseDatabase.getInstance()
             .getReference("dailyRecords")
             .child(halqaId)
             .child(currentDate)
-            .addListenerForSingleValueEvent(object : com.google.firebase.database.ValueEventListener {
-                override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
-                    lastMembersSnap?.let { mSnap ->
-                        populateVerticalMembersSheetList(listContainer, lastChain, mSnap, snapshot, dialog)
-                    }
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    FirebaseDatabase.getInstance().getReference("halqas").child(halqaId)
+                        .addListenerForSingleValueEvent(object : ValueEventListener {
+                            override fun onDataChange(halqaSnap: DataSnapshot) {
+                                val chain = (halqaSnap.child("chain").value as? List<*>)
+                                    ?.filterIsInstance<String>() ?: emptyList()
+                                val membersSnap = halqaSnap.child("members")
+                                populateVerticalMembersSheetList(listContainer, chain, membersSnap, snapshot, dialog)
+                            }
+                            override fun onCancelled(error: DatabaseError) {}
+                        })
                 }
-                override fun onCancelled(error: com.google.firebase.database.DatabaseError) {}
+                override fun onCancelled(error: DatabaseError) {}
             })
 
         dialog.show()
@@ -711,9 +525,9 @@ class MainActivity : AppCompatActivity() {
     private fun populateVerticalMembersSheetList(
         container: LinearLayout,
         chain: List<String>,
-        membersSnap: com.google.firebase.database.DataSnapshot,
-        recordsSnap: com.google.firebase.database.DataSnapshot,
-        dialog: com.google.android.material.bottomsheet.BottomSheetDialog
+        membersSnap: DataSnapshot,
+        recordsSnap: DataSnapshot,
+        dialog: BottomSheetDialog
     ) {
         container.removeAllViews()
         val n = chain.size
@@ -742,10 +556,10 @@ class MainActivity : AppCompatActivity() {
 
             val itemView = layoutInflater.inflate(R.layout.item_halqa_member, container, false)
 
-            val textPosition = itemView.findViewById<android.widget.TextView>(R.id.text_member_position)
-            val textName = itemView.findViewById<android.widget.TextView>(R.id.text_member_name)
-            val textDesc = itemView.findViewById<android.widget.TextView>(R.id.text_member_desc)
-            val badgeAdmin = itemView.findViewById<android.widget.TextView>(R.id.badge_admin)
+            val textPosition = itemView.findViewById<TextView>(R.id.text_member_position)
+            val textName = itemView.findViewById<TextView>(R.id.text_member_name)
+            val textDesc = itemView.findViewById<TextView>(R.id.text_member_desc)
+            val badgeAdmin = itemView.findViewById<TextView>(R.id.badge_admin)
             val layoutReorder = itemView.findViewById<View>(R.id.layout_reorder_buttons)
             val btnUp = itemView.findViewById<android.widget.ImageButton>(R.id.btn_move_up)
             val btnDown = itemView.findViewById<android.widget.ImageButton>(R.id.btn_move_down)
@@ -789,7 +603,7 @@ class MainActivity : AppCompatActivity() {
                     setOnClickListener {
                         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
                         currentActiveHalqaId?.let { hId ->
-                            com.google.firebase.database.FirebaseDatabase.getInstance()
+                            FirebaseDatabase.getInstance()
                                 .getReference("dailyRecords")
                                 .child(hId).child(currentDate).child(mId).child("status")
                                 .setValue("awake")
@@ -859,8 +673,6 @@ class MainActivity : AppCompatActivity() {
             container.addView(itemView)
         }
     }
-
-    // ==================== مساعدات ====================
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()

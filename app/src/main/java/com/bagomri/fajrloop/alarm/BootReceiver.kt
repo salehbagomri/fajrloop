@@ -4,14 +4,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.bagomri.fajrloop.data.PrayerTimesRepository
+import java.util.Date
 
 /**
- * BootReceiver — إعادة جدولة المنبه بعد إعادة تشغيل الجهاز
- *
- * Android يحذف جميع AlarmManager المجدولة عند إعادة التشغيل،
- * لذا يجب إعادة الجدولة فوراً بعد اكتمال التشغيل.
- *
- * يتلقى: BOOT_COMPLETED, LOCKED_BOOT_COMPLETED, QUICKBOOT_POWERON
+ * BootReceiver — إعادة جدولة منبه الفجر تلقائياً بعد إقلاع الهاتف
  */
 class BootReceiver : BroadcastReceiver() {
 
@@ -34,10 +31,7 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     /**
-     * إعادة جدولة المنبه من التفضيلات المحفوظة محلياً
-     *
-     * في المرحلة الأولى: يعيد جدولة المنبه المحفوظ في SharedPreferences.
-     * في المراحل التالية: سيقرأ من بيانات الحلقة النشطة.
+     * إعادة حساب الفجر وجدولة المنبه تلقائياً بناءً على طريقة الحساب والموقع الجغرافي الفعلي
      */
     private fun rescheduleAlarms(context: Context) {
         val prefs = context.getSharedPreferences(
@@ -45,26 +39,49 @@ class BootReceiver : BroadcastReceiver() {
             Context.MODE_PRIVATE
         )
 
-        val savedAlarmTime = prefs.getLong(AlarmPreferences.KEY_ALARM_TIME_MILLIS, -1L)
-        val alarmLabel = prefs.getString(AlarmPreferences.KEY_ALARM_LABEL, "صلاة الفجر") ?: "صلاة الفجر"
         val alarmEnabled = prefs.getBoolean(AlarmPreferences.KEY_ALARM_ENABLED, false)
+        val alarmLabel = prefs.getString(AlarmPreferences.KEY_ALARM_LABEL, "صلاة الفجر") ?: "صلاة الفجر"
 
-        if (!alarmEnabled || savedAlarmTime == -1L) {
-            Log.d(TAG, "No saved alarm to reschedule")
+        if (!alarmEnabled) {
+            Log.d(TAG, "Alarm not enabled, skipping reschedule")
             return
         }
 
-        // إذا كان الوقت قد مضى — جدوله للغد
+        val prayerTimesRepository = PrayerTimesRepository(context)
         val now = System.currentTimeMillis()
-        val targetTime = if (savedAlarmTime > now) {
-            savedAlarmTime
-        } else {
-            // أضف يوماً كاملاً (86400000 ms) — في المرحلة التالية سيتم حساب الفجر الفعلي
-            savedAlarmTime + 86_400_000L
+        var prayerTimes = prayerTimesRepository.getPrayerTimesForDate(Date())
+        
+        if (prayerTimes.fajr < now) {
+            val tomorrow = Date(now + 86_400_000L)
+            prayerTimes = prayerTimesRepository.getPrayerTimesForDate(tomorrow)
         }
 
-        AlarmScheduler.scheduleAlarm(context, targetTime, alarmLabel)
-        Log.d(TAG, "✅ Alarm rescheduled after boot: $alarmLabel at $targetTime")
+        // تطبيق خيارات إزاحة توقيت المنبه
+        val type = prefs.getString("alarm_timing_type", "with") ?: "with"
+        val offset = prefs.getInt("alarm_timing_offset_minutes", 0)
+        val offsetMillis = offset * 60 * 1000L
+        
+        val adjustedFajr = when (type) {
+            "before" -> prayerTimes.fajr - offsetMillis
+            "after" -> prayerTimes.fajr + offsetMillis
+            else -> prayerTimes.fajr
+        }
+
+        val targetAlarmTime = if (adjustedFajr > now) {
+            adjustedFajr
+        } else {
+            val tomorrowTimes = prayerTimesRepository.getPrayerTimesForDate(Date(now + 86_400_000L))
+            when (type) {
+                "before" -> tomorrowTimes.fajr - offsetMillis
+                "after" -> tomorrowTimes.fajr + offsetMillis
+                else -> tomorrowTimes.fajr
+            }
+        }
+
+        AlarmScheduler.scheduleAlarm(context, targetAlarmTime, alarmLabel)
+        
+        prefs.edit().putLong(AlarmPreferences.KEY_ALARM_TIME_MILLIS, targetAlarmTime).apply()
+        
+        Log.d(TAG, "✅ Alarm rescheduled after boot: $alarmLabel at $targetAlarmTime")
     }
 }
-

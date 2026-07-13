@@ -8,30 +8,33 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.bagomri.fajrloop.R
 import com.bagomri.fajrloop.alarm.AlarmScheduler
 import com.bagomri.fajrloop.auth.AuthManager
 import com.bagomri.fajrloop.databinding.ActivitySettingsBinding
 import com.bagomri.fajrloop.ui.auth.LoginActivity
+import com.bagomri.fajrloop.data.UserLocation
+import com.bagomri.fajrloop.data.UserSettings
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * SettingsActivity — إعدادات التطبيق (MVVM Refactored)
+ */
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var prefs: SharedPreferences
+    private lateinit var viewModel: SettingsViewModel
 
     private val locationPermissionLauncher = registerForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
@@ -51,52 +54,55 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         prefs = getSharedPreferences(com.bagomri.fajrloop.alarm.AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        viewModel = ViewModelProvider(this)[SettingsViewModel::class.java]
 
         // تهيئة المظهر واللون الأحمر الزجاجي لزر تسجيل الخروج
         binding.btnLogout.setCustomBgAndBorder(
-            Color.argb(26, 0xE7, 0x4C, 0x3C), // خلفية حمراء 10% شفافية
-            Color.argb(77, 0xE7, 0x4C, 0x3C)  // حدود حمراء 30% شفافية
+            Color.argb(26, 0xE7, 0x4C, 0x3C),
+            Color.argb(77, 0xE7, 0x4C, 0x3C)
         )
 
         setupListeners()
         loadSavedSettings()
+        setupObservers()
     }
 
     override fun onResume() {
         super.onResume()
-        // تحديث حالة وضع السفر في حال عاد المستخدم من الشاشة الخاصة به
         updateTravelModeStatus()
     }
 
     private fun loadSavedSettings() {
-        // 1. وضع السفر
         updateTravelModeStatus()
 
-        // 2. الموقع
         val savedCity = prefs.getString("user_city", "مكة المكرمة")
         binding.textLocationStatus.text = "المدينة: $savedCity 📍 (اضغط للتحديث عبر الـ GPS)"
 
-        // 3. طريقة الحساب
         binding.textCalcMethodValue.text = prefs.getString(
             "prayer_calc_method",
             "جامعة أم القرى (مكة المكرمة)"
         )
 
-        // 4. توقيت المنبه
         binding.textAlarmTimingValue.text = prefs.getString(
             "alarm_timing_desc",
             "مع أذان الفجر بالضبط 🕌"
         )
 
-        // 5. التحدي المفضل
         val challengeType = prefs.getString("challenge_type", "math")
         val challengeDiff = prefs.getString("challenge_difficulty", "medium")
         updateChallengeDescText(challengeType, challengeDiff)
 
-        // 6. خيارات إضافية (Switches)
         binding.switchVibrate.isChecked = prefs.getBoolean("vibrate_on_alarm", true)
         binding.switchMorningAdhkar.isChecked = prefs.getBoolean("show_adhkar_after_alarm", true)
         binding.switchDailyDua.isChecked = prefs.getBoolean("daily_dua_notification", true)
+    }
+
+    private fun setupObservers() {
+        viewModel.userProfile.observe(this) { profile ->
+            if (profile != null) {
+                // sync profile settings to layout switches if needed
+            }
+        }
     }
 
     private fun updateTravelModeStatus() {
@@ -104,7 +110,7 @@ class SettingsActivity : AppCompatActivity() {
         if (isTravelEnabled) {
             val travelUntil = prefs.getString("travel_mode_until", "حتى الإلغاء اليدوي")
             binding.textTravelModeStatus.text = "نشط حالياً ✈️ (حتى: $travelUntil)"
-            binding.textTravelModeStatus.setTextColor(Color.parseColor("#3498DB")) // أزرق نشط
+            binding.textTravelModeStatus.setTextColor(Color.parseColor("#3498DB"))
         } else {
             binding.textTravelModeStatus.text = "غير نشط حالياً"
             binding.textTravelModeStatus.setTextColor(Color.parseColor("#B0B0C5"))
@@ -128,76 +134,68 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
-        // زر الرجوع
         binding.btnBack.setOnClickListener { finish() }
 
-        // وضع السفر
         binding.rowTravelMode.setOnClickListener {
             startActivity(Intent(this, TravelModeActivity::class.java))
         }
 
-        // كود الاستعادة الاحتياطي (TOTP)
         binding.rowBackupCode.setOnClickListener {
             startActivity(Intent(this, BackupCodeActivity::class.java))
         }
 
-        // إدارة حلقاتي
         binding.rowManageHalqas.setOnClickListener {
             showToast("إدارة وتعدد الحلقات — قريباً في الإصدار السحابي المحدث")
         }
 
-        // الموقع وتحديث الـ GPS
         binding.rowLocation.setOnClickListener {
             checkLocationPermissionsAndFetch()
         }
 
-        // طريقة الحساب
         binding.rowCalcMethod.setOnClickListener {
             showCalcMethodDialog()
         }
 
-        // توقيت المنبه
         binding.rowAlarmTiming.setOnClickListener {
             showAlarmTimingDialog()
         }
 
-        // التحدي المفضل
         binding.rowChallenge.setOnClickListener {
             showChallengeSettingsDialog()
         }
 
-        // التشغيل التلقائي (Auto-Start)
         binding.rowAutostart.setOnClickListener {
             openAutoStartSettings()
         }
 
-        // إعدادات البطارية
         binding.rowBattery.setOnClickListener {
             openBatteryOptimizationSettings()
         }
 
-        // Switches
         binding.switchVibrate.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("vibrate_on_alarm", isChecked).apply()
+            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+            viewModel.updateUserSettings(currentSettings.copy(vibration = isChecked)) {}
         }
         binding.switchMorningAdhkar.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("show_adhkar_after_alarm", isChecked).apply()
+            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+            viewModel.updateUserSettings(currentSettings.copy(showMorningAdhkar = isChecked)) {}
         }
         binding.switchDailyDua.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("daily_dua_notification", isChecked).apply()
+            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+            viewModel.updateUserSettings(currentSettings.copy(showDailyDua = isChecked)) {}
         }
 
-        // اختبار المنبه
         binding.rowTestAlarm.setOnClickListener {
             scheduleTestAlarm()
         }
 
-        // دليل الاستخدام
         binding.rowGuide.setOnClickListener {
             startActivity(Intent(this, GuideActivity::class.java))
         }
 
-        // تسجيل الخروج
         binding.btnLogout.setOnClickListener {
             showLogoutConfirmationDialog()
         }
@@ -245,6 +243,17 @@ class SettingsActivity : AppCompatActivity() {
         val selectMethod = { selected: String ->
             prefs.edit().putString("prayer_calc_method", selected).apply()
             binding.textCalcMethodValue.text = selected
+
+            // Local cache
+            val lat = prefs.getFloat("user_latitude", 14.5425f).toDouble()
+            val lng = prefs.getFloat("user_longitude", 49.1242f).toDouble()
+            val city = prefs.getString("user_city", "المكلا") ?: "المكلا"
+            viewModel.saveLocalLocationAndMethod(lat, lng, city, selected)
+
+            // Cloud sync
+            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+            viewModel.updateUserSettings(currentSettings.copy(prayerCalcMethod = mapMethodNameToCode(selected))) {}
+
             showToast("تم حفظ طريقة الحساب الجديدة")
             dialog.dismiss()
         }
@@ -257,6 +266,17 @@ class SettingsActivity : AppCompatActivity() {
 
         view.findViewById<View>(R.id.btn_close_calc).setOnClickListener { dialog.dismiss() }
         dialog.show()
+    }
+
+    private fun mapMethodNameToCode(name: String): String {
+        return when {
+            name.contains("أم القرى") -> "umm_al_qura"
+            name.contains("رابطة") -> "muslim_world_league"
+            name.contains("المصرية") -> "egypt"
+            name.contains("كراتشي") -> "karachi"
+            name.contains("ISNA") -> "isna"
+            else -> "umm_al_qura"
+        }
     }
 
     private fun showAlarmTimingDialog() {
@@ -362,6 +382,10 @@ class SettingsActivity : AppCompatActivity() {
                 .putString("alarm_timing_desc", desc)
                 .apply()
 
+            // Cloud sync
+            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+            viewModel.updateUserSettings(currentSettings.copy(alarmMinutesBefore = if (selectedType == "before") -selectedOffset else selectedOffset)) {}
+
             binding.textAlarmTimingValue.text = desc
             showToast("تم تحديث توقيت المنبه بنجاح")
             dialog.dismiss()
@@ -396,8 +420,8 @@ class SettingsActivity : AppCompatActivity() {
         val textMedium = view.findViewById<TextView>(R.id.text_diff_medium)
         val textHard = view.findViewById<TextView>(R.id.text_diff_hard)
 
-        var selectedType = currentType
-        var selectedDiff = currentDiff
+        var selectedType: String = currentType ?: "math"
+        var selectedDiff: String = currentDiff ?: "medium"
 
         fun updateUI() {
             btnMath.setBackgroundResource(R.drawable.bg_code_container)
@@ -463,6 +487,10 @@ class SettingsActivity : AppCompatActivity() {
                 .putString("challenge_difficulty", selectedDiff)
                 .apply()
 
+            // Cloud sync
+            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+            viewModel.updateUserSettings(currentSettings.copy(challengeType = selectedType, challengeDifficulty = selectedDiff)) {}
+
             updateChallengeDescText(selectedType, selectedDiff)
             showToast("تم تحديث تحدي الاستيقاظ المفضل")
             dialog.dismiss()
@@ -491,57 +519,32 @@ class SettingsActivity : AppCompatActivity() {
                 val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                 startActivity(intent)
             } catch (e: Exception) {
-                showToast("يرجى الانتقال لإعدادات البطارية يدوياً واستثناء حلقة الفجر")
+                showToast("تعذر فتح إعدادات البطارية تلقائياً")
             }
-        } else {
-            showToast("جهازك لا يتطلب إعدادات بطارية متقدمة")
         }
     }
 
     private fun scheduleTestAlarm() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val alarmManager = getSystemService(ALARM_SERVICE) as android.app.AlarmManager
-            if (!alarmManager.canScheduleExactAlarms()) {
-                showToast("⚠️ يجب منح صلاحية المنبه الدقيق أولاً")
-                startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
-                return
-            }
-        }
-        val triggerAt = System.currentTimeMillis() + 60000L // دقيقة واحدة
-        val label = "اختبار المنبه الفوري"
-        AlarmScheduler.scheduleAlarm(this, triggerAt, label)
-
-        val format = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(triggerAt))
-        showToast("تمت جدولة منبه تجريبي بنجاح عند: $format")
-    }
-
-    private fun showLogoutConfirmationDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("تسجيل الخروج")
-            .setMessage("هل أنت متأكد من رغبتك في تسجيل الخروج؟")
-            .setPositiveButton("تسجيل خروج") { _, _ ->
-                AuthManager.signOut()
-                // العودة لشاشة الدخول وتصفير الـ stack
-                val intent = Intent(this, LoginActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                }
-                startActivity(intent)
-                finish()
-            }
-            .setNegativeButton("إلغاء", null)
-            .show()
+        AlarmScheduler.scheduleTestAlarm(this, 10)
+        showToast("🧪 تم جدولة منبه تجريبي بعد 10 ثوانٍ! الرجاء قفل الشاشة لاختبار الحماية.")
     }
 
     private fun checkLocationPermissionsAndFetch() {
-        val finePermission = android.Manifest.permission.ACCESS_FINE_LOCATION
-        val coarsePermission = android.Manifest.permission.ACCESS_COARSE_LOCATION
-        val fineGranted = androidx.core.content.ContextCompat.checkSelfPermission(this, finePermission) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        val coarseGranted = androidx.core.content.ContextCompat.checkSelfPermission(this, coarsePermission) == android.content.pm.PackageManager.PERMISSION_GRANTED
-
-        if (fineGranted || coarseGranted) {
-            getCurrentLocation()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val hasFine = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            val hasCoarse = checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (hasFine || hasCoarse) {
+                getCurrentLocation()
+            } else {
+                locationPermissionLauncher.launch(
+                    arrayOf(
+                        android.Manifest.permission.ACCESS_FINE_LOCATION,
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+            }
         } else {
-            locationPermissionLauncher.launch(arrayOf(finePermission, coarsePermission))
+            getCurrentLocation()
         }
     }
 
@@ -559,7 +562,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.textLocationStatus.text = "جارٍ تحديد موقعك الجغرافي الحقيقي... 📡"
 
         val provider = if (isNetworkEnabled) android.location.LocationManager.NETWORK_PROVIDER else android.location.LocationManager.GPS_PROVIDER
-        
+
         try {
             val lastKnown = locationManager.getLastKnownLocation(provider)
             if (lastKnown != null) {
@@ -590,15 +593,29 @@ class SettingsActivity : AppCompatActivity() {
                 val city = translateCityToArabic(rawCity)
 
                 runOnUiThread {
-                    prefs.edit().putString("user_city", city).apply()
+                    prefs.edit().putString("user_city", city)
+                        .putFloat("user_latitude", lat.toFloat())
+                        .putFloat("user_longitude", lng.toFloat())
+                        .apply()
                     binding.textLocationStatus.text = "المدينة: $city 📍 (تم التحديث عبر الـ GPS)"
+
+                    // Sync to cloud
+                    viewModel.updateUserLocation(UserLocation(latitude = lat, longitude = lng, cityName = city)) {}
+
                     showToast("تم تحديد موقعك الحقيقي بنجاح: $city 🎉")
                 }
             } catch (e: Exception) {
                 runOnUiThread {
                     val simplifiedLoc = String.format(Locale.US, "%.3f, %.3f", lat, lng)
-                    prefs.edit().putString("user_city", simplifiedLoc).apply()
+                    prefs.edit().putString("user_city", simplifiedLoc)
+                        .putFloat("user_latitude", lat.toFloat())
+                        .putFloat("user_longitude", lng.toFloat())
+                        .apply()
                     binding.textLocationStatus.text = "الموقع: $simplifiedLoc 📍 (تم التحديث عبر الـ GPS)"
+
+                    // Sync to cloud
+                    viewModel.updateUserLocation(UserLocation(latitude = lat, longitude = lng, cityName = simplifiedLoc)) {}
+
                     showToast("تم تحديد الإحداثيات بنجاح! 📍")
                 }
             }
@@ -607,7 +624,6 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun translateCityToArabic(englishName: String): String {
         val translations = mapOf(
-            // السعودية
             "makkah" to "مكة المكرمة",
             "mecca" to "مكة المكرمة",
             "riyadh" to "الرياض",
@@ -631,8 +647,6 @@ class SettingsActivity : AppCompatActivity() {
             "ahsa" to "الأحساء",
             "hofuf" to "الهفوف",
             "qatif" to "القطيف",
-
-            // اليمن
             "sanaa" to "صنعاء",
             "sana" to "صنعاء",
             "aden" to "عدن",
@@ -647,41 +661,24 @@ class SettingsActivity : AppCompatActivity() {
             "ibb" to "إب",
             "dhamar" to "ذمار",
             "amran" to "عمران",
-            "sayyan" to "سيان",
-            "zabid" to "زبيد",
-            "shibam" to "شبام",
-            "marib" to "مأرب",
-            "albayda" to "البيضاء",
-            "bayda" to "البيضاء",
-            "hajjah" to "حجة",
-            "sadah" to "صعدة",
-            "lahij" to "لحج",
-            "lahj" to "لحج",
-            "abyan" to "أبين",
-            "shabwah" to "شبوة",
-            "shabwa" to "شبوة",
-            "almahrah" to "المهرة",
-            "mahra" to "المهرة",
-            "socotra" to "سقطرى",
-            "hadramaut" to "حضرموت",
-            "hadhramaut" to "حضرموت",
-            "hadramout" to "حضرموت",
-            "seiyun" to "سيئون",
-            "sayun" to "سيئون",
-            "tarim" to "تريم"
+            "sayyan" to "سيان"
         )
-        // تطبيع النص بالكامل بإزالة الكلمات التوضيحية (مثل Governorate, Province, City) والرموز والمسافات
-        val normalized = englishName.lowercase()
-            .replace("governorate", "")
-            .replace("province", "")
-            .replace("city", "")
-            .replace("'", "")
-            .replace("`", "")
-            .replace(" ", "")
-            .replace("-", "")
-            .trim()
+        return translations[englishName.lowercase(Locale.ROOT)] ?: englishName
+    }
 
-        return translations[normalized] ?: translations[englishName.lowercase().trim()] ?: englishName
+    private fun showLogoutConfirmationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("تسجيل الخروج")
+            .setMessage("هل أنت متأكد من رغبتك في تسجيل الخروج من التطبيق؟")
+            .setPositiveButton("خروج") { _, _ ->
+                AuthManager.signOut()
+                val intent = Intent(this, LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+            }
+            .setNegativeButton("إلغاء", null)
+            .show()
     }
 
     private fun showToast(message: String) {

@@ -16,29 +16,19 @@ import android.view.animation.AnimationUtils
 import android.widget.Toast
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
-import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AppCompatActivity
-import com.bagomri.fajrloop.R
-import com.bagomri.fajrloop.alarm.AlarmPreferences
-import com.bagomri.fajrloop.alarm.AlarmSoundService
-import com.bagomri.fajrloop.auth.AuthManager
-import com.bagomri.fajrloop.databinding.ActivityAlarmRingingBinding
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.Random
-import java.util.TimeZone
-import kotlin.math.absoluteValue
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
+import com.bagomri.fajrloop.R
+import com.bagomri.fajrloop.alarm.AlarmPreferences
+import com.bagomri.fajrloop.alarm.AlarmSoundService
+import com.bagomri.fajrloop.databinding.ActivityAlarmRingingBinding
 
 /**
- * AlarmRingingActivity — شاشة رنين المنبه
- *
- * تضم تحديات الاستيقاظ (المرحلة 5) ومنطق التصعيد والمزامنة الدائرية (المرحلة 6).
+ * AlarmRingingActivity — شاشة رنين المنبه (MVVM Refactored)
  */
 class AlarmRingingActivity : AppCompatActivity() {
 
@@ -49,13 +39,13 @@ class AlarmRingingActivity : AppCompatActivity() {
     }
 
     private lateinit var binding: ActivityAlarmRingingBinding
+    private lateinit var viewModel: AlarmRingingViewModel
     private var alarmLabel = "صلاة الفجر"
     private var triggerTime = 0L
 
     // خصائص التحديات
     private var challengeType = "math"
     private var challengeDifficulty = "medium"
-    private var isChallengeSolved = false
     private var isAlarmDismissed = false
     private var isVolumeEnforced = true
     private var isLaunchingDialer = false
@@ -67,7 +57,6 @@ class AlarmRingingActivity : AppCompatActivity() {
                 if (reason != null && (reason == "homekey" || reason == "recentapps")) {
                     android.util.Log.d(TAG, "Home or Recents button pressed! reason=$reason")
                     if (!isAlarmDismissed) {
-                        // إعادة قفل المنبه وجر الشاشة للأمام فوراً
                         isLaunchingDialer = false
                         val relaunchIntent = Intent(context, AlarmRingingActivity::class.java).apply {
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
@@ -109,28 +98,15 @@ class AlarmRingingActivity : AppCompatActivity() {
         }
     }
 
-    // مستمع السجل اليومي السحابي (المرحلة 6)
-    private var dailyRecordListener: ValueEventListener? = null
-    private var dailyRecordRef: DatabaseReference? = null
-
-    // 1. تحدي الحساب
+    // تحدي الحساب
     private var mathAnswer = 0
     private var mathSolvedCount = 0
     private val mathTotalRequired = 3
 
-    // 2. تحدي الكلمات
-    private val scrambledWords = listOf(
-        Pair("ج ر ف", "فجر"),
-        Pair("ة ا ل ص", "صلاة"),
-        Pair("د ج س م", "مسجد"),
-        Pair("ن ا م ي إ", "إيمان"),
-        Pair("ن آ ر ق", "قرآن"),
-        Pair("ة ك م", "مكة"),
-        Pair("ة ن ي د م", "مدينة")
-    )
+    // تحدي الكلمات
     private var correctWord = ""
 
-    // 3. تحدي الهز
+    // تحدي الهز
     private var sensorManager: SensorManager? = null
     private var accelerometer: Sensor? = null
     private var shakeCount = 0
@@ -153,7 +129,7 @@ class AlarmRingingActivity : AppCompatActivity() {
                     binding.progressShake.progress = shakeCount
                     if (shakeCount >= shakeRequired) {
                         unregisterShakeSensor()
-                        onChallengePassed()
+                        viewModel.onChallengePassed()
                     }
                 }
             }
@@ -168,23 +144,21 @@ class AlarmRingingActivity : AppCompatActivity() {
         binding = ActivityAlarmRingingBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        viewModel = ViewModelProvider(this)[AlarmRingingViewModel::class.java]
+
         alarmLabel = intent.getStringExtra(EXTRA_ALARM_LABEL) ?: "صلاة الفجر"
         triggerTime = intent.getLongExtra(EXTRA_TRIGGER_TIME, System.currentTimeMillis())
 
-        // رفع صوت المنبه للحد الأقصى ومنع التغيير
         forceMaxAlarmVolume()
 
-        // حظر الإيماءات وزر الرجوع بالكامل في هواتف أندرويد الحديثة والقديمة
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                // لا تفعل شيئاً لحجب زر الرجوع وإيماءات السحب
+                // حظر زر الرجوع
             }
         })
 
-        // فرض الصوت الأقصى بانتظام كل 500 ملي ثانية
         handler.post(volumeEnforcer)
 
-        // تسجيل مستقبل زر الهوم والتطبيقات الأخيرة
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 registerReceiver(homeButtonReceiver, IntentFilter(Intent.ACTION_CLOSE_SYSTEM_DIALOGS), Context.RECEIVER_EXPORTED)
@@ -197,20 +171,19 @@ class AlarmRingingActivity : AppCompatActivity() {
 
         loadChallengeSettings()
         setupUI()
+        setupObservers()
         startAnimations()
         setupChallenge()
 
-        // البدء بمراقبة حالة السجل السحابي للمزامنة الدائرية
         val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
         val halqaId = prefs.getString("current_halqa_id", null)
         if (!halqaId.isNullOrEmpty()) {
-            // إعادة ضبط الحالة السحابية للمنبه للتأكد من عدم تخطي المنبه تلقائياً بسبب اختبار سابق اليوم
-            updateDailyStatus("pending")
-            startObservingDailyRecord(halqaId)
-            loadPartnerDetails(halqaId)
+            viewModel.updateDailyStatus("pending")
+            viewModel.startObservingDailyRecord(halqaId)
+            viewModel.loadPartnerDetails(halqaId)
         }
 
-        // المستمعين للتركيز للتمرير التلقائي للأعلى حتى لا تختفي الحقول خلف الكيبورد
+        // التمرير التلقائي للأعلى حقول التركيز
         binding.inputMathAnswer.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
                 binding.scrollView.postDelayed({
@@ -234,9 +207,6 @@ class AlarmRingingActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * رفع صوت المنبه للحد الأقصى حتى لا يستطيع المستخدم تجاهله.
-     */
     private fun forceMaxAlarmVolume() {
         try {
             val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -274,13 +244,74 @@ class AlarmRingingActivity : AppCompatActivity() {
             val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
             textAlarmTime.text = timeFormat.format(Date(triggerTime))
 
-            // زر الاستغاثة SOS
             btnSos.setOnClickListener {
-                triggerEmergencySos()
+                viewModel.triggerEmergencySos()
             }
 
             btnSubmitTotp.setOnClickListener {
                 verifyTotpCode()
+            }
+        }
+    }
+
+    private fun setupObservers() {
+        viewModel.isChallengeSolved.observe(this) { solved ->
+            if (solved) {
+                showToast("🎉 تم تجاوز التحدي بنجاح!")
+                startService(Intent(this, AlarmSoundService::class.java).apply {
+                    action = AlarmSoundService.ACTION_SOFTEN_ALARM
+                })
+                isVolumeEnforced = false
+                handler.removeCallbacks(volumeEnforcer)
+
+                binding.apply {
+                    layoutChallengeMath.visibility = View.GONE
+                    layoutChallengeShake.visibility = View.GONE
+                    layoutChallengeWord.visibility = View.GONE
+                    layoutWaitingConfirmation.visibility = View.VISIBLE
+                }
+            }
+        }
+
+        viewModel.isPanicActive.observe(this) { panic ->
+            if (panic) {
+                startService(Intent(this, AlarmSoundService::class.java).apply {
+                    action = AlarmSoundService.ACTION_SOFTEN_ALARM
+                })
+                isVolumeEnforced = false
+                handler.removeCallbacks(volumeEnforcer)
+
+                binding.apply {
+                    layoutChallengeMath.visibility = View.GONE
+                    layoutChallengeShake.visibility = View.GONE
+                    layoutChallengeWord.visibility = View.GONE
+                    
+                    layoutWaitingConfirmation.visibility = View.VISIBLE
+                    textWaitingDesc.text = "🚨 نداء الاستغاثة نشط! يرجى الانتظار، زملائك في الحلقة يحاولون الاتصال بك الآن لمساعدتك على الاستيقاظ."
+                    btnSos.visibility = View.GONE
+                }
+                showToast("🚨 تم إرسال نداء استغاثة عاجل لأعضاء الحلقة")
+            }
+        }
+
+        viewModel.supervisorName.observe(this) { name ->
+            binding.textWaitingDesc.text = "بانتظار تأكيد استيقاظك من زميلك المسؤول: $name"
+        }
+
+        viewModel.supervisorPhone.observe(this) { phone ->
+            binding.btnCallPartner.setOnClickListener {
+                launchDialer(phone)
+            }
+        }
+
+        viewModel.dismissFinished.observe(this) { finished ->
+            if (finished) {
+                isAlarmDismissed = true
+                handler.removeCallbacks(volumeEnforcer)
+                startService(Intent(this, AlarmSoundService::class.java).apply {
+                    action = AlarmSoundService.ACTION_STOP_ALARM
+                })
+                finish()
             }
         }
     }
@@ -306,11 +337,15 @@ class AlarmRingingActivity : AppCompatActivity() {
                     layoutChallengeWord.visibility = View.VISIBLE
                     textChallengeTitle.text = "ترتيب الحروف 🧩"
                     textChallengeSubtitle.text = "أعد كتابة الكلمة بشكل صحيح لتجاوز المنبه"
-                    generateWordPuzzle()
+                    
+                    val puzzle = viewModel.generateWordPuzzle()
+                    correctWord = puzzle.second
+                    textScrambledLetters.text = puzzle.first
+
                     btnSubmitWord.setOnClickListener {
                         val input = inputWordAnswer.text.toString().trim()
                         if (input.equals(correctWord, ignoreCase = true)) {
-                            onChallengePassed()
+                            viewModel.onChallengePassed()
                         } else {
                             showToast("❌ الكلمة غير صحيحة، حاول مجدداً")
                         }
@@ -320,18 +355,26 @@ class AlarmRingingActivity : AppCompatActivity() {
                     layoutChallengeMath.visibility = View.VISIBLE
                     textChallengeTitle.text = "تحدي الرياضيات 🧮"
                     textChallengeSubtitle.text = "حل 3 مسائل حسابية متتالية لإيقاظ عقلك"
-                    generateMathQuestion()
+                    
+                    fun setupMathQuestion() {
+                        val question = viewModel.generateMathQuestion(challengeDifficulty)
+                        mathAnswer = question.second
+                        textMathQuestion.text = question.first
+                    }
+                    
+                    setupMathQuestion()
+
                     btnSubmitMath.setOnClickListener {
                         val inputStr = inputMathAnswer.text.toString().trim()
                         val inputVal = inputStr.toIntOrNull()
                         if (inputVal == mathAnswer) {
                             mathSolvedCount++
                             if (mathSolvedCount >= mathTotalRequired) {
-                                onChallengePassed()
+                                viewModel.onChallengePassed()
                             } else {
                                 inputMathAnswer.setText("")
                                 textChallengeSubtitle.text = "أحسنت! حل المسألة ${mathSolvedCount + 1} من $mathTotalRequired"
-                                generateMathQuestion()
+                                setupMathQuestion()
                             }
                         } else {
                             showToast("❌ إجابة خاطئة! ركز وحاول مجدداً")
@@ -340,41 +383,6 @@ class AlarmRingingActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    private fun generateMathQuestion() {
-        val random = Random()
-        val a: Int
-        val b: Int
-        val op: String
-        when (challengeDifficulty) {
-            "easy" -> {
-                a = random.nextInt(15) + 1
-                b = random.nextInt(15) + 1
-                op = "+"
-                mathAnswer = a + b
-            }
-            "hard" -> {
-                a = random.nextInt(8) + 2
-                b = random.nextInt(9) + 11
-                op = "*"
-                mathAnswer = a * b
-            }
-            else -> { // medium
-                a = random.nextInt(50) + 10
-                b = random.nextInt(40) + 10
-                op = if (random.nextBoolean()) "+" else "-"
-                mathAnswer = if (op == "+") a + b else a - b
-            }
-        }
-        binding.textMathQuestion.text = "$a $op $b = ?"
-    }
-
-    private fun generateWordPuzzle() {
-        val random = Random()
-        val pair = scrambledWords[random.nextInt(scrambledWords.size)]
-        correctWord = pair.second
-        binding.textScrambledLetters.text = pair.first
     }
 
     private fun registerShakeSensor() {
@@ -387,171 +395,26 @@ class AlarmRingingActivity : AppCompatActivity() {
         sensorManager?.unregisterListener(sensorEventListener)
     }
 
-    /**
-     * عند حل التحدي بنجاح (المرحلة 6):
-     * 1. نقوم بتخفيض صوت المنبه محلياً (Soften).
-     * 2. نغير الاهتزاز لنبض خفيف.
-     * 3. نحدث الحالة سحابياً إلى challenge_done.
-     * 4. نعرض واجهة انتظار تأكيد الزميل المسؤول.
-     */
-    private fun onChallengePassed() {
-        isChallengeSolved = true
-        showToast("🎉 تم تجاوز التحدي بنجاح!")
-
-        // 1. تخفيف الرنين محلياً
-        startService(Intent(this, AlarmSoundService::class.java).apply {
-            action = AlarmSoundService.ACTION_SOFTEN_ALARM
-        })
-
-        // إيقاف مفرض الصوت الأقصى
-        isVolumeEnforced = false
-        handler.removeCallbacks(volumeEnforcer)
-
-        // 2. تحديث الحالة سحابياً إلى challenge_done
-        updateDailyStatus("challenge_done")
-
-        // 3. إظهار واجهة تأكيد الاستيقاظ (اتصال + TOTP + استغاثة)
-        binding.apply {
-            layoutChallengeMath.visibility = View.GONE
-            layoutChallengeShake.visibility = View.GONE
-            layoutChallengeWord.visibility = View.GONE
-            layoutWaitingConfirmation.visibility = View.VISIBLE
-        }
-    }
-
-    /**
-     * إرسال نداء استغاثة سحابي عاجل وتخفيف الصوت محلياً
-     */
-    private fun triggerEmergencySos() {
-        // 1. تحديث الحالة سحابياً إلى panic (لتطلق السيرفرات إشعارات FCM عالية الأولوية)
-        updateDailyStatus("panic")
-
-        // 2. تخفيف المنبه محلياً لتمكين المستخدم من سماع المكالمات الهاتفية من أصدقائه
-        startService(Intent(this, AlarmSoundService::class.java).apply {
-            action = AlarmSoundService.ACTION_SOFTEN_ALARM
-        })
-
-        // إيقاف مفرض الصوت الأقصى
-        isVolumeEnforced = false
-        handler.removeCallbacks(volumeEnforcer)
-
-        // 3. تحويل الشاشة إلى حالة انتظار الدعم
-        binding.apply {
-            layoutChallengeMath.visibility = View.GONE
-            layoutChallengeShake.visibility = View.GONE
-            layoutChallengeWord.visibility = View.GONE
-            
-            layoutWaitingConfirmation.visibility = View.VISIBLE
-            textWaitingDesc.text = "🚨 نداء الاستغاثة نشط! يرجى الانتظار، زملائك في الحلقة يحاولون الاتصال بك الآن لمساعدتك على الاستيقاظ."
-            btnSos.visibility = View.GONE
+    private fun verifyTotpCode() {
+        val userInput = binding.inputTotpCode.text.toString().replace(" ", "").trim()
+        if (userInput.length < 6) {
+            showToast("❌ يرجى إدخال رمز من 6 أرقام")
+            return
         }
 
-        showToast("🚨 تم إرسال نداء استغاثة عاجل لأعضاء الحلقة")
-    }
+        val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        val halqaId = prefs.getString("current_halqa_id", null)
+        if (halqaId.isNullOrEmpty()) {
+            showToast("❌ خطأ: لم يتم العثور على معرّف الحلقة")
+            return
+        }
 
-    /**
-     * مراقبة السجل السحابي للاستيقاظ - يغلق المنبه فوراً إذا كتب الزميل المسؤول "awake"
-     */
-    private fun startObservingDailyRecord(halqaId: String) {
-        val uid = AuthManager.getUserId() ?: return
-        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-        dailyRecordRef = FirebaseDatabase.getInstance()
-            .getReference("dailyRecords")
-            .child(halqaId)
-            .child(currentDate)
-            .child(uid)
-
-        dailyRecordListener = dailyRecordRef?.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (snapshot.exists()) {
-                    val status = snapshot.child("status").value as? String
-                    if (status == "awake" && isChallengeSolved) {
-                        showToast("✅ تم تأكيد استيقاظك سحابياً من زميلك المسؤول!")
-                        dismissAlarm(status = "awake")
-                    }
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                android.util.Log.e(TAG, "Database listener cancelled", error.toException())
-            }
-        })
-    }
-
-    /**
-     * جلب بيانات المسؤول للاتصال به
-     */
-    private fun loadPartnerDetails(halqaId: String) {
-        val uid = AuthManager.getUserId() ?: return
-        FirebaseDatabase.getInstance().getReference("halqas").child(halqaId)
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    if (snapshot.exists()) {
-                        val membersSnap = snapshot.child("members")
-                        
-                        var supervisorUid: String? = null
-                        var supervisorName = "المسؤول"
-                        
-                        // البحث عن العضو المسؤول عن إيقاظ المستخدم الحالي
-                        for (member in membersSnap.children) {
-                            val respFor = member.child("responsibleForUserId").value as? String
-                            if (respFor == uid && member.key != uid) {
-                                supervisorUid = member.key
-                                supervisorName = member.child("displayName").value as? String ?: "المسؤول"
-                                break
-                            }
-                        }
-                        
-                        // إذا لم يتم العثور على مسؤول مباشر، نأخذ أول عضو آخر في الحلقة
-                        if (supervisorUid == null) {
-                            for (member in membersSnap.children) {
-                                if (member.key != uid) {
-                                    supervisorUid = member.key
-                                    supervisorName = member.child("displayName").value as? String ?: "المسؤول"
-                                    break
-                                }
-                            }
-                        }
-                        
-                        if (supervisorUid != null) {
-                            binding.textWaitingDesc.text = "بانتظار تأكيد استيقاظك من زميلك المسؤول: $supervisorName"
-                            
-                            // جلب رقم الهاتف من ملف تعريف المستخدم المسؤول إن وجد
-                            FirebaseDatabase.getInstance().getReference("users").child(supervisorUid)
-                                .addListenerForSingleValueEvent(object : ValueEventListener {
-                                    override fun onDataChange(userSnap: DataSnapshot) {
-                                        val phone = userSnap.child("phone").value as? String 
-                                            ?: userSnap.child("phoneNumber").value as? String 
-                                            ?: ""
-                                        binding.btnCallPartner.setOnClickListener {
-                                            launchDialer(phone)
-                                        }
-                                    }
-                                    override fun onCancelled(error: DatabaseError) {
-                                        binding.btnCallPartner.setOnClickListener {
-                                            launchDialer("")
-                                        }
-                                    }
-                                })
-                        } else {
-                            binding.textWaitingDesc.text = "بانتظار تأكيد استيقاظك من زميلك المسؤول..."
-                            binding.btnCallPartner.setOnClickListener {
-                                launchDialer("")
-                            }
-                        }
-                    } else {
-                        binding.btnCallPartner.setOnClickListener {
-                            launchDialer("")
-                        }
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    binding.btnCallPartner.setOnClickListener {
-                        launchDialer("")
-                    }
-                }
-            })
+        if (viewModel.verifyTotpCode(userInput, halqaId)) {
+            showToast("✅ رمز الطوارئ صحيح! تم إلغاء قفل المنبه.")
+            viewModel.dismissAlarm("awake")
+        } else {
+            showToast("❌ رمز الطوارئ غير صحيح، حاول مجدداً")
+        }
     }
 
     private fun launchDialer(phoneNumber: String) {
@@ -566,7 +429,6 @@ class AlarmRingingActivity : AppCompatActivity() {
 
             val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as android.app.KeyguardManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && keyguardManager.isKeyguardLocked) {
-                // فك قفل الشاشة برمجياً لتمكين لوحة الاتصال من الظهور فوق شاشة القفل
                 keyguardManager.requestDismissKeyguard(this, object : android.app.KeyguardManager.KeyguardDismissCallback() {
                     override fun onDismissSucceeded() {
                         super.onDismissSucceeded()
@@ -586,43 +448,11 @@ class AlarmRingingActivity : AppCompatActivity() {
                 startActivity(dialIntent)
             }
 
-            // بدء فحص حارس المكالمات للتأكد من خروج المستخدم من لوحة الاتصال أو انتهاء مكالمته
             handler.removeCallbacks(dialerWatchdog)
             handler.postDelayed(dialerWatchdog, 4000)
         } catch (e: Exception) {
             isLaunchingDialer = false
             showToast("❌ تعذر فتح تطبيق الاتصال")
-        }
-    }
-
-    private fun updateDailyStatus(status: String) {
-        val uid = AuthManager.getUserId()
-        val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val halqaId = prefs.getString("current_halqa_id", null)
-
-        if (!uid.isNullOrEmpty() && !halqaId.isNullOrEmpty()) {
-            val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-            val recordRef = FirebaseDatabase.getInstance()
-                .getReference("dailyRecords")
-                .child(halqaId)
-                .child(currentDate)
-                .child(uid)
-
-            val isoDate = getIso8601String(Date())
-            val recordMap = mapOf(
-                "status" to status,
-                "updatedAt" to isoDate,
-                "alarmTime" to getIso8601String(Date(triggerTime)),
-                "challengeDoneAt" to isoDate
-            )
-
-            recordRef.setValue(recordMap)
-                .addOnSuccessListener {
-                    android.util.Log.d(TAG, "Successfully updated status: $status")
-                }
-                .addOnFailureListener {
-                    android.util.Log.e(TAG, "Failed to update status", it)
-                }
         }
     }
 
@@ -641,57 +471,6 @@ class AlarmRingingActivity : AppCompatActivity() {
         binding.textAlarmTime.startAnimation(fadeIn)
     }
 
-    private fun dismissAlarm(status: String) {
-        isAlarmDismissed = true
-        handler.removeCallbacks(volumeEnforcer)
-
-        // إيقاف خدمة الصوت والرنين تماماً
-        val stopIntent = Intent(this, AlarmSoundService::class.java).apply {
-            action = AlarmSoundService.ACTION_STOP_ALARM
-        }
-        startService(stopIntent)
-
-        // تحديث قاعدة البيانات
-        updateDailyStatus(status)
-
-        // إغلاق الشاشة
-        finish()
-    }
-
-    private fun getIso8601String(date: Date): String {
-        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
-        sdf.timeZone = TimeZone.getTimeZone("UTC")
-        return sdf.format(date)
-    }
-
-    private fun verifyTotpCode() {
-        val userInput = binding.inputTotpCode.text.toString().replace(" ", "").trim()
-        if (userInput.length < 6) {
-            showToast("❌ يرجى إدخال رمز من 6 أرقام")
-            return
-        }
-
-        val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val halqaId = prefs.getString("current_halqa_id", null)
-        if (halqaId.isNullOrEmpty()) {
-            showToast("❌ خطأ: لم يتم العثور على معرّف الحلقة")
-            return
-        }
-
-        // توليد الرمز المتوقع لليوم الحالي (نفس الطريقة المستخدمة في BackupCodeActivity)
-        val dateStr = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
-        val seed = (dateStr + halqaId).hashCode().absoluteValue
-        val expectedCode = (seed % 900000) + 100000 // رقم من 6 خانات
-
-        val userCodeVal = userInput.toIntOrNull()
-        if (userCodeVal == expectedCode) {
-            showToast("✅ رمز الطوارئ صحيح! تم إلغاء قفل المنبه.")
-            dismissAlarm(status = "awake")
-        } else {
-            showToast("❌ رمز الطوارئ غير صحيح، حاول مجدداً")
-        }
-    }
-
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
@@ -705,7 +484,7 @@ class AlarmRingingActivity : AppCompatActivity() {
         super.onResume()
         isLaunchingDialer = false
         handler.removeCallbacks(dialerWatchdog)
-        if (challengeType == "shake" && !isChallengeSolved) {
+        if (challengeType == "shake" && !viewModel.isChallengeSolved.value!!) {
             registerShakeSensor()
         }
     }
@@ -715,9 +494,6 @@ class AlarmRingingActivity : AppCompatActivity() {
         unregisterShakeSensor()
     }
 
-    /**
-     * عند محاولة المستخدم الخروج بزر Home — نعيد فتح الشاشة فوراً.
-     */
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         if (!isAlarmDismissed && !isLaunchingDialer) {
@@ -730,7 +506,6 @@ class AlarmRingingActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        // إذا أُغلقت الشاشة بشكل غير شرعي (مثلاً من Recent Apps)، نعيد فتحها
         if (!isAlarmDismissed && !isLaunchingDialer && !isFinishing) {
             val relaunchIntent = Intent(this, AlarmRingingActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
@@ -739,9 +514,6 @@ class AlarmRingingActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * حظر أزرار الصوت لمنع المستخدم من كتم الصوت باستخدام dispatchKeyEvent.
-     */
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (!isAlarmDismissed) {
             val keyCode = event.keyCode
@@ -751,7 +523,7 @@ class AlarmRingingActivity : AppCompatActivity() {
                 if (isVolumeEnforced) {
                     forceMaxAlarmVolume()
                 }
-                return true // استهلاك الحدث تماماً لمنع تغيير الصوت أو عرض مؤشر النظام
+                return true
             }
         }
         return super.dispatchKeyEvent(event)
@@ -760,9 +532,6 @@ class AlarmRingingActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacks(dialerWatchdog)
-        dailyRecordListener?.let {
-            dailyRecordRef?.removeEventListener(it)
-        }
         try {
             unregisterReceiver(homeButtonReceiver)
         } catch (e: Exception) {
@@ -772,6 +541,6 @@ class AlarmRingingActivity : AppCompatActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        // تجاهل الرجوع لمنع التخطي
+        // تجاهل الرجوع
     }
 }

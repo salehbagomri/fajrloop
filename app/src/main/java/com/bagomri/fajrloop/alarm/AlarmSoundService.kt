@@ -291,7 +291,7 @@ class AlarmSoundService : Service() {
             "FajrLoop::AlarmServiceWakeLock"
         ).also {
             it.setReferenceCounted(false)
-            it.acquire() // بدون timeout — الخدمة ستحرره عند الإيقاف
+            it.acquire(10 * 60 * 1000L) // أقصى حد 10 دقائق لضمان عدم استنزاف البطارية
         }
     }
 
