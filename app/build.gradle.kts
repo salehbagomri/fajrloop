@@ -62,6 +62,9 @@ dependencies {
     // Glide for image loading (user avatars)
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
+    // Adhan-Java for prayer time calculations
+    implementation(libs.adhan)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
