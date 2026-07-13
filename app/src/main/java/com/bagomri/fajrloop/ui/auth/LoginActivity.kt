@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.Toast
 import com.bagomri.fajrloop.ui.BaseActivity
 import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
@@ -73,11 +74,22 @@ class LoginActivity : BaseActivity() {
                 }
 
                 val credential = result.credential
-                if (credential is GoogleIdTokenCredential) {
-                    firebaseAuthWithGoogle(credential.idToken)
-                } else {
-                    setLoading(false)
-                    showToast("نوع تفويض غير مدعوم")
+                when {
+                    // الحالة 1: نوع مباشر (نادر)
+                    credential is GoogleIdTokenCredential -> {
+                        firebaseAuthWithGoogle(credential.idToken)
+                    }
+                    // الحالة 2: CustomCredential يلف GoogleIdToken — الأكثر شيوعاً!
+                    credential is CustomCredential &&
+                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL -> {
+                        val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                        firebaseAuthWithGoogle(googleCredential.idToken)
+                    }
+                    else -> {
+                        setLoading(false)
+                        Log.w("LoginActivity", "Unexpected credential type: ${credential::class.simpleName}")
+                        showToast("نوع تفويض غير مدعوم")
+                    }
                 }
 
             } catch (e: TimeoutCancellationException) {
