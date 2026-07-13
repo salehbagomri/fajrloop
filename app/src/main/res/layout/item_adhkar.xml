@@ -74,7 +74,8 @@
                 android:backgroundTint="#22FFD700"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackgroundBorderless">
+                android:clipToOutline="true"
+                android:foreground="?android:attr/selectableItemBackground">
 
                 <TextView
                     android:id="@+id/text_counter_number"
