@@ -251,6 +251,16 @@ class AlarmRingingActivity : AppCompatActivity() {
             btnSubmitTotp.setOnClickListener {
                 verifyTotpCode()
             }
+
+            btnSnooze.setOnClickListener {
+                val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+                val halqaId = prefs.getString("current_halqa_id", null)
+                if (!halqaId.isNullOrEmpty()) {
+                    viewModel.triggerSnooze(halqaId)
+                } else {
+                    showToast("حدث خطأ في تحديد الحلقة")
+                }
+            }
         }
     }
 
@@ -268,6 +278,7 @@ class AlarmRingingActivity : AppCompatActivity() {
                     layoutChallengeMath.visibility = View.GONE
                     layoutChallengeShake.visibility = View.GONE
                     layoutChallengeWord.visibility = View.GONE
+                    btnSnooze.visibility = View.GONE
                     layoutWaitingConfirmation.visibility = View.VISIBLE
                 }
             }
@@ -285,12 +296,24 @@ class AlarmRingingActivity : AppCompatActivity() {
                     layoutChallengeMath.visibility = View.GONE
                     layoutChallengeShake.visibility = View.GONE
                     layoutChallengeWord.visibility = View.GONE
+                    btnSnooze.visibility = View.GONE
                     
                     layoutWaitingConfirmation.visibility = View.VISIBLE
                     textWaitingDesc.text = "🚨 نداء الاستغاثة نشط! يرجى الانتظار، زملائك في الحلقة يحاولون الاتصال بك الآن لمساعدتك على الاستيقاظ."
                     btnSos.visibility = View.GONE
                 }
                 showToast("🚨 تم إرسال نداء استغاثة عاجل لأعضاء الحلقة")
+            }
+        }
+
+        viewModel.snoozeCountLeft.observe(this) { count ->
+            val isSolved = viewModel.isChallengeSolved.value == true
+            val isPanic = viewModel.isPanicActive.value == true
+            if (count > 0 && !isSolved && !isPanic) {
+                binding.btnSnooze.visibility = View.VISIBLE
+                binding.btnSnooze.text = "غفوة (متبقي: $count) ⏰"
+            } else {
+                binding.btnSnooze.visibility = View.GONE
             }
         }
 
@@ -504,13 +527,28 @@ class AlarmRingingActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        if (!isAlarmDismissed && !isLaunchingDialer && !isFinishing) {
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus && !isAlarmDismissed && !isLaunchingDialer) {
             val relaunchIntent = Intent(this, AlarmRingingActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
             }
             startActivity(relaunchIntent)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (!isAlarmDismissed && !isLaunchingDialer && !isFinishing) {
+            try {
+                val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+                activityManager.moveTaskToFront(taskId, android.app.ActivityManager.MOVE_TASK_WITH_HOME)
+            } catch (e: Exception) {
+                val relaunchIntent = Intent(this, AlarmRingingActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                }
+                startActivity(relaunchIntent)
+            }
         }
     }
 

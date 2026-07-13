@@ -38,6 +38,9 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
     private val _dismissFinished = MutableLiveData(false)
     val dismissFinished: LiveData<Boolean> = _dismissFinished
 
+    private val _snoozeCountLeft = MutableLiveData(2)
+    val snoozeCountLeft: LiveData<Int> = _snoozeCountLeft
+
     private var dailyRecordListener: ValueEventListener? = null
 
     // تحديات
@@ -64,6 +67,39 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
     fun dismissAlarm(status: String) {
         _isAlarmDismissed.value = true
         updateDailyStatus(status)
+        _dismissFinished.value = true
+    }
+
+    fun triggerSnooze(halqaId: String) {
+        val currentLeft = _snoozeCountLeft.value ?: 2
+        if (currentLeft <= 0) return
+
+        val newLeft = currentLeft - 1
+        _snoozeCountLeft.value = newLeft
+
+        val uid = userRepository.getUserId() ?: return
+        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val recordRef = FirebaseDatabase.getInstance()
+            .getReference("dailyRecords")
+            .child(halqaId)
+            .child(currentDate)
+            .child(uid)
+
+        // Increment snoozeCount in Firebase
+        val countRef = recordRef.child("snoozeCount")
+        val currentSnoozes = 2 - currentLeft
+        countRef.setValue(currentSnoozes + 1)
+
+        // Schedule snooze alarm 5 minutes later
+        val snoozeTimeMillis = System.currentTimeMillis() + 5 * 60 * 1000L
+        com.bagomri.fajrloop.alarm.AlarmScheduler.scheduleAlarm(getApplication(), snoozeTimeMillis, "غفوة صلاة الفجر")
+
+        // Save new snooze alarm time in preferences
+        val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        prefs.edit().putLong(AlarmPreferences.KEY_ALARM_TIME_MILLIS, snoozeTimeMillis).apply()
+
+        // Terminate active ringing activity
+        _isAlarmDismissed.value = true
         _dismissFinished.value = true
     }
 
@@ -125,6 +161,10 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
                     val status = snapshot.child("status").value as? String
                     if (status == "awake") {
                         dismissAlarm("awake")
+                    }
+                    val count = snapshot.child("snoozeCount").value as? Long
+                    if (count != null) {
+                        _snoozeCountLeft.value = (2 - count.toInt()).coerceAtLeast(0)
                     }
                 }
             }

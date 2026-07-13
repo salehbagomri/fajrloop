@@ -51,6 +51,9 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.firebase.messaging)
 
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
     // Google Sign-In & Credential Manager
     implementation(libs.play.services.auth)
     implementation(libs.androidx.credentials)

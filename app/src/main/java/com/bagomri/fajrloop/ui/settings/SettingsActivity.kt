@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
@@ -95,6 +96,18 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchVibrate.isChecked = prefs.getBoolean("vibrate_on_alarm", true)
         binding.switchMorningAdhkar.isChecked = prefs.getBoolean("show_adhkar_after_alarm", true)
         binding.switchDailyDua.isChecked = prefs.getBoolean("daily_dua_notification", true)
+
+        val alarmSoundChoice = prefs.getString("alarm_sound_choice", "default")
+        binding.textAlarmSoundValue.text = mapSoundChoiceToText(alarmSoundChoice)
+    }
+
+    private fun mapSoundChoiceToText(choice: String?): String {
+        return when (choice) {
+            "afasy" -> "الأذان بصوت الشيخ مشاري العفاسي"
+            "abdulbasit" -> "الأذان بصوت الشيخ عبدالباسط عبدالصمد"
+            "islamic" -> "نغمة إسلامية هادئة"
+            else -> "نغمة النظام الافتراضية"
+        }
     }
 
     private fun setupObservers() {
@@ -162,6 +175,10 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.rowChallenge.setOnClickListener {
             showChallengeSettingsDialog()
+        }
+
+        binding.rowAlarmSound.setOnClickListener {
+            showAlarmSoundDialog()
         }
 
         binding.rowAutostart.setOnClickListener {
@@ -684,5 +701,147 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private var previewPlayer: android.media.MediaPlayer? = null
+    private val previewHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var stopPreviewRunnable: Runnable? = null
+
+    private fun showAlarmSoundDialog() {
+        val currentChoice = prefs.getString("alarm_sound_choice", "default") ?: "default"
+
+        val dialog = BottomSheetDialog(this, R.style.DarkBottomSheetTheme)
+        val view = layoutInflater.inflate(R.layout.dialog_settings_alarm_sound, null)
+        dialog.setContentView(view)
+        dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundColor(Color.TRANSPARENT)
+
+        val btnAfasy = view.findViewById<LinearLayout>(R.id.btn_sound_afasy)
+        val btnAbdulbasit = view.findViewById<LinearLayout>(R.id.btn_sound_abdulbasit)
+        val btnIslamic = view.findViewById<LinearLayout>(R.id.btn_sound_islamic)
+        val btnDefault = view.findViewById<LinearLayout>(R.id.btn_sound_default)
+
+        val textAfasy = view.findViewById<TextView>(R.id.text_sound_afasy)
+        val textAbdulbasit = view.findViewById<TextView>(R.id.text_sound_abdulbasit)
+        val textIslamic = view.findViewById<TextView>(R.id.text_sound_islamic)
+        val textDefault = view.findViewById<TextView>(R.id.text_sound_default)
+
+        val playAfasy = view.findViewById<ImageView>(R.id.btn_preview_afasy)
+        val playAbdulbasit = view.findViewById<ImageView>(R.id.btn_preview_abdulbasit)
+        val playIslamic = view.findViewById<ImageView>(R.id.btn_preview_islamic)
+        val playDefault = view.findViewById<ImageView>(R.id.btn_preview_default)
+
+        var selectedChoice = currentChoice
+
+        fun updateUI() {
+            btnAfasy.setBackgroundResource(R.drawable.bg_code_container)
+            btnAbdulbasit.setBackgroundResource(R.drawable.bg_code_container)
+            btnIslamic.setBackgroundResource(R.drawable.bg_code_container)
+            btnDefault.setBackgroundResource(R.drawable.bg_code_container)
+
+            textAfasy.setTextColor(Color.parseColor("#B0B0C5"))
+            textAbdulbasit.setTextColor(Color.parseColor("#B0B0C5"))
+            textIslamic.setTextColor(Color.parseColor("#B0B0C5"))
+            textDefault.setTextColor(Color.parseColor("#B0B0C5"))
+
+            when (selectedChoice) {
+                "afasy" -> {
+                    btnAfasy.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
+                    textAfasy.setTextColor(Color.parseColor("#FFD700"))
+                }
+                "abdulbasit" -> {
+                    btnAbdulbasit.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
+                    textAbdulbasit.setTextColor(Color.parseColor("#FFD700"))
+                }
+                "islamic" -> {
+                    btnIslamic.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
+                    textIslamic.setTextColor(Color.parseColor("#FFD700"))
+                }
+                "default" -> {
+                    btnDefault.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
+                    textDefault.setTextColor(Color.parseColor("#FFD700"))
+                }
+            }
+        }
+
+        btnAfasy.setOnClickListener { selectedChoice = "afasy"; updateUI() }
+        btnAbdulbasit.setOnClickListener { selectedChoice = "abdulbasit"; updateUI() }
+        btnIslamic.setOnClickListener { selectedChoice = "islamic"; updateUI() }
+        btnDefault.setOnClickListener { selectedChoice = "default"; updateUI() }
+
+        val startPreview = { choice: String, previewBtn: ImageView ->
+            stopPreview()
+            previewBtn.setImageResource(android.R.drawable.ic_media_pause)
+
+            try {
+                previewPlayer = android.media.MediaPlayer().apply {
+                    val uri = when (choice) {
+                        "afasy" -> Uri.parse("android.resource://$packageName/${R.raw.adhan_afasy}")
+                        "abdulbasit" -> Uri.parse("android.resource://$packageName/${R.raw.adhan_abdulbasit}")
+                        "islamic" -> Uri.parse("android.resource://$packageName/${R.raw.islamic_tone}")
+                        else -> android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+                            ?: android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION)
+                    }
+                    setDataSource(this@SettingsActivity, uri)
+                    setAudioAttributes(
+                        android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+                    prepare()
+                    start()
+                }
+
+                stopPreviewRunnable = Runnable {
+                    stopPreview()
+                    previewBtn.setImageResource(android.R.drawable.ic_media_play)
+                }
+                previewHandler.postDelayed(stopPreviewRunnable!!, 5000)
+            } catch (e: Exception) {
+                showToast("خطأ في تشغيل المعاينة")
+                previewBtn.setImageResource(android.R.drawable.ic_media_play)
+            }
+        }
+
+        playAfasy.setOnClickListener { startPreview("afasy", playAfasy) }
+        playAbdulbasit.setOnClickListener { startPreview("abdulbasit", playAbdulbasit) }
+        playIslamic.setOnClickListener { startPreview("islamic", playIslamic) }
+        playDefault.setOnClickListener { startPreview("default", playDefault) }
+
+        updateUI()
+
+        view.findViewById<View>(R.id.btn_save_sound).setOnClickListener {
+            prefs.edit().putString("alarm_sound_choice", selectedChoice).apply()
+            binding.textAlarmSoundValue.text = mapSoundChoiceToText(selectedChoice)
+            showToast("تم تحديث نغمة المنبه")
+            stopPreview()
+            dialog.dismiss()
+        }
+
+        view.findViewById<View>(R.id.btn_close_sound).setOnClickListener {
+            stopPreview()
+            dialog.dismiss()
+        }
+        dialog.setOnDismissListener {
+            stopPreview()
+        }
+        dialog.show()
+    }
+
+    private fun stopPreview() {
+        stopPreviewRunnable?.let { previewHandler.removeCallbacks(it) }
+        stopPreviewRunnable = null
+        try {
+            previewPlayer?.let {
+                if (it.isPlaying) it.stop()
+                it.release()
+            }
+        } catch (e: Exception) {}
+        previewPlayer = null
+    }
+
+    override fun onDestroy() {
+        stopPreview()
+        super.onDestroy()
     }
 }

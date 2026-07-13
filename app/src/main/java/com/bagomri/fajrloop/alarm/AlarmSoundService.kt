@@ -17,6 +17,7 @@ import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.net.Uri
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.bagomri.fajrloop.R
@@ -162,8 +163,16 @@ class AlarmSoundService : Service() {
 
     private fun startRingtone() {
         try {
-            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+            val choice = prefs.getString("alarm_sound_choice", "default") ?: "default"
+
+            val alarmUri = when (choice) {
+                "afasy" -> Uri.parse("android.resource://$packageName/${R.raw.adhan_afasy}")
+                "abdulbasit" -> Uri.parse("android.resource://$packageName/${R.raw.adhan_abdulbasit}")
+                "islamic" -> Uri.parse("android.resource://$packageName/${R.raw.islamic_tone}")
+                else -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            }
 
             mediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(
@@ -306,10 +315,19 @@ class AlarmSoundService : Service() {
         super.onTaskRemoved(rootIntent)
         Log.d(TAG, "onTaskRemoved: Application task swiped away!")
 
-        // إذا كان المنبه نشطاً، أعد إطلاق شاشة الرنين وجدولة الـ Watchdog للتحقق الفوري
         val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
         val isAlarmActive = prefs.getBoolean("alarm_active_ringing", false)
         if (isAlarmActive) {
+            try {
+                val workRequest = androidx.work.OneTimeWorkRequestBuilder<AlarmReviveWorker>()
+                    .setInitialDelay(0, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+                androidx.work.WorkManager.getInstance(applicationContext).enqueue(workRequest)
+                Log.d(TAG, "Enqueued AlarmReviveWorker via WorkManager")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to enqueue AlarmReviveWorker", e)
+            }
+
             launchRingingScreen("صلاة الفجر", System.currentTimeMillis())
             AlarmReceiver.scheduleWatchdog(this)
         }
