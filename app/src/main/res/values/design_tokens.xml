@@ -20,11 +20,10 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
 
     <!--
-        الخط الرئيسي للتطبيق.
-        لتغيير الخط: غيّر قيمة هذا الـ string ليشير لملف XML في res/font/
-        الخطوط المتاحة: @font/pp_nm_arabic
+        الخط الرئيسي للتطبيق يُحكَم من themes.xml مباشرة:
+          <item name="fontFamily">@font/pp_nm_arabic</item>
+        لتغيير الخط: عدّل themes.xml فقط.
     -->
-    <string name="app_font_family">@font/pp_nm_arabic</string>
 
     <!--
         مضاعف حجم الخط العالمي (fontScale).
