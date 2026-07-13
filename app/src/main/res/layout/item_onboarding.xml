@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp">
+
+    <com.bagomri.fajrloop.ui.widget.GlassCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="32dp">
+
+            <!-- Huge beautiful Emoji graphic -->
+            <TextView
+                android:id="@+id/text_onboarding_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🌙"
+                android:textSize="80sp"
+                android:layout_marginBottom="24dp" />
+
+            <TextView
+                android:id="@+id/text_onboarding_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="مرحباً بك في حلقة الفجر"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/text_onboarding_desc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="تطبيق يساعدك وأصدقاءك على الاستيقاظ لأداء صلاة الفجر جماعة وبشكل مضمون"
+                android:textColor="#B0B0C5"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:lineSpacingExtra="6dp" />
+
+        </LinearLayout>
+    </com.bagomri.fajrloop.ui.widget.GlassCardView>
+
+</LinearLayout>

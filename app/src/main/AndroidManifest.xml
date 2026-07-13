@@ -62,6 +62,7 @@
         <activity
             android:name=".ui.main.MainActivity"
             android:exported="true"
+            android:theme="@style/Theme.FajrLoop.Starting"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -84,6 +85,11 @@
             android:windowSoftInputMode="adjustResize"
             android:launchMode="singleInstance"
             android:excludeFromRecents="true" />
+
+        <!-- شاشة الترحيب والتعريف -->
+        <activity
+            android:name=".ui.onboarding.OnboardingActivity"
+            android:exported="false" />
 
         <!-- نشاط طلب الصلاحيات (يُعرض عند أول تشغيل) -->
         <activity
@@ -109,6 +115,11 @@
             android:exported="false" />
         <activity
             android:name=".ui.settings.BackupCodeActivity"
+            android:exported="false" />
+
+        <!-- شاشة أذكار الصباح التفاعلية -->
+        <activity
+            android:name=".ui.adhkar.MorningAdhkarActivity"
             android:exported="false" />
 
         <!-- شات الحلقة -->

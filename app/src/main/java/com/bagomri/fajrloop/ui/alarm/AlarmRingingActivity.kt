@@ -49,6 +49,7 @@ class AlarmRingingActivity : AppCompatActivity() {
     private var isAlarmDismissed = false
     private var isVolumeEnforced = true
     private var isLaunchingDialer = false
+    private var isSnoozed = false
 
     private val homeButtonReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -256,6 +257,7 @@ class AlarmRingingActivity : AppCompatActivity() {
                 val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
                 val halqaId = prefs.getString("current_halqa_id", null)
                 if (!halqaId.isNullOrEmpty()) {
+                    isSnoozed = true
                     viewModel.triggerSnooze(halqaId)
                 } else {
                     showToast("حدث خطأ في تحديد الحلقة")
@@ -334,6 +336,16 @@ class AlarmRingingActivity : AppCompatActivity() {
                 startService(Intent(this, AlarmSoundService::class.java).apply {
                     action = AlarmSoundService.ACTION_STOP_ALARM
                 })
+
+                if (!isSnoozed) {
+                    val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+                    val showAdhkar = prefs.getBoolean("show_adhkar_after_alarm", true)
+                    if (showAdhkar) {
+                        val adhkarIntent = Intent(this, com.bagomri.fajrloop.ui.adhkar.MorningAdhkarActivity::class.java)
+                        startActivity(adhkarIntent)
+                    }
+                }
+
                 finish()
             }
         }

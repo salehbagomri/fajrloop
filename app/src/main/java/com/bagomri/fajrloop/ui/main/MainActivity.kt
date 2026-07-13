@@ -14,6 +14,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModelProvider
 import com.bagomri.fajrloop.R
 import com.bagomri.fajrloop.alarm.AlarmPreferences
@@ -58,7 +59,15 @@ class MainActivity : AppCompatActivity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        val onboardingPrefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val onboardingCompleted = onboardingPrefs.getBoolean("onboarding_completed", false)
+        if (!onboardingCompleted) {
+            startActivity(Intent(this, com.bagomri.fajrloop.ui.onboarding.OnboardingActivity::class.java))
+            finish()
+            return
+        }
 
         if (!AuthManager.isUserSignedIn()) {
             navigateToLogin()

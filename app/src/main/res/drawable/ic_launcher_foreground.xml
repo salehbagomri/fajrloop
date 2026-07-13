@@ -1,29 +1,33 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- أيقونة واجهة المشغّل (foreground) — هلال وقبة مسجد -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- خلفية دائرية -->
+    <!-- Crescent Moon (ذهبى) -->
     <path
-        android:fillColor="#1A0A2E"
-        android:pathData="M0,0 L108,0 L108,108 L0,108 Z" />
+        android:fillColor="#FFD700"
+        android:pathData="M 68 25 C 60 25 50 32 45 42 C 48 37 53 35 59 35 C 72 35 82 46 82 60 C 82 68 78 75 72 79 C 80 74 85 64 85 54 C 85 38 77 25 68 25 Z" />
 
-    <!-- قبة المسجد -->
+    <!-- Mosque structure (ذهبى) -->
     <path
-        android:fillColor="#E8D5A3"
-        android:pathData="M54,25 C47,25 41,31 41,38 L41,42 L34,42 L34,83 L74,83 L74,42 L67,42 L67,38 C67,31 61,25 54,25 Z" />
-
-    <!-- باب -->
+        android:fillColor="#FFD700"
+        android:pathData="M 54 44 C 50.7 44 48 46.7 48 50 L 48 52 C 44.7 52 42 54.7 42 58 L 42 60 L 38 60 L 38 80 L 70 80 L 70 60 L 66 60 L 66 58 C 66 54.7 63.3 52 60 52 L 60 50 C 60 46.7 57.3 44 54 44 Z" />
     <path
-        android:fillColor="#0D1117"
-        android:pathData="M49,83 L59,83 L59,65 C59,61.7 56.7,59 54,59 C51.3,59 49,61.7 49,65 Z" />
-
-    <!-- الهلال -->
+        android:fillColor="#07071B"
+        android:pathData="M 50 80 L 58 80 L 58 68 C 58 65.8 56.2 64 54 64 C 51.8 64 50 65.8 50 68 Z" />
     <path
-        android:fillColor="#E8D5A3"
-        android:pathData="M54,16 C50,16 47,19 46,22 C47,21 49,20 51,20 C55,20 58,23 58,27 C58,29 57,31 56,32 C59,30 61,27 61,23 C61,19 58,16 54,16 Z" />
-
+        android:fillColor="#07071B"
+        android:pathData="M 44 66 h 4 v 6 h -4 z" />
+    <path
+        android:fillColor="#07071B"
+        android:pathData="M 60 66 h 4 v 6 h -4 z" />
+    <!-- Left minaret -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M 34 56 L 34 80 L 38 80 L 38 56 L 36 52 Z" />
+    <!-- Right minaret -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M 74 56 L 74 80 L 70 80 L 70 56 L 72 52 Z" />
 </vector>
