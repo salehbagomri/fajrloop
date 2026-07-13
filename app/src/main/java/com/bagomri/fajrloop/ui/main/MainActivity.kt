@@ -20,6 +20,9 @@ import com.bagomri.fajrloop.R
 import com.bagomri.fajrloop.alarm.AlarmPreferences
 import com.bagomri.fajrloop.auth.AuthManager
 import com.bagomri.fajrloop.databinding.ActivityMainBinding
+import android.app.NotificationManager
+import android.os.PowerManager
+import androidx.core.app.NotificationManagerCompat
 import com.bagomri.fajrloop.ui.auth.LoginActivity
 import com.bagomri.fajrloop.ui.permissions.PermissionSetupActivity
 import com.bumptech.glide.Glide
@@ -71,6 +74,13 @@ class MainActivity : BaseActivity() {
 
         if (!AuthManager.isUserSignedIn()) {
             navigateToLogin()
+            return
+        }
+
+        // تحقق من الصلاحيات الحرجة قبل فتح الشاشة الرئيسية
+        if (!hasAllCriticalPermissions()) {
+            startActivity(Intent(this, PermissionSetupActivity::class.java))
+            finish()
             return
         }
 
@@ -704,6 +714,28 @@ class MainActivity : BaseActivity() {
     private fun navigateToLogin() {
         startActivity(Intent(this, LoginActivity::class.java))
         finish()
+    }
+
+    private fun hasAllCriticalPermissions(): Boolean {
+        // 1. الإشعارات (Android 13+)
+        val notifGranted = NotificationManagerCompat.from(this).areNotificationsEnabled()
+
+        // 2. المنبه الدقيق (Android 12+)
+        val exactAlarmGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (getSystemService(ALARM_SERVICE) as AlarmManager).canScheduleExactAlarms()
+        } else true
+
+        // 3. تجاهل تحسين البطارية
+        val pm = getSystemService(POWER_SERVICE) as PowerManager
+        val batteryGranted = pm.isIgnoringBatteryOptimizations(packageName)
+
+        // 4. الظهور فوق قفل الشاشة Full Screen Intent (Android 14+)
+        val fullScreenGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val nm = getSystemService(NotificationManager::class.java)
+            nm.canUseFullScreenIntent()
+        } else true
+
+        return notifGranted && exactAlarmGranted && batteryGranted && fullScreenGranted
     }
 
     private fun dpToPx(dp: Int): Int {

@@ -122,6 +122,7 @@ class PermissionSetupActivity : BaseActivity() {
             }
 
             btnDone.setOnClickListener {
+                startActivity(Intent(this@PermissionSetupActivity, com.bagomri.fajrloop.ui.main.MainActivity::class.java))
                 finish()
             }
         }
