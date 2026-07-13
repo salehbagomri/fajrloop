@@ -429,65 +429,79 @@ class MainActivity : BaseActivity() {
     }
 
     private fun showCreateHalqaDialog() {
-        val editText = android.widget.EditText(this).apply {
-            hint = "مثال: حلقة الفجر المباركة"
-            setTextColor(Color.WHITE)
-            setHintTextColor(Color.parseColor("#6B6B8A"))
-            gravity = Gravity.END
-            setPadding(32, 24, 32, 24)
+        val dialog = android.app.Dialog(this)
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_create_halqa)
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.9).toInt(),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        val inputName = dialog.findViewById<android.widget.EditText>(R.id.input_halqa_name)
+        val btnCancel = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_cancel)
+        val btnConfirm = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_confirm)
+
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
         }
-        AlertDialog.Builder(this)
-            .setTitle("إنشاء حلقة فجر")
-            .setMessage("أدخل اسماً يعبر عن حلقتكم.")
-            .setView(editText)
-            .setPositiveButton("إنشاء وتوليد كود الدعوة 🚀") { _, _ ->
-                val name = editText.text.toString().trim()
-                if (name.length < 3) {
-                    showToast("يجب أن يكون اسم الحلقة 3 أحرف على الأقل")
-                    return@setPositiveButton
-                }
-                com.bagomri.fajrloop.data.HalqaManager.createHalqa(name) { success, result ->
-                    if (success) {
-                        showToast("تم إنشاء الحلقة بنجاح! 🎉")
-                        com.bagomri.fajrloop.data.AnalyticsHelper.logHalqaCreated()
-                    } else {
-                        showToast("خطأ: $result")
-                    }
+
+        btnConfirm.setOnClickListener {
+            val name = inputName.text.toString().trim()
+            if (name.length < 3) {
+                showToast("يجب أن يكون اسم الحلقة 3 أحرف على الأقل")
+                return@setOnClickListener
+            }
+            dialog.dismiss()
+            com.bagomri.fajrloop.data.HalqaManager.createHalqa(name) { success, result ->
+                if (success) {
+                    showToast("تم إنشاء الحلقة بنجاح! 🎉")
+                    com.bagomri.fajrloop.data.AnalyticsHelper.logHalqaCreated()
+                } else {
+                    showToast("خطأ: $result")
                 }
             }
-            .setNegativeButton("إلغاء", null)
-            .show()
+        }
+
+        dialog.show()
     }
 
     private fun showJoinHalqaDialog() {
-        val editText = android.widget.EditText(this).apply {
-            hint = "مثال: FJR-A8B9"
-            setTextColor(Color.WHITE)
-            setHintTextColor(Color.parseColor("#6B6B8A"))
-            gravity = Gravity.CENTER
-            setPadding(32, 24, 32, 24)
+        val dialog = android.app.Dialog(this)
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_join_halqa)
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.9).toInt(),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        val inputCode = dialog.findViewById<android.widget.EditText>(R.id.input_invite_code)
+        val btnCancel = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_cancel)
+        val btnConfirm = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_confirm)
+
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
         }
-        AlertDialog.Builder(this)
-            .setTitle("انضم لصديقك 🔑")
-            .setMessage("أدخل كود الدعوة المكون من 4 رموز (مثال: FJR-A8B9)")
-            .setView(editText)
-            .setPositiveButton("تحقق وانضم للحلقة 🤝") { _, _ ->
-                val code = editText.text.toString().trim()
-                if (code.isEmpty()) {
-                    showToast("يرجى إدخال كود الدعوة")
-                    return@setPositiveButton
-                }
-                com.bagomri.fajrloop.data.HalqaManager.joinHalqa(code) { success, result ->
-                    if (success) {
-                        showToast("تم الانضمام بنجاح! 🎉")
-                        com.bagomri.fajrloop.data.AnalyticsHelper.logHalqaJoined()
-                    } else {
-                        showToast("خطأ: $result")
-                    }
+
+        btnConfirm.setOnClickListener {
+            val code = inputCode.text.toString().trim()
+            if (code.isEmpty()) {
+                showToast("يرجى إدخال كود الدعوة")
+                return@setOnClickListener
+            }
+            dialog.dismiss()
+            com.bagomri.fajrloop.data.HalqaManager.joinHalqa(code) { success, result ->
+                if (success) {
+                    showToast("تم الانضمام بنجاح! 🎉")
+                    com.bagomri.fajrloop.data.AnalyticsHelper.logHalqaJoined()
+                } else {
+                    showToast("خطأ: $result")
                 }
             }
-            .setNegativeButton("إلغاء", null)
-            .show()
+        }
+
+        dialog.show()
     }
 
     private fun checkAndRequestPermissions() {
