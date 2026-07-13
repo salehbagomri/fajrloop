@@ -51,6 +51,7 @@ class AlarmRingingActivity : AppCompatActivity() {
     private var isLaunchingDialer = false
     private var isSnoozed = false
     private var startRingingTime = 0L
+    private var adhkarLaunched = false   // منع تشغيل الأذكار مرتين
 
     private val homeButtonReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -358,7 +359,8 @@ class AlarmRingingActivity : AppCompatActivity() {
         }
 
         viewModel.dismissFinished.observe(this) { finished ->
-            if (finished) {
+            if (finished && !isFinishing && !adhkarLaunched) {
+                adhkarLaunched = true
                 isAlarmDismissed = true
                 handler.removeCallbacks(volumeEnforcer)
                 startService(Intent(this, AlarmSoundService::class.java).apply {
