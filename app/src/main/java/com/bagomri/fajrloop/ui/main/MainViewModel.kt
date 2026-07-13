@@ -23,13 +23,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val prayerTimesRepository = PrayerTimesRepository(application)
 
     // UI state LiveData
-    private val _userProfile = MutableLiveData<UserProfile?>()
+    private val _userProfile = MutableLiveData<UserProfile?>().apply {
+        val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        val name = prefs.getString("cached_user_display_name", null)
+        val photo = prefs.getString("cached_user_photo_url", "")
+        val halqaId = prefs.getString("current_halqa_id", "")
+        if (name != null) {
+            value = UserProfile(
+                displayName = name,
+                photoUrl = photo ?: "",
+                currentHalqaId = halqaId ?: ""
+            )
+        }
+    }
     val userProfile: LiveData<UserProfile?> = _userProfile
 
-    private val _halqaId = MutableLiveData<String?>()
+    private val _halqaId = MutableLiveData<String?>().apply {
+        val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        value = prefs.getString("current_halqa_id", null)
+    }
     val halqaId: LiveData<String?> = _halqaId
 
-    private val _halqaName = MutableLiveData<String>()
+    private val _halqaName = MutableLiveData<String>().apply {
+        val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        value = prefs.getString("current_halqa_name", "") ?: ""
+    }
     val halqaName: LiveData<String> = _halqaName
 
     private val _isCurrentUserAdmin = MutableLiveData<Boolean>()
@@ -38,10 +56,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _loopMembers = MutableLiveData<List<LoopMemberItem>>()
     val loopMembers: LiveData<List<LoopMemberItem>> = _loopMembers
 
-    private val _todaySummaryText = MutableLiveData<String>()
+    private val _todaySummaryText = MutableLiveData<String>().apply {
+        val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        value = prefs.getString("cached_today_summary_text", "") ?: ""
+    }
     val todaySummaryText: LiveData<String> = _todaySummaryText
 
-    private val _awakeCountText = MutableLiveData<String>()
+    private val _awakeCountText = MutableLiveData<String>().apply {
+        val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        value = prefs.getString("cached_awake_count_text", "") ?: ""
+    }
     val awakeCountText: LiveData<String> = _awakeCountText
 
     private val _friendWakeAlert = MutableLiveData<FriendWakeAlert?>()
@@ -80,7 +104,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 // مزامنة مع SharedPreferences
                 val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-                prefs.edit().putString("current_halqa_id", hId).apply()
+                val editor = prefs.edit()
+                editor.putString("current_halqa_id", hId)
+                if (profile != null) {
+                    editor.putString("cached_user_display_name", profile.displayName)
+                    editor.putString("cached_user_photo_url", profile.photoUrl)
+                } else {
+                    editor.remove("cached_user_display_name")
+                    editor.remove("cached_user_photo_url")
+                }
+                editor.apply()
             }
 
             halqaListener = halqaRepository.observeUserHalqa { snapshot ->
@@ -94,8 +127,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _friendWakeAlert.value = null
                     stopObservingDailyRecords()
 
-                    // مسح المعرف في SharedPreferences
-                    prefs.edit().putString("current_halqa_id", null).apply()
+                    // مسح المعرف والاسم والإحصائيات في SharedPreferences
+                    prefs.edit()
+                        .remove("current_halqa_id")
+                        .remove("current_halqa_name")
+                        .remove("cached_awake_count_text")
+                        .remove("cached_today_summary_text")
+                        .apply()
                 } else {
                     val name = snapshot.child("name").value as? String ?: "حلقة"
                     _halqaName.value = name
@@ -109,8 +147,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _isCurrentUserAdmin.value = isAdmin
 
                     val halqaId = snapshot.key!!
-                    // حفظ المعرف في SharedPreferences
-                    prefs.edit().putString("current_halqa_id", halqaId).apply()
+                    // حفظ المعرف والاسم في SharedPreferences
+                    prefs.edit()
+                        .putString("current_halqa_id", halqaId)
+                        .putString("current_halqa_name", name)
+                        .apply()
 
                     startObservingDailyRecords(halqaId, chain, membersSnap)
                 }
@@ -204,12 +245,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _friendWakeAlert.value = alertFriend
 
         val total = chain.size
-        _awakeCountText.value = "$awakeCount / $total"
-        if (awakeCount == total && total > 0) {
-            _todaySummaryText.value = "ما شاء الله! استيقظت الحلقة بالكامل 🎉"
+        val countText = "$awakeCount / $total"
+        _awakeCountText.value = countText
+        val summaryText = if (awakeCount == total && total > 0) {
+            "ما شاء الله! استيقظت الحلقة بالكامل 🎉"
         } else {
-            _todaySummaryText.value = "استيقظ $awakeCount من أصل $total أعضاء حتى الآن."
+            "استيقظ $awakeCount من أصل $total أعضاء حتى الآن."
         }
+        _todaySummaryText.value = summaryText
+
+        // حفظ في SharedPreferences للمرة القادمة
+        val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit()
+            .putString("cached_awake_count_text", countText)
+            .putString("cached_today_summary_text", summaryText)
+            .apply()
     }
 
     fun confirmFriendWake(friendUid: String, onResult: (Boolean, String?) -> Unit) {

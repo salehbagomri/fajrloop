@@ -705,9 +705,16 @@ class SettingsActivity : BaseActivity() {
             .setMessage("هل أنت متأكد من رغبتك في تسجيل الخروج من التطبيق؟")
             .setPositiveButton("خروج") { _, _ ->
                 com.bagomri.fajrloop.auth.FcmTokenManager.unregisterToken()
-                // مسح معرف الحلقة المخزن محلياً عند تسجيل الخروج
+                // مسح جميع بيانات الحلقة والمستخدم المخزنة محلياً عند تسجيل الخروج
                 val prefs = getSharedPreferences(com.bagomri.fajrloop.alarm.AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-                prefs.edit().remove("current_halqa_id").apply()
+                prefs.edit()
+                    .remove("current_halqa_id")
+                    .remove("current_halqa_name")
+                    .remove("cached_user_display_name")
+                    .remove("cached_user_photo_url")
+                    .remove("cached_awake_count_text")
+                    .remove("cached_today_summary_text")
+                    .apply()
                 
                 AuthManager.signOut()
                 val intent = Intent(this, LoginActivity::class.java)
