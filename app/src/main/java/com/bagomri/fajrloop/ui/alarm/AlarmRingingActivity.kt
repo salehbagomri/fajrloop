@@ -186,26 +186,46 @@ class AlarmRingingActivity : AppCompatActivity() {
             viewModel.loadPartnerDetails(halqaId)
         }
 
-        // التمرير التلقائي للأعلى حقول التركيز
-        binding.inputMathAnswer.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) {
-                binding.scrollView.postDelayed({
-                    binding.scrollView.smoothScrollTo(0, binding.cardChallengePanel.top + binding.inputMathAnswer.top)
-                }, 200)
-            }
-        }
-        binding.inputWordAnswer.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) {
-                binding.scrollView.postDelayed({
-                    binding.scrollView.smoothScrollTo(0, binding.cardChallengePanel.top + binding.inputWordAnswer.top)
-                }, 200)
-            }
-        }
-        binding.inputTotpCode.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) {
-                binding.scrollView.postDelayed({
-                    binding.scrollView.smoothScrollTo(0, binding.cardChallengePanel.top + binding.inputTotpCode.top)
-                }, 200)
+        // التمرير الذكي عند فتح لوحة المفاتيح — يظهر الإجابة + زر التحقق معاً
+        setupKeyboardAwareScroll()
+    }
+
+    /**
+     * يكشف ارتفاع لوحة المفاتيح عند فتحها ويُمرّر ScrollView تلقائياً
+     * ليظهر حقل الإجابة + زر التحقق فوق اللوحة مباشرة
+     */
+    private fun setupKeyboardAwareScroll() {
+        val rootView = binding.root
+        rootView.viewTreeObserver.addOnGlobalLayoutListener {
+            val rect = android.graphics.Rect()
+            rootView.getWindowVisibleDisplayFrame(rect)
+            val screenHeight = rootView.height
+            val keyboardHeight = screenHeight - rect.bottom
+
+            if (keyboardHeight > screenHeight * 0.15) {
+                // لوحة المفاتيح مفتوحة — نُمرّر لإظهار زر التحقق
+                val focusedView = currentFocus
+                if (focusedView != null) {
+                    // نحسب أين يجب التمرير: الزر المناسب بعد حقل الإجابة
+                    val targetView = when (focusedView.id) {
+                        R.id.input_math_answer -> binding.btnSubmitMath
+                        R.id.input_word_answer -> binding.btnSubmitWord
+                        R.id.input_totp_code   -> binding.btnSubmitTotp
+                        else -> null
+                    }
+                    if (targetView != null) {
+                        binding.scrollView.postDelayed({
+                            // نحسب موضع الزر بالنسبة للـ ScrollView
+                            val scrollPos = IntArray(2)
+                            targetView.getLocationInWindow(scrollPos)
+                            val rootPos = IntArray(2)
+                            binding.scrollView.getLocationInWindow(rootPos)
+                            // نُمرّر لأن يكون الزر ظاهراً فوق الكيبورد بهامش 32dp
+                            val targetY = binding.scrollView.scrollY + (scrollPos[1] - rootPos[1]) - 32
+                            binding.scrollView.smoothScrollTo(0, targetY)
+                        }, 150)
+                    }
+                }
             }
         }
     }
@@ -230,8 +250,7 @@ class AlarmRingingActivity : AppCompatActivity() {
             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
             WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
-            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
-            WindowManager.LayoutParams.FLAG_FULLSCREEN
+            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
         )
     }
 

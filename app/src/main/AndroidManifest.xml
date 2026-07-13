@@ -82,7 +82,8 @@
             android:noHistory="true"
             android:showOnLockScreen="true"
             android:turnScreenOn="true"
-            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.FajrLoop.AlarmRinging"
+            android:windowSoftInputMode="adjustResize|stateVisible"
             android:launchMode="singleInstance"
             android:excludeFromRecents="true" />
 

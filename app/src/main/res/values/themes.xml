@@ -35,9 +35,8 @@
         <item name="android:activityCloseExitAnimation">@anim/slide_out_right</item>
     </style>
 
-    <!-- ثيم شاشة الرنين (بدون ActionBar، ملء الشاشة) -->
+    <!-- ثيم شاشة الرنين (بدون ActionBar) -->
     <style name="Theme.FajrLoop.AlarmRinging" parent="Theme.FajrLoop">
-        <item name="android:windowFullscreen">true</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">@color/dark_bg</item>
     </style>
