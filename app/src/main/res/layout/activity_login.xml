@@ -1,113 +1,177 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<!--
+    activity_login.xml — شاشة تسجيل الدخول (تصميم احترافي فخم متناسق 100% مع هوية التطبيق البصرية)
+
+    الهوية البصرية الموحدة:
+    - الخلفية: #07071B
+    - تأثير الخلفية: AnimatedGradientView (الشعاع البنفسجي الدوار)
+    - ألوان النصوص والرموز: أبيض، ذهبي (#FFD700)، ونصوص ثانوية (#B0B0C5)
+    - زر تسجيل الدخول: متطابق مع هوية جوجل مع تأثير حواف زجاجية
+-->
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://tools.android.com/tools"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_alarm_gradient"
+    android:background="#07071B"
+    android:layoutDirection="rtl"
+    android:textDirection="rtl"
     tools:context=".ui.auth.LoginActivity">
 
-    <!-- خلفية النجوم المتلألئة أو طبقة التنعيم -->
+    <!-- ====== الخلفية المتحركة الموحدة للتطبيق ====== -->
+    <com.bagomri.fajrloop.ui.widget.AnimatedGradientView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- دوائر زخرفية خلفية خفيفة -->
     <View
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:background="@drawable/bg_mosque_glow"
+        android:alpha="0.05"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="-100dp"
+        android:layout_marginStart="-100dp" />
+
+    <!-- المحتوى الرئيسي للمسافة الكاملة -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#20000000" />
+        android:padding="24dp">
 
-    <!-- الشعار والاسم -->
-    <LinearLayout
-        android:id="@+id/layout_logo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="32dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/btn_google_signin"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_chainStyle="packed"
-        android:layout_marginBottom="48dp">
-
-        <!-- مسجد مذهب مقتبس من ic_mosque -->
-        <ImageView
-            android:layout_width="140dp"
-            android:layout_height="140dp"
-            android:src="@drawable/ic_mosque"
-            android:tint="#E8D5A3"
-            android:contentDescription="شعار التطبيق"
-            android:padding="8dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- حاوية الشعار والاسم والوصف -->
+        <LinearLayout
+            android:id="@+id/layout_logo"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="حلقة الفجر"
-            android:textSize="40sp"
-            android:textColor="#E8D5A3"
-            android:fontFamily="sans-serif-medium"
-            android:textStyle="bold"
-            android:letterSpacing="0.05"
-            android:layout_marginTop="16dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="FajrLoop"
-            android:textSize="18sp"
-            android:textColor="#8B949E"
-            android:letterSpacing="0.2"
-            android:fontFamily="sans-serif"
-            android:layout_marginTop="4dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="«استيقظوا لصلاة الفجر معاً بالمسؤولية المتبادلة»"
-            android:textSize="14sp"
-            android:textColor="#A8B2C1"
-            android:fontFamily="sans-serif"
-            android:layout_marginTop="24dp"
+            android:orientation="vertical"
             android:gravity="center"
-            android:lineSpacingExtra="4dp" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/card_signin"
+            app:layout_constraintVertical_chainStyle="spread_inside"
+            android:layout_marginTop="56dp"
+            android:layout_marginBottom="24dp">
 
-    </LinearLayout>
+            <!-- هالة مضيئة للشعار -->
+            <FrameLayout
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:layout_marginBottom="16dp">
 
-    <!-- زر تسجيل الدخول بواسطة جوجل -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_google_signin"
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:text="تسجيل الدخول بواسطة Google"
-        android:textSize="16sp"
-        android:textColor="#0D1117"
-        android:fontFamily="sans-serif-medium"
-        app:icon="@drawable/ic_google"
-        app:iconTint="@null"
-        app:iconGravity="textStart"
-        app:iconSize="24dp"
-        app:iconPadding="16dp"
-        app:backgroundTint="#FFFFFF"
-        app:cornerRadius="32dp"
-        android:layout_marginStart="36dp"
-        android:layout_marginEnd="36dp"
-        android:layout_marginBottom="48dp"
-        app:strokeColor="#15FFFFFF"
-        app:strokeWidth="2dp"
-        app:layout_constraintTop_toBottomOf="@id/layout_logo"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+                <View
+                    android:layout_width="160dp"
+                    android:layout_height="160dp"
+                    android:background="@drawable/bg_mosque_glow"
+                    android:alpha="0.8" />
 
-    <!-- مؤشر الانتظار المتطور -->
+                <ImageView
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:src="@drawable/ic_mosque"
+                    android:layout_gravity="center"
+                    android:contentDescription="شعار حلقة الفجر" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="حلقة الفجر"
+                android:textSize="36sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.02" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FajrLoop"
+                android:textSize="15sp"
+                android:textColor="#FFD700"
+                android:textStyle="bold"
+                android:letterSpacing="0.1"
+                android:fontFamily="sans-serif"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="«استيقظوا لصلاة الفجر معاً بالمسؤولية المتبادلة»"
+                android:textSize="14sp"
+                android:textColor="#B0B0C5"
+                android:fontFamily="sans-serif"
+                android:layout_marginTop="20dp"
+                android:gravity="center"
+                android:lineSpacingExtra="5dp" />
+        </LinearLayout>
+
+        <!-- كرت تسجيل الدخول Glassmorphism السفلي -->
+        <com.bagomri.fajrloop.ui.widget.GlassCardView
+            android:id="@+id/card_signin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="مرحباً بك في حلقة الفجر 👋"
+                    android:textSize="16sp"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="سجّل دخولك لحفظ إحصائياتك والاتصال بحلقتك سحابياً"
+                    android:textSize="12sp"
+                    android:textColor="#B0B0C5"
+                    android:gravity="center"
+                    android:layout_marginBottom="24dp" />
+
+                <!-- زر جوجل بالتصميم الحديث -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_google_signin"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="تسجيل الدخول بواسطة Google"
+                    android:textSize="15sp"
+                    android:textColor="#07071B"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    app:icon="@drawable/ic_google"
+                    app:iconTint="@null"
+                    app:iconGravity="textStart"
+                    app:iconSize="20dp"
+                    app:iconPadding="12dp"
+                    app:backgroundTint="#FFFFFF"
+                    app:cornerRadius="16dp"
+                    android:stateListAnimator="@null" />
+
+            </LinearLayout>
+        </com.bagomri.fajrloop.ui.widget.GlassCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- مؤشر الانتظار متناسق باللون الذهبي -->
     <ProgressBar
         android:id="@+id/progress_loading"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:indeterminateTint="#E8D5A3"
-        android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:indeterminateTint="#FFD700"
+        android:layout_gravity="center"
+        android:visibility="gone" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</FrameLayout>
