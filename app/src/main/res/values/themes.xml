@@ -12,9 +12,9 @@
         <item name="android:colorBackground">@color/dark_bg</item>
         <item name="colorOnBackground">@color/text_primary</item>
 
-        <!-- الخط الافتراضي (Noto Sans Arabic) -->
-        <item name="fontFamily">@font/noto_sans_arabic</item>
-        <item name="android:fontFamily">@font/noto_sans_arabic</item>
+        <!-- الخط الافتراضي (SF Vision) -->
+        <item name="fontFamily">@font/sf_vision</item>
+        <item name="android:fontFamily">@font/sf_vision</item>
 
         <!-- شريط الحالة شفاف -->
         <item name="android:statusBarColor">@android:color/transparent</item>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<font-family xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Regular (400) -->
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        android:font="@font/sf_vision_regular"
+        app:fontStyle="normal"
+        app:fontWeight="400"
+        app:font="@font/sf_vision_regular" />
+
+    <!-- Medium (500) -->
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="500"
+        android:font="@font/sf_vision_medium"
+        app:fontStyle="normal"
+        app:fontWeight="500"
+        app:font="@font/sf_vision_medium" />
+
+    <!-- Bold (700) -->
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="700"
+        android:font="@font/sf_vision_bold"
+        app:fontStyle="normal"
+        app:fontWeight="700"
+        app:font="@font/sf_vision_bold" />
+
+    <!-- Black (900) -->
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="900"
+        android:font="@font/sf_vision_black"
+        app:fontStyle="normal"
+        app:fontWeight="900"
+        app:font="@font/sf_vision_black" />
+</font-family>
