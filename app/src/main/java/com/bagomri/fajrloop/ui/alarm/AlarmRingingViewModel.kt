@@ -42,6 +42,8 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
     val snoozeCountLeft: LiveData<Int> = _snoozeCountLeft
 
     private var dailyRecordListener: ValueEventListener? = null
+    private var supervisorRecordListener: ValueEventListener? = null
+    private var supervisorUid: String? = null
 
     // تحديات
     private var scrambledWords = listOf(
@@ -57,6 +59,75 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
     fun onChallengePassed() {
         _isChallengeSolved.value = true
         updateDailyStatus("challenge_done")
+
+        // تحقق مما إذا كان المشرف (المسؤول) مستيقظاً بالفعل لحسم التأكيد التلقائي
+        val sUid = supervisorUid
+        val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val halqaId = prefs.getString("current_halqa_id", null)
+        if (!sUid.isNullOrEmpty() && !halqaId.isNullOrEmpty()) {
+            val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+            FirebaseDatabase.getInstance()
+                .getReference("dailyRecords")
+                .child(halqaId)
+                .child(currentDate)
+                .child(sUid)
+                .child("status")
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val status = snapshot.value as? String
+                        if (status == "challenge_done" || status == "awake") {
+                            checkAndAutoConfirm(halqaId, sUid)
+                        }
+                    }
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+        }
+    }
+
+    private fun startObservingSupervisorStatus(halqaId: String, sUid: String) {
+        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val supervisorRecordRef = FirebaseDatabase.getInstance()
+            .getReference("dailyRecords")
+            .child(halqaId)
+            .child(currentDate)
+            .child(sUid)
+
+        supervisorRecordListener = supervisorRecordRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    val status = snapshot.child("status").value as? String
+                    if (status == "challenge_done" || status == "awake") {
+                        checkAndAutoConfirm(halqaId, sUid)
+                    }
+                }
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
+
+    private fun checkAndAutoConfirm(halqaId: String, sUid: String) {
+        val isSolved = _isChallengeSolved.value == true
+        if (isSolved && _isAlarmDismissed.value != true) {
+            val uid = userRepository.getUserId() ?: return
+            val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+            val recordRef = FirebaseDatabase.getInstance()
+                .getReference("dailyRecords")
+                .child(halqaId)
+                .child(currentDate)
+                .child(uid)
+
+            val isoDate = getIso8601String(Date())
+            val recordMap = mapOf(
+                "status" to "awake",
+                "updatedAt" to isoDate,
+                "alarmTime" to isoDate,
+                "challengeDoneAt" to isoDate,
+                "confirmedBy" to sUid
+            )
+            recordRef.setValue(recordMap).addOnSuccessListener {
+                dismissAlarm("awake")
+            }
+        }
     }
 
     fun triggerEmergencySos() {
@@ -202,6 +273,9 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
                         }
                         
                         if (supervisorUid != null) {
+                            this@AlarmRingingViewModel.supervisorUid = supervisorUid
+                            startObservingSupervisorStatus(halqaId, supervisorUid)
+
                             FirebaseDatabase.getInstance().getReference("users").child(supervisorUid)
                                 .addListenerForSingleValueEvent(object : ValueEventListener {
                                     override fun onDataChange(userSnap: DataSnapshot) {
@@ -263,6 +337,20 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
                     .child(halqaId)
                     .child(currentDate)
                     .child(uid)
+                    .removeEventListener(it)
+            }
+        }
+        supervisorRecordListener?.let {
+            val sUid = supervisorUid
+            val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+            val halqaId = prefs.getString("current_halqa_id", null)
+            if (!sUid.isNullOrEmpty() && !halqaId.isNullOrEmpty()) {
+                val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                FirebaseDatabase.getInstance()
+                    .getReference("dailyRecords")
+                    .child(halqaId)
+                    .child(currentDate)
+                    .child(sUid)
                     .removeEventListener(it)
             }
         }
