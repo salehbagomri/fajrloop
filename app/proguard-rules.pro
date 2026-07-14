@@ -21,3 +21,10 @@
 # Keep Adhan calculations library
 -keep class com.batoulapps.adhan.** { *; }
 -keepclassmembers class com.batoulapps.adhan.** { *; }
+
+# Keep Jetpack WorkManager, Room, and Startup classes to prevent release startup crash
+-keep class androidx.work.** { *; }
+-keep class androidx.room.** { *; }
+-keep class androidx.startup.** { *; }
+-keep class androidx.sqlite.** { *; }
+
