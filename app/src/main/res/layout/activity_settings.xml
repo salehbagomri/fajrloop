@@ -863,6 +863,52 @@
                             app:tint="#6B6B8A" />
                     </LinearLayout>
 
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#1525254A" />
+
+                    <!-- سياسة الخصوصية وشروط الاستخدام -->
+                    <LinearLayout
+                        android:id="@+id/row_privacy_policy"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="16dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="سياسة الخصوصية وشروط الاستخدام"
+                                android:textSize="15sp"
+                                android:textColor="#FFFFFF"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="الاطلاع على سياسة الخصوصية وحماية البيانات وشروط الخدمة"
+                                android:textSize="12sp"
+                                android:textColor="#B0B0C5"
+                                android:layout_marginTop="2dp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_chevron_left"
+                            app:tint="#6B6B8A" />
+                    </LinearLayout>
+
                 </LinearLayout>
             </com.bagomri.fajrloop.ui.widget.GlassCardView>
 

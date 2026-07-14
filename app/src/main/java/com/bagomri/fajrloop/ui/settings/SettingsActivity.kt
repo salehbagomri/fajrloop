@@ -213,6 +213,11 @@ class SettingsActivity : BaseActivity() {
             startActivity(Intent(this, GuideActivity::class.java))
         }
 
+        binding.rowPrivacyPolicy.setOnClickListener {
+            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://salehbagomri.github.io/fajrloop-privacy/"))
+            startActivity(intent)
+        }
+
         binding.btnLogout.setOnClickListener {
             showLogoutConfirmationDialog()
         }
