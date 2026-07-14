@@ -107,6 +107,11 @@ class MainActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (AuthManager.isUserSignedIn() && !hasAllCriticalPermissions()) {
+            startActivity(Intent(this, PermissionSetupActivity::class.java))
+            finish()
+            return
+        }
         checkAndRequestPermissions()
         viewModel.startFajrCountdown()
     }
