@@ -50,8 +50,8 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
         Pair("ج ر ف", "فجر"),
         Pair("ة ا ل ص", "صلاة"),
         Pair("د ج س م", "مسجد"),
-        Pair("n ا م ي إ", "إيمان"),
-        Pair("n آ ر ق", "قرآن"),
+        Pair("ن ا م ي إ", "إيمان"),
+        Pair("ن آ ر ق", "قرآن"),
         Pair("ة ك م", "مكة"),
         Pair("ة ن ي د م", "مدينة")
     )

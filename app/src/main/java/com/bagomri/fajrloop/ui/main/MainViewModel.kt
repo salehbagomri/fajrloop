@@ -114,6 +114,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     editor.remove("cached_user_photo_url")
                 }
                 editor.apply()
+
+                // إعادة جدولة أو إلغاء المنبه فورياً عند تغيير الحلقة
+                startFajrCountdown()
             }
 
             halqaListener = halqaRepository.observeUserHalqa { snapshot ->
@@ -327,6 +330,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (config.triggerTimeMillis != targetAlarmTime) {
                 alarmRepository.saveAlarmConfig(config.copy(triggerTimeMillis = targetAlarmTime))
             }
+        } else {
+            alarmRepository.cancelAlarm()
         }
 
         countdownRunnable = object : Runnable {
