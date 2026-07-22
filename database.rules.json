@@ -19,37 +19,35 @@
     "halqas": {
       ".read": "auth != null",
       "$halqaId": {
-        // القراءة مسموحة لأعضاء هذه الحلقة (يمكن الإبقاء عليها أو إزالتها حيث الأب يمنح القراءة)
+        // القراءة مسموحة لأعضاء هذه الحلقة
         ".read": "auth != null && data.child('members').child(auth.uid).exists()",
         
         // الإنشاء مسموح لأي مستخدم مسجل
-        // التعديل مسموح لـ Admin الحلقة، أو عند إنشاء الحلقة، أو عند الانضمام/المغادرة (تغير حالة العضوية)
-        ".write": "auth != null && (!data.exists() || data.child('members').child(auth.uid).child('role').val() == 'admin' || newData.child('members').child(auth.uid).exists() != data.child('members').child(auth.uid).exists())",
+        // التعديل مسموح لـ Admin الحلقة، أو عند إنشاء الحلقة، أو عند حذفها، أو عند الانضمام/المغادرة (تغير حالة العضوية)
+        ".write": "auth != null && (!data.exists() || data.child('members').child(auth.uid).child('role').val() == 'admin' || (!newData.exists() && data.child('members').child(auth.uid).exists()) || (newData.child('members').child(auth.uid).exists() != data.child('members').child(auth.uid).exists()))",
         
-        // تعديل السلسلة مسموح لـ Admin أو في حال تغير حالة العضوية (الانضمام والمغادرة)
+        // تعديل السلسلة مسموح لـ Admin أو في حال تغير حالة العضوية (الانضمام والمغادرة) أو تفريغ الحلقة
         "chain": {
-          ".write": "auth != null && (data.parent().child('members').child(auth.uid).child('role').val() == 'admin' || newData.parent().child('members').child(auth.uid).exists() != data.parent().child('members').child(auth.uid).exists())"
+          ".write": "auth != null && (data.parent().child('members').child(auth.uid).child('role').val() == 'admin' || (!newData.exists() && data.parent().child('members').child(auth.uid).exists()) || (newData.parent().child('members').child(auth.uid).exists() != data.parent().child('members').child(auth.uid).exists()))"
         },
         
-        // تعديل قائمة الأعضاء مسموح لـ Admin أو في حال تغير حالة العضوية (الانضمام والمغادرة)
+        // تعديل قائمة الأعضاء مسموح لـ Admin أو في حال تغير حالة العضوية (الانضمام والمغادرة) أو تفريغ الحلقة
         "members": {
-          ".write": "auth != null && (data.parent().child('members').child(auth.uid).child('role').val() == 'admin' || newData.parent().child('members').child(auth.uid).exists() != data.parent().child('members').child(auth.uid).exists())",
+          ".write": "auth != null && (data.parent().child('members').child(auth.uid).child('role').val() == 'admin' || (!newData.exists() && data.parent().child('members').child(auth.uid).exists()) || (newData.parent().child('members').child(auth.uid).exists() != data.parent().child('members').child(auth.uid).exists()))",
           "$userId": {
-            ".write": "auth != null && (auth.uid == $userId || data.parent().parent().child('members').child(auth.uid).child('role').val() == 'admin')"
+            ".write": "auth != null && (auth.uid == $userId || data.parent().parent().child('members').child(auth.uid).child('role').val() == 'admin' || (!newData.parent().parent().exists() && data.parent().parent().child('members').child(auth.uid).exists()) || (newData.parent().parent().child('members').child(auth.uid).exists() != data.parent().parent().child('members').child(auth.uid).exists()))"
           }
         }
       }
     },
 
     // 3. عقدة المفتاح السري المشترك للحلقة (/halqaSecrets/{halqaId})
-    // مفصول أمنياً ويُكتب مرة واحدة فقط عند الإنشاء ويُمنع تعديله لاحقاً
     "halqaSecrets": {
       "$halqaId": {
         // القراءة مسموحة لأعضاء الحلقة فقط لحساب رموز TOTP
         ".read": "auth != null && root.child('halqas').child($halqaId).child('members').child(auth.uid).exists()",
         // يُكتب عند الإنشاء ويُحذف عند تفريغ الحلقة (يُمنع التعديل فقط)
-        // نستخدم newData.parent().parent() للتحقق من المجلد الجذر للبيانات الجديدة في نفس المعاملة الذرية عند الإنشاء
-        ".write": "auth != null && ((!data.exists() && newData.parent().parent().child('halqas').child($halqaId).child('createdBy').val() == auth.uid) || (!newData.exists() && root.child('halqas').child($halqaId).child('createdBy').val() == auth.uid))"
+        ".write": "auth != null && ((!data.exists() && newData.parent().parent().child('halqas').child($halqaId).child('createdBy').val() == auth.uid) || (!newData.exists() && (root.child('halqas').child($halqaId).child('createdBy').val() == auth.uid || root.child('halqas').child($halqaId).child('members').child(auth.uid).exists())))"
       }
     },
 

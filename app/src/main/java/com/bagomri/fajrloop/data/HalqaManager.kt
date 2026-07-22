@@ -235,8 +235,11 @@ object HalqaManager {
 
                                 val membersSnapshot = halqaSnapshot.child("members")
 
-                                // إذا كان هو العضو الوحيد، يتم حذف الحلقة بالكامل أمنياً
-                                if (currentChain.size <= 1) {
+                                // إزالة المستخدم الحالي من السلسلة
+                                currentChain.remove(uid)
+
+                                // إذا لم يتبقَ أي أعضاء في الحلقة، يتم حذفها وسرها بالكامل أمنياً
+                                if (currentChain.isEmpty()) {
                                     val updates = hashMapOf<String, Any?>()
                                     updates["/halqas/$halqaId"] = null
                                     updates["/halqaSecrets/$halqaId"] = null
@@ -249,9 +252,7 @@ object HalqaManager {
                                     return
                                 }
 
-                                // إذا كان الأعضاء متعددين، نقوم بإزالته وإعادة هيكلة الحلقة
-                                currentChain.remove(uid)
-
+                                // إذا كان هناك أعضاء متبقون، نقوم بإعادة هيكلة الحلقة
                                 val updatedMembers = mutableMapOf<String, Any>()
                                 var wasAdmin = false
 
@@ -277,7 +278,7 @@ object HalqaManager {
                                     }
                                 }
 
-                                // إعادة حساب الترتيب الدائري والمسؤوليات
+                                // إعادة حساب الترتيب الدائري والمسؤوليات للأعضاء المتبقين
                                 recalculateLoopResponsibility(currentChain, updatedMembers)
 
                                 // إجراء التحديث الذري
