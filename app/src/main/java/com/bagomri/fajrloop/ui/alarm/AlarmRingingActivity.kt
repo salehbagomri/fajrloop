@@ -1,34 +1,35 @@
 package com.bagomri.fajrloop.ui.alarm
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.media.AudioManager
-import android.view.KeyEvent
+import android.content.IntentFilter
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
-import android.view.View
+import android.view.KeyEvent
 import android.view.WindowManager
-import android.view.animation.AnimationUtils
 import android.widget.Toast
-import android.content.BroadcastReceiver
-import android.content.IntentFilter
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.bagomri.fajrloop.alarm.AlarmPreferences
+import com.bagomri.fajrloop.alarm.AlarmSoundService
+import com.bagomri.fajrloop.ui.BaseActivity
+import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.activity.OnBackPressedCallback
-import com.bagomri.fajrloop.ui.BaseActivity
-import androidx.lifecycle.ViewModelProvider
-import com.bagomri.fajrloop.R
-import com.bagomri.fajrloop.alarm.AlarmPreferences
-import com.bagomri.fajrloop.alarm.AlarmSoundService
-import com.bagomri.fajrloop.databinding.ActivityAlarmRingingBinding
 
 /**
- * AlarmRingingActivity — شاشة رنين المنبه (MVVM Refactored)
+ * AlarmRingingActivity — شاشة رنين المنبه الإلزامية (Jetpack Compose with LockScreen Enforcer)
  */
 class AlarmRingingActivity : BaseActivity() {
 
@@ -38,12 +39,11 @@ class AlarmRingingActivity : BaseActivity() {
         private const val TAG = "AlarmRingingActivity"
     }
 
-    private lateinit var binding: ActivityAlarmRingingBinding
-    private lateinit var viewModel: AlarmRingingViewModel
+    private val viewModel: AlarmRingingViewModel by viewModels()
+
     private var alarmLabel = "صلاة الفجر"
     private var triggerTime = 0L
 
-    // خصائص التحديات
     private var challengeType = "math"
     private var challengeDifficulty = "medium"
     private var isAlarmDismissed = false
@@ -51,14 +51,30 @@ class AlarmRingingActivity : BaseActivity() {
     private var isLaunchingDialer = false
     private var isSnoozed = false
     private var startRingingTime = 0L
-    private var adhkarLaunched = false   // منع تشغيل الأذكار مرتين
+    private var adhkarLaunched = false
+
+    // StateFlows for Compose UI
+    private val mathQuestionFlow = MutableStateFlow("")
+    private var mathAnswer = 0
+    private var mathSolvedCount = 0
+    private val mathTotalRequired = 3
+
+    private val scrambledWordFlow = MutableStateFlow("")
+    private var correctWord = ""
+
+    private val shakeCountFlow = MutableStateFlow(0)
+    private val shakeRequired = 30
+    private var lastShakeTime = 0L
+    private val shakeThreshold = 13.0f
+
+    private var sensorManager: SensorManager? = null
+    private var accelerometer: Sensor? = null
 
     private val homeButtonReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == Intent.ACTION_CLOSE_SYSTEM_DIALOGS) {
                 val reason = intent.getStringExtra("reason")
                 if (reason != null && (reason == "homekey" || reason == "recentapps")) {
-                    android.util.Log.d(TAG, "Home or Recents button pressed! reason=$reason")
                     if (!isAlarmDismissed) {
                         isLaunchingDialer = false
                         val relaunchIntent = Intent(context, AlarmRingingActivity::class.java).apply {
@@ -81,22 +97,10 @@ class AlarmRingingActivity : BaseActivity() {
         }
     }
 
-    /**
-     * 🔒 نظام القفل الذكي أثناء المكالمة:
-     *
-     * المنطق:
-     *  1. عند فتح تطبيق الهاتف → فترة سماح 3 ثوانٍ (لفتح الـ Dialer)
-     *  2. بعد فترة السماح: هل المكالمة نشطة؟
-     *     - نعم → انتظر حتى تنتهي (تحقق كل 2 ثانية)
-     *     - لا  → أعد المستخدم فوراً لشاشة التحدي
-     *  3. عند انتهاء المكالمة → أعد فوراً
-     *
-     * النتيجة: المستخدم يستطيع الاتصال فقط، لا يستطيع الهروب لأي تطبيق آخر.
-     */
     private var dialerLaunchTime = 0L
     private var wasInActiveCall = false
-    private val DIALER_GRACE_PERIOD_MS = 3000L  // 3 ثوانٍ سماح لفتح الـ Dialer
-    private val WATCHDOG_INTERVAL_MS = 2000L     // تحقق كل 2 ثانية
+    private val DIALER_GRACE_PERIOD_MS = 3000L
+    private val WATCHDOG_INTERVAL_MS = 2000L
 
     private val dialerWatchdog = object : Runnable {
         override fun run() {
@@ -111,25 +115,19 @@ class AlarmRingingActivity : BaseActivity() {
 
                 when {
                     isCallActive -> {
-                        // مكالمة نشطة → سجّل وانتظر انتهاءها
                         wasInActiveCall = true
                         handler.postDelayed(this, WATCHDOG_INTERVAL_MS)
                     }
                     wasInActiveCall -> {
-                        // المكالمة انتهت للتو → أعد المستخدم فوراً
-                        android.util.Log.d(TAG, "Call ended — bringing user back to alarm screen")
                         isLaunchingDialer = false
                         wasInActiveCall = false
                         bringActivityToFront()
                     }
                     elapsed > DIALER_GRACE_PERIOD_MS -> {
-                        // فترة السماح انتهت بدون مكالمة → أعد فوراً
-                        android.util.Log.d(TAG, "Dialer grace period expired — bringing user back")
                         isLaunchingDialer = false
                         bringActivityToFront()
                     }
                     else -> {
-                        // لا زلنا في فترة السماح → انتظر
                         handler.postDelayed(this, WATCHDOG_INTERVAL_MS)
                     }
                 }
@@ -137,9 +135,6 @@ class AlarmRingingActivity : BaseActivity() {
         }
     }
 
-    /**
-     * يُعيد شاشة المنبه للمقدمة بشكل موثوق
-     */
     private fun bringActivityToFront() {
         try {
             val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
@@ -152,22 +147,6 @@ class AlarmRingingActivity : BaseActivity() {
         }
     }
 
-    // تحدي الحساب
-    private var mathAnswer = 0
-    private var mathSolvedCount = 0
-    private val mathTotalRequired = 3
-
-    // تحدي الكلمات
-    private var correctWord = ""
-
-    // تحدي الهز
-    private var sensorManager: SensorManager? = null
-    private var accelerometer: Sensor? = null
-    private var shakeCount = 0
-    private val shakeRequired = 30
-    private var lastShakeTime = 0L
-    private val shakeThreshold = 13.0f
-
     private val sensorEventListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
             val x = event.values[0]
@@ -178,10 +157,9 @@ class AlarmRingingActivity : BaseActivity() {
                 val now = System.currentTimeMillis()
                 if (now - lastShakeTime > 250) {
                     lastShakeTime = now
-                    shakeCount++
-                    binding.textShakeCount.text = "$shakeCount / $shakeRequired"
-                    binding.progressShake.progress = shakeCount
-                    if (shakeCount >= shakeRequired) {
+                    val newCount = shakeCountFlow.value + 1
+                    shakeCountFlow.value = newCount
+                    if (newCount >= shakeRequired) {
                         unregisterShakeSensor()
                         viewModel.onChallengePassed()
                     }
@@ -196,20 +174,13 @@ class AlarmRingingActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         startRingingTime = System.currentTimeMillis()
 
-        binding = ActivityAlarmRingingBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        viewModel = ViewModelProvider(this)[AlarmRingingViewModel::class.java]
-
         alarmLabel = intent.getStringExtra(EXTRA_ALARM_LABEL) ?: "صلاة الفجر"
         triggerTime = intent.getLongExtra(EXTRA_TRIGGER_TIME, System.currentTimeMillis())
 
         forceMaxAlarmVolume()
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                // حظر زر الرجوع
-            }
+            override fun handleOnBackPressed() {}
         })
 
         handler.post(volumeEnforcer)
@@ -225,10 +196,8 @@ class AlarmRingingActivity : BaseActivity() {
         }
 
         loadChallengeSettings()
-        setupUI()
-        setupObservers()
-        startAnimations()
         setupChallenge()
+        setupObservers()
 
         val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
         val halqaId = prefs.getString("current_halqa_id", null)
@@ -238,46 +207,77 @@ class AlarmRingingActivity : BaseActivity() {
             viewModel.loadPartnerDetails(halqaId)
         }
 
-        // التمرير الذكي عند فتح لوحة المفاتيح — يظهر الإجابة + زر التحقق معاً
-        setupKeyboardAwareScroll()
-    }
+        setContent {
+            FajrLoopTheme {
+                val isSolved by viewModel.isChallengeSolvedFlow.collectAsState()
+                val isPanic by viewModel.isPanicActiveFlow.collectAsState()
+                val snoozeCount by viewModel.snoozeCountLeftFlow.collectAsState()
+                val supervisorName by viewModel.supervisorNameFlow.collectAsState()
+                val supervisorPhone by viewModel.supervisorPhoneFlow.collectAsState()
 
-    /**
-     * يكشف ارتفاع لوحة المفاتيح عند فتحها ويُمرّر ScrollView تلقائياً
-     * ليظهر حقل الإجابة + زر التحقق فوق اللوحة مباشرة
-     */
-    private fun setupKeyboardAwareScroll() {
-        val rootView = binding.root
-        rootView.viewTreeObserver.addOnGlobalLayoutListener {
-            val rect = android.graphics.Rect()
-            rootView.getWindowVisibleDisplayFrame(rect)
-            val screenHeight = rootView.height
-            val keyboardHeight = screenHeight - rect.bottom
+                val mathQuestion by mathQuestionFlow.collectAsState()
+                val scrambledWord by scrambledWordFlow.collectAsState()
+                val shakeCount by shakeCountFlow.collectAsState()
 
-            if (keyboardHeight > screenHeight * 0.15) {
-                // لوحة المفاتيح مفتوحة — نُمرّر لإظهار زر التحقق
-                val focusedView = currentFocus
-                if (focusedView != null) {
-                    // نحسب أين يجب التمرير: الزر المناسب بعد حقل الإجابة
-                    val targetView = when (focusedView.id) {
-                        R.id.input_math_answer -> binding.btnSubmitMath
-                        R.id.input_word_answer -> binding.btnSubmitWord
-                        R.id.input_totp_code   -> binding.btnSubmitTotp
-                        else -> null
+                val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                val timeStr = timeFormat.format(Date(triggerTime))
+
+                AlarmRingingScreen(
+                    alarmLabel = alarmLabel,
+                    alarmTimeFormatted = timeStr,
+                    challengeType = challengeType,
+                    challengeDifficulty = challengeDifficulty,
+                    mathQuestion = mathQuestion,
+                    scrambledWord = scrambledWord,
+                    shakeCount = shakeCount,
+                    shakeRequired = shakeRequired,
+                    isChallengeSolved = isSolved,
+                    isPanicActive = isPanic,
+                    snoozeCountLeft = snoozeCount,
+                    supervisorName = supervisorName,
+                    supervisorPhone = supervisorPhone,
+                    onMathSubmit = { inputVal ->
+                        if (inputVal == mathAnswer) {
+                            mathSolvedCount++
+                            if (mathSolvedCount >= mathTotalRequired) {
+                                viewModel.onChallengePassed()
+                            } else {
+                                setupMathQuestion()
+                            }
+                        } else {
+                            showToast("❌ إجابة خاطئة! ركز وحاول مجدداً")
+                        }
+                    },
+                    onWordSubmit = { inputWord ->
+                        if (inputWord.equals(correctWord, ignoreCase = true)) {
+                            viewModel.onChallengePassed()
+                        } else {
+                            showToast("❌ الكلمة غير صحيحة، حاول مجدداً")
+                        }
+                    },
+                    onTotpSubmit = { code ->
+                        verifyTotpCode(code)
+                    },
+                    onSosClick = {
+                        viewModel.triggerEmergencySos()
+                        com.bagomri.fajrloop.data.AnalyticsHelper.logEmergencyPanic()
+                    },
+                    onSnoozeClick = {
+                        val currentHalqa = prefs.getString("current_halqa_id", null)
+                        if (!currentHalqa.isNullOrEmpty()) {
+                            isSnoozed = true
+                            viewModel.triggerSnooze(currentHalqa)
+                        } else {
+                            showToast("حدث خطأ في تحديد الحلقة")
+                        }
+                    },
+                    onCallPartnerClick = { phone ->
+                        launchDialer(phone)
+                    },
+                    onConfirmWake = {
+                        viewModel.dismissAlarm("awake")
                     }
-                    if (targetView != null) {
-                        binding.scrollView.postDelayed({
-                            // نحسب موضع الزر بالنسبة للـ ScrollView
-                            val scrollPos = IntArray(2)
-                            targetView.getLocationInWindow(scrollPos)
-                            val rootPos = IntArray(2)
-                            binding.scrollView.getLocationInWindow(rootPos)
-                            // نُمرّر لأن يكون الزر ظاهراً فوق الكيبورد بهامش 32dp
-                            val targetY = binding.scrollView.scrollY + (scrollPos[1] - rootPos[1]) - 32
-                            binding.scrollView.smoothScrollTo(0, targetY)
-                        }, 150)
-                    }
-                }
+                )
             }
         }
     }
@@ -312,32 +312,27 @@ class AlarmRingingActivity : BaseActivity() {
         challengeDifficulty = prefs.getString(AlarmPreferences.KEY_CHALLENGE_DIFFICULTY, "medium") ?: "medium"
     }
 
-    private fun setupUI() {
-        binding.apply {
-            textAlarmLabel.text = alarmLabel
-            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-            textAlarmTime.text = timeFormat.format(Date(triggerTime))
-
-            btnSos.setOnClickListener {
-                viewModel.triggerEmergencySos()
-                com.bagomri.fajrloop.data.AnalyticsHelper.logEmergencyPanic()
+    private fun setupChallenge() {
+        when (challengeType) {
+            "shake" -> {
+                shakeCountFlow.value = 0
+                registerShakeSensor()
             }
-
-            btnSubmitTotp.setOnClickListener {
-                verifyTotpCode()
+            "word" -> {
+                val puzzle = viewModel.generateWordPuzzle()
+                correctWord = puzzle.second
+                scrambledWordFlow.value = puzzle.first
             }
-
-            btnSnooze.setOnClickListener {
-                val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-                val halqaId = prefs.getString("current_halqa_id", null)
-                if (!halqaId.isNullOrEmpty()) {
-                    isSnoozed = true
-                    viewModel.triggerSnooze(halqaId)
-                } else {
-                    showToast("حدث خطأ في تحديد الحلقة")
-                }
+            else -> {
+                setupMathQuestion()
             }
         }
+    }
+
+    private fun setupMathQuestion() {
+        val question = viewModel.generateMathQuestion(challengeDifficulty)
+        mathAnswer = question.second
+        mathQuestionFlow.value = question.first
     }
 
     private fun setupObservers() {
@@ -346,7 +341,7 @@ class AlarmRingingActivity : BaseActivity() {
                 showToast("🎉 تم تجاوز التحدي بنجاح!")
                 try {
                     val duration = (System.currentTimeMillis() - startRingingTime) / 1000
-                    com.bagomri.fajrloop.data.AnalyticsHelper.logChallengeSolved(challengeType ?: "unknown", "normal", duration)
+                    com.bagomri.fajrloop.data.AnalyticsHelper.logChallengeSolved(challengeType, "normal", duration)
                 } catch (e: Exception) {
                     android.util.Log.e(TAG, "Failed to log challenge_solved", e)
                 }
@@ -355,14 +350,6 @@ class AlarmRingingActivity : BaseActivity() {
                 })
                 isVolumeEnforced = false
                 handler.removeCallbacks(volumeEnforcer)
-
-                binding.apply {
-                    layoutChallengeMath.visibility = View.GONE
-                    layoutChallengeShake.visibility = View.GONE
-                    layoutChallengeWord.visibility = View.GONE
-                    btnSnooze.visibility = View.GONE
-                    layoutWaitingConfirmation.visibility = View.VISIBLE
-                }
             }
         }
 
@@ -373,39 +360,7 @@ class AlarmRingingActivity : BaseActivity() {
                 })
                 isVolumeEnforced = false
                 handler.removeCallbacks(volumeEnforcer)
-
-                binding.apply {
-                    layoutChallengeMath.visibility = View.GONE
-                    layoutChallengeShake.visibility = View.GONE
-                    layoutChallengeWord.visibility = View.GONE
-                    btnSnooze.visibility = View.GONE
-                    
-                    layoutWaitingConfirmation.visibility = View.VISIBLE
-                    textWaitingDesc.text = "🚨 نداء الاستغاثة نشط! يرجى الانتظار، زملائك في الحلقة يحاولون الاتصال بك الآن لمساعدتك على الاستيقاظ."
-                    btnSos.visibility = View.GONE
-                }
                 showToast("🚨 تم إرسال نداء استغاثة عاجل لأعضاء الحلقة")
-            }
-        }
-
-        viewModel.snoozeCountLeft.observe(this) { count ->
-            val isSolved = viewModel.isChallengeSolved.value == true
-            val isPanic = viewModel.isPanicActive.value == true
-            if (count > 0 && !isSolved && !isPanic) {
-                binding.btnSnooze.visibility = View.VISIBLE
-                binding.btnSnooze.text = "غفوة (متبقي: $count) ⏰"
-            } else {
-                binding.btnSnooze.visibility = View.GONE
-            }
-        }
-
-        viewModel.supervisorName.observe(this) { name ->
-            binding.textWaitingDesc.text = "بانتظار تأكيد استيقاظك من زميلك المسؤول: $name"
-        }
-
-        viewModel.supervisorPhone.observe(this) { phone ->
-            binding.btnCallPartner.setOnClickListener {
-                launchDialer(phone)
             }
         }
 
@@ -439,75 +394,6 @@ class AlarmRingingActivity : BaseActivity() {
         }
     }
 
-    private fun setupChallenge() {
-        binding.apply {
-            layoutChallengeMath.visibility = View.GONE
-            layoutChallengeShake.visibility = View.GONE
-            layoutChallengeWord.visibility = View.GONE
-            layoutWaitingConfirmation.visibility = View.GONE
-
-            when (challengeType) {
-                "shake" -> {
-                    layoutChallengeShake.visibility = View.VISIBLE
-                    textChallengeTitle.text = "تحدي هز الهاتف 📱"
-                    textChallengeSubtitle.text = "هز الهاتف 30 مرة متتالية بقوة لتنبيه جسمك"
-                    textShakeCount.text = "0 / $shakeRequired"
-                    progressShake.max = shakeRequired
-                    progressShake.progress = 0
-                    registerShakeSensor()
-                }
-                "word" -> {
-                    layoutChallengeWord.visibility = View.VISIBLE
-                    textChallengeTitle.text = "ترتيب الحروف 🧩"
-                    textChallengeSubtitle.text = "أعد كتابة الكلمة بشكل صحيح لتجاوز المنبه"
-                    
-                    val puzzle = viewModel.generateWordPuzzle()
-                    correctWord = puzzle.second
-                    textScrambledLetters.text = puzzle.first
-
-                    btnSubmitWord.setOnClickListener {
-                        val input = inputWordAnswer.text.toString().trim()
-                        if (input.equals(correctWord, ignoreCase = true)) {
-                            viewModel.onChallengePassed()
-                        } else {
-                            showToast("❌ الكلمة غير صحيحة، حاول مجدداً")
-                        }
-                    }
-                }
-                else -> { // math
-                    layoutChallengeMath.visibility = View.VISIBLE
-                    textChallengeTitle.text = "تحدي الرياضيات 🧮"
-                    textChallengeSubtitle.text = "حل 3 مسائل حسابية متتالية لإيقاظ عقلك"
-                    
-                    fun setupMathQuestion() {
-                        val question = viewModel.generateMathQuestion(challengeDifficulty)
-                        mathAnswer = question.second
-                        textMathQuestion.text = question.first
-                    }
-                    
-                    setupMathQuestion()
-
-                    btnSubmitMath.setOnClickListener {
-                        val inputStr = inputMathAnswer.text.toString().trim()
-                        val inputVal = inputStr.toIntOrNull()
-                        if (inputVal == mathAnswer) {
-                            mathSolvedCount++
-                            if (mathSolvedCount >= mathTotalRequired) {
-                                viewModel.onChallengePassed()
-                            } else {
-                                inputMathAnswer.setText("")
-                                textChallengeSubtitle.text = "أحسنت! حل المسألة ${mathSolvedCount + 1} من $mathTotalRequired"
-                                setupMathQuestion()
-                            }
-                        } else {
-                            showToast("❌ إجابة خاطئة! ركز وحاول مجدداً")
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private fun registerShakeSensor() {
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
@@ -518,8 +404,7 @@ class AlarmRingingActivity : BaseActivity() {
         sensorManager?.unregisterListener(sensorEventListener)
     }
 
-    private fun verifyTotpCode() {
-        val userInput = binding.inputTotpCode.text.toString().replace(" ", "").trim()
+    private fun verifyTotpCode(userInput: String) {
         if (userInput.length < 6) {
             showToast("❌ يرجى إدخال رمز من 6 أرقام")
             return
@@ -574,28 +459,12 @@ class AlarmRingingActivity : BaseActivity() {
                 startActivity(dialIntent)
             }
 
-            // بدء المراقب الذكي — يبدأ بعد ثانية واحدة ويتحقق كل 2 ثانية
             handler.removeCallbacks(dialerWatchdog)
             handler.postDelayed(dialerWatchdog, 1000)
         } catch (e: Exception) {
             isLaunchingDialer = false
             showToast("❌ تعذر فتح تطبيق الاتصال")
         }
-    }
-
-    private fun startAnimations() {
-        val pulseAnimation = AnimationUtils.loadAnimation(this, R.anim.pulse)
-        binding.imageMosque.startAnimation(pulseAnimation)
-
-        val glowAnimation = AnimationUtils.loadAnimation(this, R.anim.glow_pulse)
-        binding.viewMosqueGlow.startAnimation(glowAnimation)
-
-        val slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_fade)
-        binding.cardChallengePanel.startAnimation(slideUp)
-
-        val fadeIn = AnimationUtils.loadAnimation(this, android.R.anim.fade_in)
-        binding.textAlarmLabel.startAnimation(fadeIn)
-        binding.textAlarmTime.startAnimation(fadeIn)
     }
 
     private fun showToast(message: String) {
@@ -609,7 +478,6 @@ class AlarmRingingActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        // المستخدم عاد لشاشة المنبه — أوقف مراقبة المكالمة
         isLaunchingDialer = false
         wasInActiveCall = false
         handler.removeCallbacks(dialerWatchdog)
@@ -676,7 +544,5 @@ class AlarmRingingActivity : BaseActivity() {
     }
 
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        // تجاهل الرجوع
-    }
+    override fun onBackPressed() {}
 }
