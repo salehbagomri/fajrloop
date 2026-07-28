@@ -135,32 +135,19 @@ class MainActivity : BaseActivity() {
         viewModel.halqaId.observe(this) { hId ->
             currentActiveHalqaId = hId
             if (hId == null) {
-                binding.layoutHasHalqa.visibility = View.GONE
-                binding.cardNoHalqa.visibility = View.VISIBLE
                 binding.layoutQuickActionsInHalqa.visibility = View.GONE
                 binding.layoutQuickActionsNoHalqa.visibility = View.VISIBLE
                 binding.cardTodaySummary.visibility = View.GONE
                 binding.cardFriendWakeAlert.visibility = View.GONE
             } else {
-                binding.layoutHasHalqa.visibility = View.VISIBLE
-                binding.cardNoHalqa.visibility = View.GONE
                 binding.layoutQuickActionsInHalqa.visibility = View.VISIBLE
                 binding.layoutQuickActionsNoHalqa.visibility = View.GONE
                 binding.cardTodaySummary.visibility = View.VISIBLE
             }
         }
 
-        viewModel.halqaName.observe(this) { name ->
-            binding.textHalqaName.text = "حلقة: $name"
-        }
-
         viewModel.isCurrentUserAdmin.observe(this) { isAdmin ->
             isCurrentUserAdmin = isAdmin
-            binding.btnReorderChain.visibility = if (isAdmin) View.VISIBLE else View.GONE
-        }
-
-        viewModel.loopMembers.observe(this) { members ->
-            populateHorizontalLoopChain(members)
         }
 
         viewModel.todaySummaryText.observe(this) { summary ->
@@ -229,103 +216,7 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    private fun populateHorizontalLoopChain(members: List<LoopMemberItem>) {
-        binding.layoutLoopChain.removeAllViews()
-        val n = members.size
-        val currentUid = AuthManager.getUserId() ?: ""
 
-        for (i in 0 until n) {
-            val item = members[i]
-            val statusColor: String
-            val statusText: String
-            val statusIconRes: Int
-
-            when (item.status) {
-                "travel" -> {
-                    statusColor = "#3498DB"
-                    statusText = "مسافر ✈️"
-                    statusIconRes = R.drawable.ic_travel
-                }
-                "awake" -> {
-                    statusColor = "#2ECC71"
-                    statusText = "مستيقظ"
-                    statusIconRes = R.drawable.ic_circle_check
-                }
-                "challenge_done" -> {
-                    statusColor = "#FFD700"
-                    statusText = "حل التحدي"
-                    statusIconRes = R.drawable.ic_circle_warning
-                }
-                "panic" -> {
-                    statusColor = "#E74C3C"
-                    statusText = "استغاثة"
-                    statusIconRes = R.drawable.ic_circle_warning
-                }
-                "ringing" -> {
-                    statusColor = "#B57CFF"
-                    statusText = "يرن المنبه"
-                    statusIconRes = R.drawable.ic_alarm_notification
-                }
-                "missed" -> {
-                    statusColor = "#6B6B8A"
-                    statusText = "فاته الفجر"
-                    statusIconRes = R.drawable.ic_alarm_off
-                }
-                else -> {
-                    statusColor = "#B0B0C5"
-                    statusText = "نائم"
-                    statusIconRes = R.drawable.ic_circle_warning
-                }
-            }
-
-            val itemView = layoutInflater.inflate(R.layout.item_loop_member, binding.layoutLoopChain, false)
-            val imgAvatar = itemView.findViewById<de.hdodenhof.circleimageview.CircleImageView>(R.id.image_loop_avatar)
-            val imgStatus = itemView.findViewById<android.widget.ImageView>(R.id.image_loop_status_icon)
-            val txtName = itemView.findViewById<android.widget.TextView>(R.id.text_loop_member_name)
-            val txtStatus = itemView.findViewById<android.widget.TextView>(R.id.text_loop_member_status)
-
-            txtName.text = item.displayName.split(" ").first()
-            txtStatus.text = statusText
-            txtStatus.setTextColor(Color.parseColor(statusColor))
-            imgAvatar.borderColor = Color.parseColor(statusColor)
-
-            if (item.photoUrl.isNotEmpty()) {
-                Glide.with(this)
-                    .load(item.photoUrl)
-                    .circleCrop()
-                    .placeholder(R.drawable.ic_default_avatar)
-                    .into(imgAvatar)
-            } else {
-                imgAvatar.setImageResource(R.drawable.ic_default_avatar)
-            }
-
-            imgStatus.setImageResource(statusIconRes)
-            imgStatus.imageTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(statusColor))
-
-            if (item.userId == currentUid) {
-                txtName.setTextColor(Color.parseColor("#FFD700"))
-            } else {
-                txtName.setTextColor(Color.WHITE)
-            }
-
-            binding.layoutLoopChain.addView(itemView)
-
-            if (i < n - 1) {
-                val arrowView = android.widget.ImageView(this).apply {
-                    setImageResource(R.drawable.ic_loop_arrow)
-                    layoutParams = LinearLayout.LayoutParams(
-                        dpToPx(20),
-                        dpToPx(20)
-                    ).apply {
-                        gravity = Gravity.CENTER_VERTICAL
-                        marginStart = dpToPx(6)
-                        marginEnd = dpToPx(6)
-                    }
-                }
-                binding.layoutLoopChain.addView(arrowView)
-            }
-        }
-    }
 
     private fun setupSpiritualContent() {
         val dayIndex = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
@@ -395,41 +286,75 @@ class MainActivity : BaseActivity() {
             startActivity(Intent(this, com.bagomri.fajrloop.ui.stats.StatsActivity::class.java))
         }
         binding.cardActionInvite.setOnClickListener {
-            shareInviteCode()
+            showInviteDialog()
         }
-
-        binding.btnCreateHalqa.setOnClickListener { showCreateHalqaDialog() }
-        binding.btnJoinHalqa.setOnClickListener { showJoinHalqaDialog() }
 
         binding.cardActionCreateHalqa.setOnClickListener { showCreateHalqaDialog() }
         binding.cardActionJoinHalqa.setOnClickListener { showJoinHalqaDialog() }
         binding.cardActionStatsAlone.setOnClickListener {
             startActivity(Intent(this, com.bagomri.fajrloop.ui.stats.StatsActivity::class.java))
         }
-        binding.btnReorderChain.setOnClickListener {
-            showHalqaDetailsBottomSheet()
-        }
     }
 
-    private fun shareInviteCode() {
+    private fun showInviteDialog() {
         val halqaId = currentActiveHalqaId ?: run {
-            showToast("يرجى الانضمام لحلقة أولاً")
+            showToast("يرجى الانضمام لحلقة أولاً لعرض كود الدعوة")
             return
         }
         FirebaseDatabase.getInstance()
             .getReference("halqas").child(halqaId)
             .addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
+                    if (isFinishing || isDestroyed) return
                     val name = snapshot.child("name").value as? String ?: "حلقة الفجر"
                     val code = snapshot.child("inviteCode").value as? String ?: ""
-                    val shareText = "🌙 انضم لحلقة الفجر!\nاسم الحلقة: $name\nكود الدعوة: $code\nحمّل التطبيق لتستيقظ للفجر معي!"
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, shareText)
+
+                    if (code.isEmpty()) {
+                        showToast("لم يتوفر كود الدعوة للحلقة")
+                        return
                     }
-                    startActivity(Intent.createChooser(shareIntent, "مشاركة الكود"))
+
+                    val dialog = android.app.Dialog(this@MainActivity)
+                    dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+                    dialog.setContentView(R.layout.dialog_invite_code)
+                    dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+
+                    val txtHalqaName = dialog.findViewById<TextView>(R.id.txt_halqa_name)
+                    val txtInviteCode = dialog.findViewById<TextView>(R.id.txt_invite_code)
+                    val btnQuickCopy = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_quick_copy)
+                    val btnClose = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_close)
+                    val btnShare = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_share_invite)
+
+                    txtHalqaName?.text = "حلقة: $name"
+                    txtInviteCode?.text = code
+
+                    val copyAction = {
+                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        val clip = android.content.ClipData.newPlainText("كود دعوة حلقة الفجر", code)
+                        clipboard.setPrimaryClip(clip)
+                        showToast("تم نسخ كود الدعوة بنجاح! 📋")
+                    }
+
+                    btnQuickCopy?.setOnClickListener { copyAction() }
+                    txtInviteCode?.setOnClickListener { copyAction() }
+
+                    btnShare?.setOnClickListener {
+                        val shareText = "🌙 انضم لحلقة الفجر معي!\nاسم الحلقة: $name\nكود الدعوة: $code\n\nحمّل تطبيق FajrLoop واستيقظ للفجر معنا!"
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                        }
+                        startActivity(Intent.createChooser(shareIntent, "مشاركة كود الدعوة"))
+                    }
+
+                    btnClose?.setOnClickListener { dialog.dismiss() }
+
+                    dialog.show()
                 }
-                override fun onCancelled(error: DatabaseError) {}
+
+                override fun onCancelled(error: DatabaseError) {
+                    showToast("فشل في تحميل بيانات الحلقة")
+                }
             })
     }
 
