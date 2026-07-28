@@ -56,7 +56,6 @@ class AlarmRepository(private val context: Context) {
      * إلغاء المنبه النشط
      */
     fun cancelAlarm() {
-        prefs.edit().putBoolean(AlarmPreferences.KEY_ALARM_ENABLED, false).apply()
         AlarmScheduler.cancelAlarm(context)
     }
 }

@@ -39,11 +39,12 @@ class BootReceiver : BroadcastReceiver() {
             Context.MODE_PRIVATE
         )
 
-        val alarmEnabled = prefs.getBoolean(AlarmPreferences.KEY_ALARM_ENABLED, false)
+        val hasHalqa = !prefs.getString("current_halqa_id", null).isNullOrEmpty()
+        val alarmEnabled = hasHalqa && prefs.getBoolean(AlarmPreferences.KEY_ALARM_ENABLED, true)
         val alarmLabel = prefs.getString(AlarmPreferences.KEY_ALARM_LABEL, "صلاة الفجر") ?: "صلاة الفجر"
 
         if (!alarmEnabled) {
-            Log.d(TAG, "Alarm not enabled, skipping reschedule")
+            Log.d(TAG, "Alarm not enabled or no halqa, skipping reschedule")
             return
         }
 
