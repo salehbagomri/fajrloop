@@ -80,6 +80,7 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
 
     // Google Sign-In & Credential Manager
+    implementation(libs.play.services.auth)
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)

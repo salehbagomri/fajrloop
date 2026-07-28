@@ -5,16 +5,19 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import com.bagomri.fajrloop.ui.BaseActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
-import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.lifecycleScope
 import com.bagomri.fajrloop.auth.AuthManager
 import com.bagomri.fajrloop.databinding.ActivityLoginBinding
+import com.bagomri.fajrloop.ui.BaseActivity
 import com.bagomri.fajrloop.ui.main.MainActivity
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -24,7 +27,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 /**
- * LoginActivity — شاشة تسجيل الدخول باستخدام Credential Manager
+ * LoginActivity — شاشة تسجيل الدخول باستخدام Credential Manager مع fallback لـ GoogleSignInClient
  */
 class LoginActivity : BaseActivity() {
 
@@ -35,6 +38,32 @@ class LoginActivity : BaseActivity() {
 
     // Credential Manager — يُنشأ مرة واحدة فقط
     private val credentialManager by lazy { CredentialManager.create(this) }
+
+    // Launcher للطريقة التقليدية (GoogleSignInClient) لحل أي تعليق في أجهزة Honor / Huawei
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                val idToken = account?.idToken
+                if (!idToken.isNullOrEmpty()) {
+                    firebaseAuthWithGoogle(idToken)
+                } else {
+                    setLoading(false)
+                    showToast("فشل الحصول على رمز التفويض من قوقل")
+                }
+            } catch (e: ApiException) {
+                setLoading(false)
+                Log.e("LoginActivity", "Legacy Google Sign-In failed code: ${e.statusCode}", e)
+                showToast("فشل تسجيل الدخول عبر قوقل (رمز ${e.statusCode})")
+            }
+        } else {
+            setLoading(false)
+            Log.d("LoginActivity", "Legacy Google Sign-In cancelled (code: ${result.resultCode})")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,52 +97,59 @@ class LoginActivity : BaseActivity() {
 
         lifecycleScope.launch {
             try {
-                // مهلة 20 ثانية لمنع التعليق اللانهائي
-                val result = withTimeout(20_000L) {
+                // مهلة 3 ثوانٍ تجنباً لتعليق CredentialManager في أجهزة Honor/OEMs
+                val result = withTimeout(3_000L) {
                     credentialManager.getCredential(this@LoginActivity, request)
                 }
 
                 val credential = result.credential
                 when {
-                    // الحالة 1: نوع مباشر (نادر)
                     credential is GoogleIdTokenCredential -> {
                         firebaseAuthWithGoogle(credential.idToken)
                     }
-                    // الحالة 2: CustomCredential يلف GoogleIdToken — الأكثر شيوعاً!
                     credential is CustomCredential &&
                     credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL -> {
                         val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
                         firebaseAuthWithGoogle(googleCredential.idToken)
                     }
                     else -> {
-                        setLoading(false)
-                        Log.w("LoginActivity", "Unexpected credential type: ${credential::class.simpleName}")
-                        showToast("نوع تفويض غير مدعوم")
+                        Log.w("LoginActivity", "Unexpected credential type, falling back to legacy sign-in")
+                        startLegacyGoogleSignIn()
                     }
                 }
 
-            } catch (e: TimeoutCancellationException) {
-                // التعليق اللانهائي — غالباً مشكلة في Google Play Services أو الإنترنت
-                setLoading(false)
-                Log.e("LoginActivity", "Google Sign-In timed out", e)
-                showToast("انتهت المهلة — تأكد من الإنترنت وحداثة خدمات Google Play")
-
             } catch (e: GetCredentialCancellationException) {
-                // المستخدم ألغى عملية الاختيار
+                // المستخدم ألغى عملية الاختيار بنفسه
                 setLoading(false)
                 Log.d("LoginActivity", "Sign-In cancelled by user")
 
-            } catch (e: NoCredentialException) {
-                // لا توجد حسابات Google على الجهاز
-                setLoading(false)
-                Log.e("LoginActivity", "No credential available", e)
-                showToast("لم يُعثر على حساب Google. أضف حساباً في إعدادات الجهاز")
+            } catch (e: TimeoutCancellationException) {
+                // تعليق CredentialManager (شائع في أجهزة Honor) — الانتقال المباشر للطريقة التقليدية
+                Log.w("LoginActivity", "CredentialManager timed out, launching legacy GoogleSignInClient fallback")
+                startLegacyGoogleSignIn()
 
             } catch (e: Exception) {
-                setLoading(false)
-                Log.e("LoginActivity", "Sign-In error: ${e::class.simpleName}: ${e.message}", e)
-                showToast("خطأ: ${e.localizedMessage ?: e::class.simpleName}")
+                Log.w("LoginActivity", "CredentialManager failed (${e::class.simpleName}), launching legacy GoogleSignInClient fallback", e)
+                startLegacyGoogleSignIn()
             }
+        }
+    }
+
+    private fun startLegacyGoogleSignIn() {
+        try {
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(WEB_CLIENT_ID)
+                .requestEmail()
+                .build()
+            val googleSignInClient = GoogleSignIn.getClient(this, gso)
+            // إجبار إظهار منتقي الحسابات دائماً
+            googleSignInClient.signOut().addOnCompleteListener {
+                googleSignInLauncher.launch(googleSignInClient.signInIntent)
+            }
+        } catch (e: Exception) {
+            setLoading(false)
+            Log.e("LoginActivity", "Failed to start legacy Google Sign-In", e)
+            showToast("خطأ أثناء فتح حسابات قوقل: ${e.localizedMessage}")
         }
     }
 
