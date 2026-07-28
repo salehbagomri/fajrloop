@@ -87,12 +87,7 @@ class MainActivity : BaseActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // تخصيص لون خلفية وحدود كرت إحصائيات المستيقظين باللون الأخضر الشفاف وتقليل زواياه لـ 12dp
-        binding.cardAwakeBadge.setCornerRadiusDp(12f)
-        binding.cardAwakeBadge.setCustomBgAndBorder(
-            Color.argb(30, 0x2E, 0xCC, 0x71),
-            Color.argb(102, 0x2E, 0xCC, 0x71)
-        )
+
 
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
@@ -137,25 +132,15 @@ class MainActivity : BaseActivity() {
             if (hId == null) {
                 binding.layoutQuickActionsInHalqa.visibility = View.GONE
                 binding.layoutQuickActionsNoHalqa.visibility = View.VISIBLE
-                binding.cardTodaySummary.visibility = View.GONE
                 binding.cardFriendWakeAlert.visibility = View.GONE
             } else {
                 binding.layoutQuickActionsInHalqa.visibility = View.VISIBLE
                 binding.layoutQuickActionsNoHalqa.visibility = View.GONE
-                binding.cardTodaySummary.visibility = View.VISIBLE
             }
         }
 
         viewModel.isCurrentUserAdmin.observe(this) { isAdmin ->
             isCurrentUserAdmin = isAdmin
-        }
-
-        viewModel.todaySummaryText.observe(this) { summary ->
-            binding.textTodaySummary.text = summary
-        }
-
-        viewModel.awakeCountText.observe(this) { count ->
-            binding.textAwakeCount.text = count
         }
 
         viewModel.friendWakeAlert.observe(this) { alert ->
@@ -235,7 +220,6 @@ class MainActivity : BaseActivity() {
     private fun showSpiritualTab(tab: Int, dayIndex: Int) {
         if (tab == 0) {
             val item = ayat[dayIndex % ayat.size]
-            binding.imageSpiritualIcon.setImageResource(R.drawable.ic_mosque)
             binding.textSpiritualContent.text = "» ${item.first} «"
             binding.textSpiritualSource.text = item.second
 
@@ -253,7 +237,6 @@ class MainActivity : BaseActivity() {
             }
         } else {
             val item = ahadith[dayIndex % ahadith.size]
-            binding.imageSpiritualIcon.setImageResource(R.drawable.ic_chat)
             binding.textSpiritualContent.text = "« ${item.first} »"
             binding.textSpiritualSource.text = item.second
 
