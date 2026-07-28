@@ -7,31 +7,39 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
-import android.view.View
-import com.bagomri.fajrloop.ui.BaseActivity
+import androidx.activity.compose.setContent
 import androidx.core.app.NotificationManagerCompat
-import com.bagomri.fajrloop.databinding.ActivityPermissionSetupBinding
+import com.bagomri.fajrloop.ui.BaseActivity
+import com.bagomri.fajrloop.ui.main.MainActivity
+import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
- * PermissionSetupActivity — شاشة فحص وطلب الصلاحيات الإلزامية
- *
- * تفحص الصلاحيات التالية وتوجّه المستخدم لمنحها:
- * 1. POST_NOTIFICATIONS (Android 13+)
- * 2. SCHEDULE_EXACT_ALARM (Android 12+)
- * 3. REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
- * 4. USE_FULL_SCREEN_INTENT (Android 14+)
+ * PermissionSetupActivity — شاشة فحص وطلب الصلاحيات الإلزامية (Jetpack Compose)
  */
 class PermissionSetupActivity : BaseActivity() {
 
-    private lateinit var binding: ActivityPermissionSetupBinding
+    private val permissionsStateFlow = MutableStateFlow<List<PermissionItemData>>(emptyList())
+    private val allGrantedStateFlow = MutableStateFlow(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityPermissionSetupBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        setupPermissionRows()
-        setupClickListeners()
+        setContent {
+            FajrLoopTheme {
+                val permissions = permissionsStateFlow.value
+                val allGranted = allGrantedStateFlow.value
+
+                PermissionScreen(
+                    permissions = permissions,
+                    allGranted = allGranted,
+                    onDoneClick = {
+                        startActivity(Intent(this@PermissionSetupActivity, MainActivity::class.java))
+                        finish()
+                    }
+                )
+            }
+        }
     }
 
     override fun onResume() {
@@ -39,106 +47,93 @@ class PermissionSetupActivity : BaseActivity() {
         updatePermissionStatus()
     }
 
-    private fun setupPermissionRows() {
-        binding.apply {
-            rowNotifications.setTitle("إشعارات التطبيق")
-            rowNotifications.setDescription("لعرض إشعار المنبه على شاشة القفل (Android 13+)")
-
-            rowExactAlarm.setTitle("المنبه الدقيق")
-            rowExactAlarm.setDescription("لضمان رنين المنبه في الوقت المحدد بدقة الثانية")
-
-            rowBattery.setTitle("تجاهل تحسين البطارية")
-            rowBattery.setDescription("لحماية خدمة الرنين من القتل في الخلفية")
-
-            rowFullScreen.setTitle("الظهور فوق قفل الشاشة")
-            rowFullScreen.setDescription("لفتح شاشة المنبه تلقائياً حتى لو كان الهاتف مقفلاً")
-
-            rowDrawOverlays.setTitle("الظهور فوق التطبيقات الأخرى")
-            rowDrawOverlays.setDescription("لمنع تجاوز المنبه وإظهار شاشة التحدي أثناء استخدام الهاتف")
-        }
-    }
-
     private fun updatePermissionStatus() {
-        binding.apply {
-            // 1. إشعارات (Android 13+)
-            val notifGranted = NotificationManagerCompat.from(this@PermissionSetupActivity)
-                .areNotificationsEnabled()
-            rowNotifications.setStatus(notifGranted)
+        // 1. إشعارات (Android 13+)
+        val notifGranted = NotificationManagerCompat.from(this).areNotificationsEnabled()
 
-            // 2. منبه دقيق (Android 12+)
-            val exactAlarmGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                (getSystemService(ALARM_SERVICE) as AlarmManager).canScheduleExactAlarms()
-            } else true
-            rowExactAlarm.setStatus(exactAlarmGranted)
+        // 2. منبه دقيق (Android 12+)
+        val exactAlarmGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (getSystemService(ALARM_SERVICE) as AlarmManager).canScheduleExactAlarms()
+        } else true
 
-            // 3. تجاهل تحسين البطارية
-            val pm = getSystemService(POWER_SERVICE) as PowerManager
-            val batteryGranted = pm.isIgnoringBatteryOptimizations(packageName)
-            rowBattery.setStatus(batteryGranted)
+        // 3. تجاهل تحسين البطارية
+        val pm = getSystemService(POWER_SERVICE) as PowerManager
+        val batteryGranted = pm.isIgnoringBatteryOptimizations(packageName)
 
-            // 4. Full Screen Intent (Android 14+)
-            val fullScreenGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                val nm = getSystemService(android.app.NotificationManager::class.java)
-                nm.canUseFullScreenIntent()
-            } else true
-            rowFullScreen.setStatus(fullScreenGranted)
+        // 4. Full Screen Intent (Android 14+)
+        val fullScreenGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val nm = getSystemService(android.app.NotificationManager::class.java)
+            nm.canUseFullScreenIntent()
+        } else true
 
-            // 5. الظهور فوق التطبيقات الأخرى (System Alert Window)
-            val overlaysGranted = Settings.canDrawOverlays(this@PermissionSetupActivity)
-            rowDrawOverlays.setStatus(overlaysGranted)
+        // 5. الظهور فوق التطبيقات الأخرى (System Alert Window)
+        val overlaysGranted = Settings.canDrawOverlays(this)
 
-            // عرض زر "الانتهاء" فقط إذا كل الصلاحيات ممنوحة
-            btnDone.visibility = if (notifGranted && exactAlarmGranted && batteryGranted && fullScreenGranted && overlaysGranted) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
-        }
-    }
+        val allGranted = notifGranted && exactAlarmGranted && batteryGranted && fullScreenGranted && overlaysGranted
+        allGrantedStateFlow.value = allGranted
 
-    private fun setupClickListeners() {
-        binding.apply {
-            rowNotifications.setOnActionClick {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                        putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-                    })
+        permissionsStateFlow.value = listOf(
+            PermissionItemData(
+                id = "notifications",
+                title = "إشعارات التطبيق",
+                description = "لعرض إشعار المنبه على شاشة القفل (Android 13+)",
+                isGranted = notifGranted,
+                onRequest = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                        })
+                    }
                 }
-            }
-
-            rowExactAlarm.setOnActionClick {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+            ),
+            PermissionItemData(
+                id = "exact_alarm",
+                title = "المنبه الدقيق",
+                description = "لضمان رنين المنبه في الوقت المحدد بدقة الثانية",
+                isGranted = exactAlarmGranted,
+                onRequest = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                            data = Uri.parse("package:$packageName")
+                        })
+                    }
+                }
+            ),
+            PermissionItemData(
+                id = "battery",
+                title = "تجاهل تحسين البطارية",
+                description = "لحماية خدمة الرنين من القتل في الخلفية",
+                isGranted = batteryGranted,
+                onRequest = {
+                    startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
                         data = Uri.parse("package:$packageName")
                     })
                 }
-            }
-
-            rowBattery.setOnActionClick {
-                startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = Uri.parse("package:$packageName")
-                })
-            }
-
-            rowFullScreen.setOnActionClick {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    startActivity(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+            ),
+            PermissionItemData(
+                id = "full_screen",
+                title = "الظهور فوق قفل الشاشة",
+                description = "لفتح شاشة المنبه تلقائياً حتى لو كان الهاتف مقفلاً",
+                isGranted = fullScreenGranted,
+                onRequest = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        startActivity(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+                            data = Uri.parse("package:$packageName")
+                        })
+                    }
+                }
+            ),
+            PermissionItemData(
+                id = "draw_overlays",
+                title = "الظهور فوق التطبيقات الأخرى",
+                description = "لمنع تجاوز المنبه وإظهار شاشة التحدي أثناء استخدام الهاتف",
+                isGranted = overlaysGranted,
+                onRequest = {
+                    startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
                         data = Uri.parse("package:$packageName")
                     })
                 }
-            }
-
-            rowDrawOverlays.setOnActionClick {
-                startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
-                    data = Uri.parse("package:$packageName")
-                })
-            }
-
-            btnDone.setOnClickListener {
-                startActivity(Intent(this@PermissionSetupActivity, com.bagomri.fajrloop.ui.main.MainActivity::class.java))
-                finish()
-            }
-        }
+            )
+        )
     }
 }
-

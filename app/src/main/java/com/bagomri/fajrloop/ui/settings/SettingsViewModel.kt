@@ -6,6 +6,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.bagomri.fajrloop.data.*
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -14,6 +17,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private val _userProfile = MutableLiveData<UserProfile?>()
     val userProfile: LiveData<UserProfile?> = _userProfile
+    private val _userProfileFlow = MutableStateFlow<UserProfile?>(null)
+    val userProfileFlow: StateFlow<UserProfile?> = _userProfileFlow.asStateFlow()
 
     private var userProfileListener: ValueEventListener? = null
 
@@ -22,9 +27,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         if (uid != null) {
             userProfileListener = userRepository.observeUserProfile(uid) { profile ->
                 _userProfile.value = profile
+                _userProfileFlow.value = profile
             }
         }
     }
+
 
     /**
      * تحديث الإعدادات سحابياً

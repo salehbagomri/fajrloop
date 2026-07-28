@@ -1,33 +1,24 @@
 package com.bagomri.fajrloop.ui.chat
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.inputmethod.InputMethodManager
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
-import com.bagomri.fajrloop.ui.BaseActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.bagomri.fajrloop.R
+import androidx.activity.compose.setContent
 import com.bagomri.fajrloop.alarm.AlarmPreferences
 import com.bagomri.fajrloop.data.ChatMessage
-import com.bagomri.fajrloop.databinding.ActivityChatBinding
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.bagomri.fajrloop.ui.BaseActivity
+import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import java.util.*
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class ChatActivity : BaseActivity() {
 
-    private lateinit var binding: ActivityChatBinding
     private lateinit var databaseRef: DatabaseReference
     private lateinit var messagesListener: ValueEventListener
 
-    private val messagesList = mutableListOf<ChatMessage>()
-    private lateinit var adapter: ChatAdapter
+    private val messagesStateFlow = MutableStateFlow<List<ChatMessage>>(emptyList())
+    private val halqaNameStateFlow = MutableStateFlow("")
 
     private var halqaId: String? = null
     private var currentUid = ""
@@ -36,10 +27,7 @@ class ChatActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityChatBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        // 1. استرجاع بيانات الحلقة والمستخدم الحالي
         val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
         halqaId = prefs.getString("current_halqa_id", null)
 
@@ -54,27 +42,27 @@ class ChatActivity : BaseActivity() {
         currentDisplayName = currentUser.displayName ?: "عضو"
         currentPhotoUrl = currentUser.photoUrl?.toString() ?: ""
 
-        // 2. إعداد شريط العنوان
-        binding.btnBack.setOnClickListener { finish() }
-        loadHalqaName()
-
-        // 3. تهيئة القائمة والـ Adapter
-        adapter = ChatAdapter(messagesList, currentUid)
-        val layoutManager = LinearLayoutManager(this).apply {
-            stackFromEnd = true
-        }
-        binding.recyclerMessages.layoutManager = layoutManager
-        binding.recyclerMessages.adapter = adapter
-
-        // 4. ربط قاعدة البيانات والمزامنة الفورية
         databaseRef = FirebaseDatabase.getInstance()
             .getReference("chatMessages")
             .child(halqaId!!)
 
+        loadHalqaName()
         setupFirebaseListener()
 
-        // 5. تهيئة أزرار الإدخال والإرسال السريع
-        setupInputListeners()
+        setContent {
+            FajrLoopTheme {
+                val messages = messagesStateFlow.value
+                val halqaName = halqaNameStateFlow.value
+
+                ChatScreen(
+                    title = halqaName,
+                    messages = messages,
+                    currentUid = currentUid,
+                    onSendMessage = { text, type -> sendMessage(text, type) },
+                    onBackClick = { finish() }
+                )
+            }
+        }
     }
 
     private fun loadHalqaName() {
@@ -84,7 +72,7 @@ class ChatActivity : BaseActivity() {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val name = snapshot.value as? String
                     if (!name.isNullOrEmpty()) {
-                        binding.textChatTitle.text = name
+                        halqaNameStateFlow.value = name
                     }
                 }
                 override fun onCancelled(error: DatabaseError) {}
@@ -94,25 +82,15 @@ class ChatActivity : BaseActivity() {
     private fun setupFirebaseListener() {
         messagesListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                messagesList.clear()
+                val newList = mutableListOf<ChatMessage>()
                 for (msgSnap in snapshot.children) {
                     val msg = msgSnap.getValue(ChatMessage::class.java)
                     if (msg != null) {
-                        messagesList.add(msg)
+                        newList.add(msg)
                     }
                 }
-                // ترتيب الرسائل زمنياً تصاعدياً
-                messagesList.sortBy { it.timestamp }
-
-                adapter.notifyDataSetChanged()
-
-                // تمرير تلقائي لآخر رسالة
-                if (messagesList.isNotEmpty()) {
-                    binding.recyclerMessages.scrollToPosition(messagesList.size - 1)
-                    binding.layoutEmptyChat.visibility = View.GONE
-                } else {
-                    binding.layoutEmptyChat.visibility = View.VISIBLE
-                }
+                newList.sortBy { it.timestamp }
+                messagesStateFlow.value = newList
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -122,31 +100,7 @@ class ChatActivity : BaseActivity() {
         databaseRef.addValueEventListener(messagesListener)
     }
 
-    private fun setupInputListeners() {
-        // زر إرسال الرسالة العادية
-        binding.btnSendMessage.setOnClickListener {
-            val text = binding.editMessageInput.text.toString().trim()
-            if (text.isNotEmpty()) {
-                sendMessage(text, "normal")
-            }
-        }
-
-        // رقاقات الإرسال السريع
-        binding.chipPrayerBetter.setOnClickListener { sendMessage(binding.chipPrayerBetter.text.toString(), "normal") }
-        binding.chipHeroesStrength.setOnClickListener { sendMessage(binding.chipHeroesStrength.text.toString(), "normal") }
-        binding.chipBlessedFajr.setOnClickListener { sendMessage(binding.chipBlessedFajr.text.toString(), "normal") }
-        binding.chipMorningAdhkar.setOnClickListener { sendMessage(binding.chipMorningAdhkar.text.toString(), "normal") }
-
-        // زر إرسال الرسائل التحفيزية السوبر (النجمة الذهبية)
-        binding.btnSendMotivational.setOnClickListener {
-            showMotivationalDialog()
-        }
-    }
-
     private fun sendMessage(text: String, type: String) {
-        binding.btnSendMessage.visibility = View.INVISIBLE
-        binding.progressSending.visibility = View.VISIBLE
-
         val msgId = databaseRef.push().key ?: return
         val chatMsg = ChatMessage(
             id = msgId,
@@ -159,63 +113,9 @@ class ChatActivity : BaseActivity() {
         )
 
         databaseRef.child(msgId).setValue(chatMsg)
-            .addOnSuccessListener {
-                binding.editMessageInput.text.clear()
-                binding.btnSendMessage.visibility = View.VISIBLE
-                binding.progressSending.visibility = View.GONE
-                // إخفاء لوحة المفاتيح
-                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.hideSoftInputFromWindow(binding.editMessageInput.windowToken, 0)
-            }
             .addOnFailureListener { e ->
-                binding.btnSendMessage.visibility = View.VISIBLE
-                binding.progressSending.visibility = View.GONE
                 Toast.makeText(this, "فشل الإرسال: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-    }
-
-    private fun showMotivationalDialog() {
-        val presets = listOf(
-            Triple("✨", "الصلاة خير من النوم ⏰", "#FFD700"),
-            Triple("💪", "همّتكم يا أبطال الفجر!", "#FF8C00"),
-            Triple("🌅", "فجر مبارك للجميع", "#2ECC71"),
-            Triple("📖", "لا تنسوا أذكار الصباح", "#B57CFF"),
-            Triple("🕋", "ألا إن سلعة الله غالية، ألا إن سلعة الله الجنة", "#FFD700"),
-            Triple("🟢", "من صلى الفجر في جماعة فهو في ذمة الله", "#2ECC71")
-        )
-
-        // إنشاء Bottom Sheet Dialog مخصص بخلفية زجاجية داكنة
-        val dialog = BottomSheetDialog(this, R.style.DarkBottomSheetTheme)
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_motivational, null)
-        dialog.setContentView(dialogView)
-
-        // تلوين خلفية الـ BottomSheet نفسها
-        dialog.window?.also { w ->
-            w.setDimAmount(0.7f)
-        }
-        val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-        bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
-
-        // بناء أزرار الرسائل التحفيزية ديناميكياً
-        val container = dialogView.findViewById<LinearLayout>(R.id.container_presets)
-        presets.forEach { (emoji, text, color) ->
-            val item = LayoutInflater.from(this)
-                .inflate(R.layout.item_motivational_preset, container, false)
-            item.findViewById<TextView>(R.id.text_preset_emoji).text = emoji
-            item.findViewById<TextView>(R.id.text_preset_message).text = text
-            item.findViewById<TextView>(R.id.text_preset_message).setTextColor(Color.parseColor(color))
-            item.setOnClickListener {
-                sendMessage("$emoji $text", "motivational")
-                dialog.dismiss()
-            }
-            container.addView(item)
-        }
-
-        dialogView.findViewById<TextView>(R.id.btn_dialog_cancel).setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialog.show()
     }
 
     override fun onDestroy() {

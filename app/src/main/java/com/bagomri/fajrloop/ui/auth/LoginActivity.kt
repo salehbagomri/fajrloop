@@ -3,8 +3,8 @@ package com.bagomri.fajrloop.ui.auth
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.Toast
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -12,9 +12,9 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.lifecycleScope
 import com.bagomri.fajrloop.auth.AuthManager
-import com.bagomri.fajrloop.databinding.ActivityLoginBinding
 import com.bagomri.fajrloop.ui.BaseActivity
 import com.bagomri.fajrloop.ui.main.MainActivity
+import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -23,23 +23,19 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 /**
- * LoginActivity — شاشة تسجيل الدخول باستخدام Credential Manager مع fallback لـ GoogleSignInClient
+ * LoginActivity — شاشة تسجيل الدخول باستخدام Credential Manager مع fallback لـ GoogleSignInClient (Jetpack Compose)
  */
 class LoginActivity : BaseActivity() {
 
-    private lateinit var binding: ActivityLoginBinding
-
-    // معرّف الويب العميل من google-services.json
     private val WEB_CLIENT_ID = "866668685561-iaftbovc44m135k8pg14o40p3jvirekv.apps.googleusercontent.com"
-
-    // Credential Manager — يُنشأ مرة واحدة فقط
     private val credentialManager by lazy { CredentialManager.create(this) }
+    private val isLoadingFlow = MutableStateFlow(false)
 
-    // Launcher للطريقة التقليدية (GoogleSignInClient) لحل أي تعليق في أجهزة Honor / Huawei
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -68,17 +64,19 @@ class LoginActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // التوجيه التلقائي إذا كان المستخدم سجّل الدخول مسبقاً
         if (AuthManager.isUserSignedIn()) {
             navigateToMain()
             return
         }
 
-        binding = ActivityLoginBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        binding.btnGoogleSignin.setOnClickListener {
-            startGoogleSignInFlow()
+        setContent {
+            FajrLoopTheme {
+                val isLoading = isLoadingFlow.value
+                LoginScreen(
+                    onGoogleSignInClick = { startGoogleSignInFlow() },
+                    isLoading = isLoading
+                )
+            }
         }
     }
 
@@ -86,9 +84,9 @@ class LoginActivity : BaseActivity() {
         setLoading(true)
 
         val googleIdOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)   // عرض جميع الحسابات
+            .setFilterByAuthorizedAccounts(false)
             .setServerClientId(WEB_CLIENT_ID)
-            .setAutoSelectEnabled(false)             // لا اختيار تلقائي
+            .setAutoSelectEnabled(false)
             .build()
 
         val request = GetCredentialRequest.Builder()
@@ -97,7 +95,6 @@ class LoginActivity : BaseActivity() {
 
         lifecycleScope.launch {
             try {
-                // مهلة 3 ثوانٍ تجنباً لتعليق CredentialManager في أجهزة Honor/OEMs
                 val result = withTimeout(3_000L) {
                     credentialManager.getCredential(this@LoginActivity, request)
                 }
@@ -119,12 +116,10 @@ class LoginActivity : BaseActivity() {
                 }
 
             } catch (e: GetCredentialCancellationException) {
-                // المستخدم ألغى عملية الاختيار بنفسه
                 setLoading(false)
                 Log.d("LoginActivity", "Sign-In cancelled by user")
 
             } catch (e: TimeoutCancellationException) {
-                // تعليق CredentialManager (شائع في أجهزة Honor) — الانتقال المباشر للطريقة التقليدية
                 Log.w("LoginActivity", "CredentialManager timed out, launching legacy GoogleSignInClient fallback")
                 startLegacyGoogleSignIn()
 
@@ -142,7 +137,6 @@ class LoginActivity : BaseActivity() {
                 .requestEmail()
                 .build()
             val googleSignInClient = GoogleSignIn.getClient(this, gso)
-            // إجبار إظهار منتقي الحسابات دائماً
             googleSignInClient.signOut().addOnCompleteListener {
                 googleSignInLauncher.launch(googleSignInClient.signInIntent)
             }
@@ -181,11 +175,7 @@ class LoginActivity : BaseActivity() {
     }
 
     private fun setLoading(isLoading: Boolean) {
-        binding.apply {
-            progressLoading.visibility = if (isLoading) View.VISIBLE else View.GONE
-            btnGoogleSignin.isEnabled = !isLoading
-            layoutLogo.alpha = if (isLoading) 0.5f else 1.0f
-        }
+        isLoadingFlow.value = isLoading
     }
 
     private fun navigateToMain() {
@@ -197,4 +187,3 @@ class LoginActivity : BaseActivity() {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 }
-
