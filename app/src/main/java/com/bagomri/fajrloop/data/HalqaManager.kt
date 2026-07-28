@@ -306,6 +306,76 @@ object HalqaManager {
     }
 
     /**
+     * حذف عضو من الحلقة بواسطة المسؤول (Admin)
+     */
+    fun removeMemberFromHalqa(halqaId: String, targetUid: String, onComplete: (Boolean, String?) -> Unit) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            onComplete(false, "المستخدم غير مسجل الدخول")
+            return
+        }
+
+        val uid = currentUser.uid
+        val halqaRef = database.getReference("halqas").child(halqaId)
+
+        halqaRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (!snapshot.exists()) {
+                    onComplete(false, "الحلقة غير موجودة")
+                    return
+                }
+
+                // التحقق من صلاحية المسؤول
+                val adminRole = snapshot.child("members").child(uid).child("role").value as? String
+                if (adminRole != "admin") {
+                    onComplete(false, "عفواً، لا يملك صلاحية حذف الأعضاء إلا مسؤول الحلقة")
+                    return
+                }
+
+                if (targetUid == uid) {
+                    onComplete(false, "لا يمكنك حذف نفسك بهذه الطريقة، استخدم زر مغادرة الحلقة")
+                    return
+                }
+
+                val currentChain = (snapshot.child("chain").value as? List<*>)
+                    ?.filterIsInstance<String>()
+                    ?.toMutableList() ?: mutableListOf()
+
+                val membersSnapshot = snapshot.child("members")
+
+                // إزالة العضو المستهدف من السلسلة
+                currentChain.remove(targetUid)
+
+                val updatedMembers = mutableMapOf<String, Any>()
+                for (memberChild in membersSnapshot.children) {
+                    val mId = memberChild.key ?: continue
+                    if (mId == targetUid) continue // تجاهل العضو المطرود
+                    val mData = memberChild.value as? Map<*, *> ?: continue
+                    updatedMembers[mId] = mData.toMutableMap()
+                }
+
+                // إعادة حساب الترتيب الدائري والمسؤوليات للأعضاء المتبقين
+                recalculateLoopResponsibility(currentChain, updatedMembers)
+
+                // إجراء التحديث الذري
+                val updates = hashMapOf<String, Any?>()
+                updates["/halqas/$halqaId/chain"] = currentChain
+                updates["/halqas/$halqaId/members"] = updatedMembers
+                updates["/users/$targetUid/currentHalqaId"] = ""
+                updates["/users/$targetUid/joinedHalqas/$halqaId"] = null
+
+                database.reference.updateChildren(updates)
+                    .addOnSuccessListener { onComplete(true, null) }
+                    .addOnFailureListener { onComplete(false, it.localizedMessage) }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                onComplete(false, error.message)
+            }
+        })
+    }
+
+    /**
      * إعادة ترتيب السلسلة يدوياً (خاص بالمسؤول Admin فقط)
      */
     fun reorderChain(halqaId: String, newChain: List<String>, onComplete: (Boolean, String?) -> Unit) {

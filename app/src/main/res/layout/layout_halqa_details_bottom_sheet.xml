@@ -21,9 +21,10 @@
         android:layout_marginBottom="20dp" />
 
     <TextView
+        android:id="@+id/text_sheet_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="تفاصيل الحلقة أو المجموعة 👥"
+        android:text="تفاصيل الحلقة 👥"
         android:textSize="18sp"
         android:textColor="#FFFFFF"
         android:textStyle="bold"

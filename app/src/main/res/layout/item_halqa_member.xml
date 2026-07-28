@@ -3,6 +3,7 @@
 <com.bagomri.fajrloop.ui.widget.GlassCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
@@ -105,6 +106,19 @@
                 android:contentDescription="لأسفل"
                 android:tint="#FFD700"
                 android:padding="6dp" />
+
+            <ImageButton
+                android:id="@+id/btn_remove_member"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_logout"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="حذف العضو"
+                android:tint="#E74C3C"
+                android:padding="7dp"
+                android:layout_marginStart="4dp"
+                android:visibility="gone"
+                tools:ignore="UseAppTint" />
 
         </LinearLayout>
 

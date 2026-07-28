@@ -441,6 +441,7 @@ class MainActivity : BaseActivity() {
         dialog.setContentView(sheetView)
 
         val listContainer = sheetView.findViewById<LinearLayout>(R.id.list_members_container_sheet)
+        val txtTitle = sheetView.findViewById<TextView>(R.id.text_sheet_title)
         val btnLeave = sheetView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_leave_halqa_sheet)
 
         btnLeave.setOnClickListener {
@@ -482,6 +483,9 @@ class MainActivity : BaseActivity() {
                     FirebaseDatabase.getInstance().getReference("halqas").child(halqaId)
                         .addListenerForSingleValueEvent(object : ValueEventListener {
                             override fun onDataChange(halqaSnap: DataSnapshot) {
+                                val name = halqaSnap.child("name").value as? String ?: "الفجر"
+                                txtTitle?.text = "تفاصيل حلقة \"$name\" 👥"
+
                                 val chain = (halqaSnap.child("chain").value as? List<*>)
                                     ?.filterIsInstance<String>() ?: emptyList()
                                 val membersSnap = halqaSnap.child("members")
@@ -537,6 +541,7 @@ class MainActivity : BaseActivity() {
             val layoutReorder = itemView.findViewById<View>(R.id.layout_reorder_buttons)
             val btnUp = itemView.findViewById<android.widget.ImageButton>(R.id.btn_move_up)
             val btnDown = itemView.findViewById<android.widget.ImageButton>(R.id.btn_move_down)
+            val btnRemove = itemView.findViewById<android.widget.ImageButton>(R.id.btn_remove_member)
 
             val statusEmoji = when (status) {
                 "travel" -> "✈️ مسافر"
@@ -610,6 +615,49 @@ class MainActivity : BaseActivity() {
 
             if (isCurrentUserAdmin && n > 1) {
                 layoutReorder.visibility = View.VISIBLE
+
+                if (mId != currentUid) {
+                    btnRemove.visibility = View.VISIBLE
+                    btnRemove.setOnClickListener {
+                        val confirmDialog = android.app.Dialog(this)
+                        confirmDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+                        confirmDialog.setContentView(R.layout.dialog_leave_halqa)
+                        confirmDialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+                        confirmDialog.window?.setLayout(
+                            (resources.displayMetrics.widthPixels * 0.9).toInt(),
+                            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                        )
+
+                        val txtTitleDialog = confirmDialog.findViewById<TextView>(R.id.txt_leave_title)
+                        val txtMessage = confirmDialog.findViewById<TextView>(R.id.text_leave_desc)
+                        val btnCancel = confirmDialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_cancel)
+                        val btnConfirm = confirmDialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_confirm)
+
+                        txtTitleDialog?.text = "تأكيد حذف العضو"
+                        txtMessage?.text = "هل أنت متأكد من رغبتك في حذف العضو ($displayName) من الحلقة؟"
+                        btnConfirm?.text = "حذف العضو 🗑️"
+
+                        btnCancel?.setOnClickListener { confirmDialog.dismiss() }
+                        btnConfirm?.setOnClickListener {
+                            confirmDialog.dismiss()
+                            currentActiveHalqaId?.let { hId ->
+                                com.bagomri.fajrloop.data.HalqaManager.removeMemberFromHalqa(hId, mId) { success, result ->
+                                    if (success) {
+                                        showToast("تم حذف العضو ($displayName) من الحلقة بنجاح 🗑️")
+                                        dialog.dismiss()
+                                        showHalqaDetailsBottomSheet()
+                                    } else {
+                                        showToast("فشل حذف العضو: $result")
+                                    }
+                                }
+                            }
+                        }
+                        confirmDialog.show()
+                    }
+                } else {
+                    btnRemove.visibility = View.GONE
+                }
+
                 btnUp.setOnClickListener {
                     if (i > 0) {
                         val newChain = chain.toMutableList().also { it[i] = it[i-1].also { _ -> it[i-1] = it[i] } }

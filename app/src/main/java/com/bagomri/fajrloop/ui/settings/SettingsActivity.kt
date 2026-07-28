@@ -79,9 +79,8 @@ class SettingsActivity : BaseActivity() {
         val savedCity = prefs.getString("user_city", "مكة المكرمة")
         binding.textLocationStatus.text = "المدينة: $savedCity 📍 (اضغط للتحديث عبر الـ GPS)"
 
-        binding.textCalcMethodValue.text = prefs.getString(
-            "prayer_calc_method",
-            "جامعة أم القرى (مكة المكرمة)"
+        binding.textCalcMethodValue.text = formatCalcMethodToDisplay(
+            prefs.getString("prayer_calc_method", "جامعة أم القرى (مكة المكرمة)")
         )
 
         binding.textAlarmTimingValue.text = prefs.getString(
@@ -247,7 +246,8 @@ class SettingsActivity : BaseActivity() {
             "جامعة العلوم الإسلامية بكراتشي",
             "الجمعية الإسلامية لأمريكا الشمالية (ISNA)"
         )
-        val currentMethod = prefs.getString("prayer_calc_method", methods[0])
+        val rawMethod = prefs.getString("prayer_calc_method", methods[0])
+        val currentMethod = formatCalcMethodToDisplay(rawMethod)
 
         val dialog = BottomSheetDialog(this, R.style.DarkBottomSheetTheme)
         val view = layoutInflater.inflate(R.layout.dialog_settings_calc_method, null)
@@ -280,7 +280,7 @@ class SettingsActivity : BaseActivity() {
 
         val selectMethod = { selected: String ->
             prefs.edit().putString("prayer_calc_method", selected).apply()
-            binding.textCalcMethodValue.text = selected
+            binding.textCalcMethodValue.text = formatCalcMethodToDisplay(selected)
 
             // Local cache
             val lat = prefs.getFloat("user_latitude", 14.5425f).toDouble()
@@ -306,13 +306,25 @@ class SettingsActivity : BaseActivity() {
         dialog.show()
     }
 
+    private fun formatCalcMethodToDisplay(method: String?): String {
+        val m = method ?: "umm_al_qura"
+        return when {
+            m.contains("umm_al_qura") || m.contains("أم القرى") -> "جامعة أم القرى (مكة المكرمة)"
+            m.contains("muslim_world_league") || m.contains("رابطة") -> "رابطة العالم الإسلامي"
+            m.contains("egypt") || m.contains("المصرية") -> "الهيئة المصرية العامة للمساحة"
+            m.contains("karachi") || m.contains("كراتشي") -> "جامعة العلوم الإسلامية بكراتشي"
+            m.contains("isna") || m.contains("ISNA") -> "الجمعية الإسلامية لأمريكا الشمالية (ISNA)"
+            else -> "جامعة أم القرى (مكة المكرمة)"
+        }
+    }
+
     private fun mapMethodNameToCode(name: String): String {
         return when {
-            name.contains("أم القرى") -> "umm_al_qura"
-            name.contains("رابطة") -> "muslim_world_league"
-            name.contains("المصرية") -> "egypt"
-            name.contains("كراتشي") -> "karachi"
-            name.contains("ISNA") -> "isna"
+            name.contains("أم القرى") || name.contains("umm_al_qura") -> "umm_al_qura"
+            name.contains("رابطة") || name.contains("muslim_world_league") -> "muslim_world_league"
+            name.contains("المصرية") || name.contains("egypt") -> "egypt"
+            name.contains("كراتشي") || name.contains("karachi") -> "karachi"
+            name.contains("ISNA") || name.contains("isna") -> "isna"
             else -> "umm_al_qura"
         }
     }

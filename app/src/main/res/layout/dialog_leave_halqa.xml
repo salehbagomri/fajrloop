@@ -27,6 +27,7 @@
 
     <!-- عنوان الحوار -->
     <TextView
+        android:id="@+id/txt_leave_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="تأكيد مغادرة الحلقة"
@@ -37,6 +38,7 @@
 
     <!-- نص الوصف -->
     <TextView
+        android:id="@+id/text_leave_desc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="هل أنت متأكد من رغبتك في مغادرة هذه الحلقة؟ سيتم إعادة ترتيب مسؤوليات الاستيقاظ بين بقية الأعضاء تلقائياً."
