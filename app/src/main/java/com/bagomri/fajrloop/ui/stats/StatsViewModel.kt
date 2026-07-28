@@ -11,10 +11,28 @@ import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.*
 
+data class LeaderboardItem(
+    val rank: Int,
+    val userId: String,
+    val displayName: String,
+    val photoUrl: String,
+    val streak: Int,
+    val rescues: Int
+)
+
+data class Achievement(
+    val id: String,
+    val title: String,
+    val desc: String,
+    val emoji: String,
+    val colorCode: String,
+    val acquiredDate: String?
+)
+
 data class WeeklyBarData(
     val dayName: String,
     val heightPercent: Float,
-    val status: String // awake, travel, challenge_done, ringing, missed, none
+    val status: String
 )
 
 data class StatsUiState(

@@ -1,44 +1,47 @@
 package com.bagomri.fajrloop.ui.settings
 
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.LayoutInflater
-import android.view.View
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.SeekBar
-import android.widget.TextView
 import android.widget.Toast
-import com.bagomri.fajrloop.ui.BaseActivity
-import androidx.lifecycle.ViewModelProvider
-import com.bagomri.fajrloop.R
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.bagomri.fajrloop.alarm.AlarmPreferences
 import com.bagomri.fajrloop.alarm.AlarmScheduler
 import com.bagomri.fajrloop.auth.AuthManager
-import com.bagomri.fajrloop.databinding.ActivitySettingsBinding
-import com.bagomri.fajrloop.ui.auth.LoginActivity
+import com.bagomri.fajrloop.auth.FcmTokenManager
 import com.bagomri.fajrloop.data.UserLocation
 import com.bagomri.fajrloop.data.UserSettings
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.bagomri.fajrloop.ui.BaseActivity
+import com.bagomri.fajrloop.ui.auth.LoginActivity
+import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.*
 
-/**
- * SettingsActivity — إعدادات التطبيق (MVVM Refactored)
- */
 class SettingsActivity : BaseActivity() {
 
-    private lateinit var binding: ActivitySettingsBinding
     private lateinit var prefs: SharedPreferences
-    private lateinit var viewModel: SettingsViewModel
+    private val viewModel: SettingsViewModel by viewModels()
+
+    private val userCityFlow = MutableStateFlow("مكة المكرمة")
+    private val calcMethodFlow = MutableStateFlow("جامعة أم القرى (مكة المكرمة)")
+    private val alarmTimingDescFlow = MutableStateFlow("مع أذان الفجر بالضبط 🕌")
+    private val challengeTextFlow = MutableStateFlow("حل المعادلة - متوسط")
+    private val alarmSoundTextFlow = MutableStateFlow("نغمة النظام الافتراضية")
+    private val travelModeStatusFlow = MutableStateFlow("غير نشط حالياً")
+    private val isVibrateFlow = MutableStateFlow(true)
+    private val isAdhkarFlow = MutableStateFlow(true)
+    private val isDuaFlow = MutableStateFlow(true)
 
     private val locationPermissionLauncher = registerForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+        ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val fineGranted = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
         val coarseGranted = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
@@ -51,21 +54,106 @@ class SettingsActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivitySettingsBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
 
-        prefs = getSharedPreferences(com.bagomri.fajrloop.alarm.AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        viewModel = ViewModelProvider(this)[SettingsViewModel::class.java]
-
-        // تهيئة المظهر واللون الأحمر الزجاجي لزر تسجيل الخروج
-        binding.btnLogout.setCustomBgAndBorder(
-            Color.argb(26, 0xE7, 0x4C, 0x3C),
-            Color.argb(77, 0xE7, 0x4C, 0x3C)
-        )
-
-        setupListeners()
         loadSavedSettings()
-        setupObservers()
+
+        setContent {
+            FajrLoopTheme {
+                val userCity by userCityFlow.collectAsState()
+                val calcMethod by calcMethodFlow.collectAsState()
+                val alarmTimingDesc by alarmTimingDescFlow.collectAsState()
+                val challengeText by challengeTextFlow.collectAsState()
+                val alarmSoundText by alarmSoundTextFlow.collectAsState()
+                val travelModeStatus by travelModeStatusFlow.collectAsState()
+                val isVibrate by isVibrateFlow.collectAsState()
+                val isAdhkar by isAdhkarFlow.collectAsState()
+                val isDua by isDuaFlow.collectAsState()
+
+                SettingsScreen(
+                    userCity = userCity,
+                    calcMethod = calcMethod,
+                    alarmTimingDesc = alarmTimingDesc,
+                    challengeText = challengeText,
+                    alarmSoundText = alarmSoundText,
+                    travelModeStatus = travelModeStatus,
+                    isVibrateEnabled = isVibrate,
+                    isAdhkarEnabled = isAdhkar,
+                    isDuaEnabled = isDua,
+                    onVibrateChange = { checked ->
+                        isVibrateFlow.value = checked
+                        prefs.edit().putBoolean("vibrate_on_alarm", checked).apply()
+                        val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+                        viewModel.updateUserSettings(currentSettings.copy(vibration = checked)) {}
+                    },
+                    onAdhkarChange = { checked ->
+                        isAdhkarFlow.value = checked
+                        prefs.edit().putBoolean("show_adhkar_after_alarm", checked).apply()
+                        val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+                        viewModel.updateUserSettings(currentSettings.copy(showMorningAdhkar = checked)) {}
+                    },
+                    onDuaChange = { checked ->
+                        isDuaFlow.value = checked
+                        prefs.edit().putBoolean("daily_dua_notification", checked).apply()
+                        val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+                        viewModel.updateUserSettings(currentSettings.copy(showDailyDua = checked)) {}
+                    },
+                    onLocationClick = { checkLocationPermissionsAndFetch() },
+                    onTravelModeClick = { startActivity(Intent(this, TravelModeActivity::class.java)) },
+                    onBackupCodeClick = { startActivity(Intent(this, BackupCodeActivity::class.java)) },
+                    onManageHalqasClick = { showToast("إدارة وتعدد الحلقات — قريباً في الإصدار السحابي المحدث") },
+                    onSaveCalcMethod = { selected ->
+                        calcMethodFlow.value = formatCalcMethodToDisplay(selected)
+                        prefs.edit().putString("prayer_calc_method", selected).apply()
+                        val lat = prefs.getFloat("user_latitude", 14.5425f).toDouble()
+                        val lng = prefs.getFloat("user_longitude", 49.1242f).toDouble()
+                        val city = prefs.getString("user_city", "المكلا") ?: "المكلا"
+                        viewModel.saveLocalLocationAndMethod(lat, lng, city, selected)
+                        val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+                        viewModel.updateUserSettings(currentSettings.copy(prayerCalcMethod = mapMethodNameToCode(selected))) {}
+                        showToast("تم حفظ طريقة الحساب الجديدة")
+                    },
+                    onSaveAlarmTiming = { type, offset, desc ->
+                        alarmTimingDescFlow.value = desc
+                        prefs.edit()
+                            .putString("alarm_timing_type", type)
+                            .putInt("alarm_timing_offset_minutes", offset)
+                            .putString("alarm_timing_desc", desc)
+                            .apply()
+                        val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+                        viewModel.updateUserSettings(currentSettings.copy(alarmMinutesBefore = if (type == "before") -offset else offset)) {}
+                        showToast("تم تحديث توقيت المنبه بنجاح")
+                    },
+                    onSaveChallenge = { type, diff ->
+                        prefs.edit()
+                            .putString("challenge_type", type)
+                            .putString("challenge_difficulty", diff)
+                            .apply()
+                        val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
+                        viewModel.updateUserSettings(currentSettings.copy(challengeType = type, challengeDifficulty = diff)) {}
+                        updateChallengeDescText(type, diff)
+                        showToast("تم تحديث تحدي الاستيقاظ المفضل")
+                    },
+                    onSaveAlarmSound = { code, title ->
+                        alarmSoundTextFlow.value = title
+                        prefs.edit().putString("alarm_sound_choice", code).apply()
+                        showToast("تم تحديث صوت المنبه بنجاح")
+                    },
+                    onAutoStartClick = { openAutoStartSettings() },
+                    onBatteryClick = { openBatteryOptimizationSettings() },
+                    onTestAlarmClick = {
+                        AlarmScheduler.scheduleTestAlarm(this, 10)
+                        showToast("🧪 تم جدولة منبه تجريبي بعد 10 ثوانٍ! الرجاء قفل الشاشة لاختبار الحماية.")
+                    },
+                    onGuideClick = { startActivity(Intent(this, GuideActivity::class.java)) },
+                    onPrivacyClick = {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://salehbagomri.github.io/fajrloop-privacy/")))
+                    },
+                    onLogoutClick = { logout() },
+                    onBackClick = { finish() }
+                )
+            }
+        }
     }
 
     override fun onResume() {
@@ -76,28 +164,25 @@ class SettingsActivity : BaseActivity() {
     private fun loadSavedSettings() {
         updateTravelModeStatus()
 
-        val savedCity = prefs.getString("user_city", "مكة المكرمة")
-        binding.textLocationStatus.text = "المدينة: $savedCity 📍 (اضغط للتحديث عبر الـ GPS)"
+        val savedCity = prefs.getString("user_city", "مكة المكرمة") ?: "مكة المكرمة"
+        userCityFlow.value = "المدينة: $savedCity 📍"
 
-        binding.textCalcMethodValue.text = formatCalcMethodToDisplay(
+        calcMethodFlow.value = formatCalcMethodToDisplay(
             prefs.getString("prayer_calc_method", "جامعة أم القرى (مكة المكرمة)")
         )
 
-        binding.textAlarmTimingValue.text = prefs.getString(
-            "alarm_timing_desc",
-            "مع أذان الفجر بالضبط 🕌"
-        )
+        alarmTimingDescFlow.value = prefs.getString("alarm_timing_desc", "مع أذان الفجر بالضبط 🕌") ?: "مع أذان الفجر بالضبط 🕌"
 
         val challengeType = prefs.getString("challenge_type", "math")
         val challengeDiff = prefs.getString("challenge_difficulty", "medium")
         updateChallengeDescText(challengeType, challengeDiff)
 
-        binding.switchVibrate.isChecked = prefs.getBoolean("vibrate_on_alarm", true)
-        binding.switchMorningAdhkar.isChecked = prefs.getBoolean("show_adhkar_after_alarm", true)
-        binding.switchDailyDua.isChecked = prefs.getBoolean("daily_dua_notification", true)
+        isVibrateFlow.value = prefs.getBoolean("vibrate_on_alarm", true)
+        isAdhkarFlow.value = prefs.getBoolean("show_adhkar_after_alarm", true)
+        isDuaFlow.value = prefs.getBoolean("daily_dua_notification", true)
 
         val alarmSoundChoice = prefs.getString("alarm_sound_choice", "default")
-        binding.textAlarmSoundValue.text = mapSoundChoiceToText(alarmSoundChoice)
+        alarmSoundTextFlow.value = mapSoundChoiceToText(alarmSoundChoice)
     }
 
     private fun mapSoundChoiceToText(choice: String?): String {
@@ -109,23 +194,13 @@ class SettingsActivity : BaseActivity() {
         }
     }
 
-    private fun setupObservers() {
-        viewModel.userProfile.observe(this) { profile ->
-            if (profile != null) {
-                // sync profile settings to layout switches if needed
-            }
-        }
-    }
-
     private fun updateTravelModeStatus() {
         val isTravelEnabled = prefs.getBoolean("travel_mode_enabled", false)
         if (isTravelEnabled) {
             val travelUntil = prefs.getString("travel_mode_until", "حتى الإلغاء اليدوي")
-            binding.textTravelModeStatus.text = "نشط حالياً ✈️ (حتى: $travelUntil)"
-            binding.textTravelModeStatus.setTextColor(Color.parseColor("#3498DB"))
+            travelModeStatusFlow.value = "نشط حالياً ✈️ (حتى: $travelUntil)"
         } else {
-            binding.textTravelModeStatus.text = "غير نشط حالياً"
-            binding.textTravelModeStatus.setTextColor(Color.parseColor("#B0B0C5"))
+            travelModeStatusFlow.value = "غير نشط حالياً"
         }
     }
 
@@ -142,168 +217,7 @@ class SettingsActivity : BaseActivity() {
             "hard" -> "صعب"
             else -> "متوسط"
         }
-        binding.textChallengeValue.text = "$typeStr - $diffStr"
-    }
-
-    private fun setupListeners() {
-        binding.btnBack.setOnClickListener { finish() }
-
-        binding.rowTravelMode.setOnClickListener {
-            startActivity(Intent(this, TravelModeActivity::class.java))
-        }
-
-        binding.rowBackupCode.setOnClickListener {
-            startActivity(Intent(this, BackupCodeActivity::class.java))
-        }
-
-        binding.rowManageHalqas.setOnClickListener {
-            showToast("إدارة وتعدد الحلقات — قريباً في الإصدار السحابي المحدث")
-        }
-
-        binding.rowLocation.setOnClickListener {
-            checkLocationPermissionsAndFetch()
-        }
-
-        binding.rowCalcMethod.setOnClickListener {
-            showCalcMethodDialog()
-        }
-
-        binding.rowAlarmTiming.setOnClickListener {
-            showAlarmTimingDialog()
-        }
-
-        binding.rowChallenge.setOnClickListener {
-            showChallengeSettingsDialog()
-        }
-
-        binding.rowAlarmSound.setOnClickListener {
-            showAlarmSoundDialog()
-        }
-
-        binding.rowAutostart.setOnClickListener {
-            openAutoStartSettings()
-        }
-
-        binding.rowBattery.setOnClickListener {
-            openBatteryOptimizationSettings()
-        }
-
-        binding.switchVibrate.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("vibrate_on_alarm", isChecked).apply()
-            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
-            viewModel.updateUserSettings(currentSettings.copy(vibration = isChecked)) {}
-        }
-        binding.switchMorningAdhkar.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("show_adhkar_after_alarm", isChecked).apply()
-            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
-            viewModel.updateUserSettings(currentSettings.copy(showMorningAdhkar = isChecked)) {}
-        }
-        binding.switchDailyDua.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("daily_dua_notification", isChecked).apply()
-            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
-            viewModel.updateUserSettings(currentSettings.copy(showDailyDua = isChecked)) {}
-        }
-
-        binding.rowTestAlarm.setOnClickListener {
-            scheduleTestAlarm()
-        }
-
-        binding.rowGuide.setOnClickListener {
-            startActivity(Intent(this, GuideActivity::class.java))
-        }
-
-        binding.rowPrivacyPolicy.setOnClickListener {
-            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://salehbagomri.github.io/fajrloop-privacy/"))
-            startActivity(intent)
-        }
-
-        binding.btnLogout.setOnClickListener {
-            showLogoutConfirmationDialog()
-        }
-
-        var versionClickCount = 0
-        binding.textVersionName.setOnClickListener {
-            versionClickCount++
-            if (versionClickCount >= 5) {
-                binding.btnTestCrash.visibility = View.VISIBLE
-                showToast("🔓 تم تفعيل خيارات المطور مؤقتاً")
-            }
-        }
-
-        binding.btnTestCrash.setOnClickListener {
-            showToast("💥 محاكاة انهيار للتطبيق خلال ثانيتين...")
-            binding.btnTestCrash.postDelayed({
-                throw RuntimeException("Test Crash for Firebase Crashlytics")
-            }, 2000)
-        }
-    }
-
-    private fun showCalcMethodDialog() {
-        val methods = arrayOf(
-            "جامعة أم القرى (مكة المكرمة)",
-            "رابطة العالم الإسلامي",
-            "الهيئة المصرية العامة للمساحة",
-            "جامعة العلوم الإسلامية بكراتشي",
-            "الجمعية الإسلامية لأمريكا الشمالية (ISNA)"
-        )
-        val rawMethod = prefs.getString("prayer_calc_method", methods[0])
-        val currentMethod = formatCalcMethodToDisplay(rawMethod)
-
-        val dialog = BottomSheetDialog(this, R.style.DarkBottomSheetTheme)
-        val view = layoutInflater.inflate(R.layout.dialog_settings_calc_method, null)
-        dialog.setContentView(view)
-
-        dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundColor(Color.TRANSPARENT)
-
-        val btnUmm = view.findViewById<View>(R.id.btn_method_um_al_qura)
-        val btnLeague = view.findViewById<View>(R.id.btn_method_muslim_league)
-        val btnEgypt = view.findViewById<View>(R.id.btn_method_egypt)
-        val btnKarachi = view.findViewById<View>(R.id.btn_method_karachi)
-        val btnIsna = view.findViewById<View>(R.id.btn_method_isna)
-
-        val checks = mapOf(
-            methods[0] to view.findViewById<View>(R.id.check_um_al_qura),
-            methods[1] to view.findViewById<View>(R.id.check_muslim_league),
-            methods[2] to view.findViewById<View>(R.id.check_egypt),
-            methods[3] to view.findViewById<View>(R.id.check_karachi),
-            methods[4] to view.findViewById<View>(R.id.check_isna)
-        )
-
-        checks[currentMethod]?.visibility = View.VISIBLE
-        when(currentMethod) {
-            methods[0] -> btnUmm.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-            methods[1] -> btnLeague.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-            methods[2] -> btnEgypt.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-            methods[3] -> btnKarachi.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-            methods[4] -> btnIsna.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-        }
-
-        val selectMethod = { selected: String ->
-            prefs.edit().putString("prayer_calc_method", selected).apply()
-            binding.textCalcMethodValue.text = formatCalcMethodToDisplay(selected)
-
-            // Local cache
-            val lat = prefs.getFloat("user_latitude", 14.5425f).toDouble()
-            val lng = prefs.getFloat("user_longitude", 49.1242f).toDouble()
-            val city = prefs.getString("user_city", "المكلا") ?: "المكلا"
-            viewModel.saveLocalLocationAndMethod(lat, lng, city, selected)
-
-            // Cloud sync
-            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
-            viewModel.updateUserSettings(currentSettings.copy(prayerCalcMethod = mapMethodNameToCode(selected))) {}
-
-            showToast("تم حفظ طريقة الحساب الجديدة")
-            dialog.dismiss()
-        }
-
-        btnUmm.setOnClickListener { selectMethod(methods[0]) }
-        btnLeague.setOnClickListener { selectMethod(methods[1]) }
-        btnEgypt.setOnClickListener { selectMethod(methods[2]) }
-        btnKarachi.setOnClickListener { selectMethod(methods[3]) }
-        btnIsna.setOnClickListener { selectMethod(methods[4]) }
-
-        view.findViewById<View>(R.id.btn_close_calc).setOnClickListener { dialog.dismiss() }
-        dialog.show()
+        challengeTextFlow.value = "$typeStr - $diffStr"
     }
 
     private fun formatCalcMethodToDisplay(method: String?): String {
@@ -327,256 +241,6 @@ class SettingsActivity : BaseActivity() {
             name.contains("ISNA") || name.contains("isna") -> "isna"
             else -> "umm_al_qura"
         }
-    }
-
-    private fun showAlarmTimingDialog() {
-        val currentType = prefs.getString("alarm_timing_type", "with")
-        val currentOffset = prefs.getInt("alarm_timing_offset_minutes", 10)
-
-        val dialog = BottomSheetDialog(this, R.style.DarkBottomSheetTheme)
-        val view = layoutInflater.inflate(R.layout.dialog_settings_alarm_timing, null)
-        dialog.setContentView(view)
-        dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundColor(Color.TRANSPARENT)
-
-        val btnBefore = view.findViewById<LinearLayout>(R.id.btn_timing_before)
-        val btnWith = view.findViewById<LinearLayout>(R.id.btn_timing_with)
-        val btnAfter = view.findViewById<LinearLayout>(R.id.btn_timing_after)
-
-        val textBefore = view.findViewById<TextView>(R.id.text_timing_before)
-        val textWith = view.findViewById<TextView>(R.id.text_timing_with)
-        val textAfter = view.findViewById<TextView>(R.id.text_timing_after)
-
-        val layoutMinutesPicker = view.findViewById<LinearLayout>(R.id.layout_minutes_picker)
-        val textWithInfo = view.findViewById<TextView>(R.id.text_timing_with_info)
-        val textOffsetSummary = view.findViewById<TextView>(R.id.text_offset_summary)
-        val seekMinutes = view.findViewById<SeekBar>(R.id.seek_minutes)
-
-        var selectedType = currentType
-        var selectedOffset = currentOffset
-
-        fun updateUI() {
-            btnBefore.setBackgroundResource(R.drawable.bg_code_container)
-            btnWith.setBackgroundResource(R.drawable.bg_code_container)
-            btnAfter.setBackgroundResource(R.drawable.bg_code_container)
-
-            textBefore.setTextColor(Color.parseColor("#B0B0C5"))
-            textWith.setTextColor(Color.parseColor("#B0B0C5"))
-            textAfter.setTextColor(Color.parseColor("#B0B0C5"))
-
-            when (selectedType) {
-                "before" -> {
-                    btnBefore.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textBefore.setTextColor(Color.parseColor("#FFD700"))
-                    layoutMinutesPicker.visibility = View.VISIBLE
-                    textWithInfo.visibility = View.GONE
-                    textOffsetSummary.text = "قبل الأذان بـ $selectedOffset دقيقة ⏰"
-                }
-                "with" -> {
-                    btnWith.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textWith.setTextColor(Color.parseColor("#FFD700"))
-                    layoutMinutesPicker.visibility = View.GONE
-                    textWithInfo.visibility = View.VISIBLE
-                }
-                "after" -> {
-                    btnAfter.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textAfter.setTextColor(Color.parseColor("#FFD700"))
-                    layoutMinutesPicker.visibility = View.VISIBLE
-                    textWithInfo.visibility = View.GONE
-                    textOffsetSummary.text = "بعد الأذان بـ $selectedOffset دقيقة ⏱️"
-                }
-            }
-        }
-
-        seekMinutes.progress = selectedOffset - 1
-        seekMinutes.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                selectedOffset = progress + 1
-                if (selectedType == "with") selectedType = "before"
-                updateUI()
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-
-        btnBefore.setOnClickListener { selectedType = "before"; updateUI() }
-        btnWith.setOnClickListener { selectedType = "with"; selectedOffset = 0; updateUI() }
-        btnAfter.setOnClickListener { selectedType = "after"; updateUI() }
-
-        val quickClicks = mapOf(
-            R.id.btn_quick_5 to 5,
-            R.id.btn_quick_10 to 10,
-            R.id.btn_quick_15 to 15,
-            R.id.btn_quick_30 to 30,
-            R.id.btn_quick_45 to 45
-        )
-        quickClicks.forEach { (id, valMin) ->
-            view.findViewById<View>(id).setOnClickListener {
-                selectedOffset = valMin
-                seekMinutes.progress = selectedOffset - 1
-                if (selectedType == "with") selectedType = "before"
-                updateUI()
-            }
-        }
-
-        updateUI()
-
-        view.findViewById<View>(R.id.btn_save_alarm_timing).setOnClickListener {
-            val desc = when (selectedType) {
-                "before" -> "قبل الأذان بـ $selectedOffset دقيقة ⏰"
-                "after" -> "بعد الأذان بـ $selectedOffset دقيقة ⏱️"
-                else -> "مع أذان الفجر بالضبط 🕌"
-            }
-            prefs.edit()
-                .putString("alarm_timing_type", selectedType)
-                .putInt("alarm_timing_offset_minutes", selectedOffset)
-                .putString("alarm_timing_desc", desc)
-                .apply()
-
-            // Cloud sync
-            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
-            viewModel.updateUserSettings(currentSettings.copy(alarmMinutesBefore = if (selectedType == "before") -selectedOffset else selectedOffset)) {}
-
-            binding.textAlarmTimingValue.text = desc
-            showToast("تم تحديث توقيت المنبه بنجاح")
-            dialog.dismiss()
-        }
-
-        view.findViewById<View>(R.id.btn_close_timing).setOnClickListener { dialog.dismiss() }
-        dialog.show()
-    }
-
-    private fun showChallengeSettingsDialog() {
-        val currentType = prefs.getString("challenge_type", "math")
-        val currentDiff = prefs.getString("challenge_difficulty", "medium")
-
-        val dialog = BottomSheetDialog(this, R.style.DarkBottomSheetTheme)
-        val view = layoutInflater.inflate(R.layout.dialog_settings_challenge, null)
-        dialog.setContentView(view)
-        dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundColor(Color.TRANSPARENT)
-
-        val btnMath = view.findViewById<LinearLayout>(R.id.btn_type_math)
-        val btnWord = view.findViewById<LinearLayout>(R.id.btn_type_word)
-        val btnShake = view.findViewById<LinearLayout>(R.id.btn_type_shake)
-
-        val textMath = view.findViewById<TextView>(R.id.text_type_math)
-        val textWord = view.findViewById<TextView>(R.id.text_type_word)
-        val textShake = view.findViewById<TextView>(R.id.text_type_shake)
-
-        val btnEasy = view.findViewById<LinearLayout>(R.id.btn_diff_easy)
-        val btnMedium = view.findViewById<LinearLayout>(R.id.btn_diff_medium)
-        val btnHard = view.findViewById<LinearLayout>(R.id.btn_diff_hard)
-
-        val textEasy = view.findViewById<TextView>(R.id.text_diff_easy)
-        val textMedium = view.findViewById<TextView>(R.id.text_diff_medium)
-        val textHard = view.findViewById<TextView>(R.id.text_diff_hard)
-
-        var selectedType: String = currentType ?: "math"
-        var selectedDiff: String = currentDiff ?: "medium"
-
-        fun updateUI() {
-            btnMath.setBackgroundResource(R.drawable.bg_code_container)
-            btnWord.setBackgroundResource(R.drawable.bg_code_container)
-            btnShake.setBackgroundResource(R.drawable.bg_code_container)
-
-            textMath.setTextColor(Color.parseColor("#B0B0C5"))
-            textWord.setTextColor(Color.parseColor("#B0B0C5"))
-            textShake.setTextColor(Color.parseColor("#B0B0C5"))
-
-            when (selectedType) {
-                "math" -> {
-                    btnMath.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textMath.setTextColor(Color.parseColor("#FFD700"))
-                }
-                "word" -> {
-                    btnWord.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textWord.setTextColor(Color.parseColor("#FFD700"))
-                }
-                "shake" -> {
-                    btnShake.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textShake.setTextColor(Color.parseColor("#FFD700"))
-                }
-            }
-
-            btnEasy.setBackgroundResource(R.drawable.bg_code_container)
-            btnMedium.setBackgroundResource(R.drawable.bg_code_container)
-            btnHard.setBackgroundResource(R.drawable.bg_code_container)
-
-            textEasy.setTextColor(Color.parseColor("#B0B0C5"))
-            textMedium.setTextColor(Color.parseColor("#B0B0C5"))
-            textHard.setTextColor(Color.parseColor("#B0B0C5"))
-
-            when (selectedDiff) {
-                "easy" -> {
-                    btnEasy.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textEasy.setTextColor(Color.parseColor("#FFD700"))
-                }
-                "medium" -> {
-                    btnMedium.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textMedium.setTextColor(Color.parseColor("#FFD700"))
-                }
-                "hard" -> {
-                    btnHard.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textHard.setTextColor(Color.parseColor("#FFD700"))
-                }
-            }
-        }
-
-        btnMath.setOnClickListener { selectedType = "math"; updateUI() }
-        btnWord.setOnClickListener { selectedType = "word"; updateUI() }
-        btnShake.setOnClickListener { selectedType = "shake"; updateUI() }
-
-        btnEasy.setOnClickListener { selectedDiff = "easy"; updateUI() }
-        btnMedium.setOnClickListener { selectedDiff = "medium"; updateUI() }
-        btnHard.setOnClickListener { selectedDiff = "hard"; updateUI() }
-
-        updateUI()
-
-        view.findViewById<View>(R.id.btn_save_challenge).setOnClickListener {
-            prefs.edit()
-                .putString("challenge_type", selectedType)
-                .putString("challenge_difficulty", selectedDiff)
-                .apply()
-
-            // Cloud sync
-            val currentSettings = viewModel.userProfile.value?.settings ?: UserSettings()
-            viewModel.updateUserSettings(currentSettings.copy(challengeType = selectedType, challengeDifficulty = selectedDiff)) {}
-
-            updateChallengeDescText(selectedType, selectedDiff)
-            showToast("تم تحديث تحدي الاستيقاظ المفضل")
-            dialog.dismiss()
-        }
-
-        view.findViewById<View>(R.id.btn_close_challenge).setOnClickListener { dialog.dismiss() }
-        dialog.show()
-    }
-
-    private fun openAutoStartSettings() {
-        try {
-            val intent = Intent().apply {
-                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                data = Uri.fromParts("package", packageName, null)
-            }
-            startActivity(intent)
-            showToast("يرجى تفعيل التشغيل التلقائي (Auto-Start) في إعدادات التطبيق")
-        } catch (e: Exception) {
-            showToast("تعذر فتح الإعدادات تلقائياً")
-        }
-    }
-
-    private fun openBatteryOptimizationSettings() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            try {
-                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                startActivity(intent)
-            } catch (e: Exception) {
-                showToast("تعذر فتح إعدادات البطارية تلقائياً")
-            }
-        }
-    }
-
-    private fun scheduleTestAlarm() {
-        AlarmScheduler.scheduleTestAlarm(this, 10)
-        showToast("🧪 تم جدولة منبه تجريبي بعد 10 ثوانٍ! الرجاء قفل الشاشة لاختبار الحماية.")
     }
 
     private fun checkLocationPermissionsAndFetch() {
@@ -609,8 +273,7 @@ class SettingsActivity : BaseActivity() {
             return
         }
 
-        binding.textLocationStatus.text = "جارٍ تحديد موقعك الجغرافي الحقيقي... 📡"
-
+        userCityFlow.value = "جارٍ تحديد موقعك الجغرافي الحقيقي... 📡"
         val provider = if (isNetworkEnabled) android.location.LocationManager.NETWORK_PROVIDER else android.location.LocationManager.GPS_PROVIDER
 
         try {
@@ -647,11 +310,8 @@ class SettingsActivity : BaseActivity() {
                         .putFloat("user_latitude", lat.toFloat())
                         .putFloat("user_longitude", lng.toFloat())
                         .apply()
-                    binding.textLocationStatus.text = "المدينة: $city 📍 (تم التحديث عبر الـ GPS)"
-
-                    // Sync to cloud
+                    userCityFlow.value = "المدينة: $city 📍"
                     viewModel.updateUserLocation(UserLocation(latitude = lat, longitude = lng, cityName = city)) {}
-
                     showToast("تم تحديد موقعك الحقيقي بنجاح: $city 🎉")
                 }
             } catch (e: Exception) {
@@ -661,11 +321,8 @@ class SettingsActivity : BaseActivity() {
                         .putFloat("user_latitude", lat.toFloat())
                         .putFloat("user_longitude", lng.toFloat())
                         .apply()
-                    binding.textLocationStatus.text = "الموقع: $simplifiedLoc 📍 (تم التحديث عبر الـ GPS)"
-
-                    // Sync to cloud
+                    userCityFlow.value = "الموقع: $simplifiedLoc 📍"
                     viewModel.updateUserLocation(UserLocation(latitude = lat, longitude = lng, cityName = simplifiedLoc)) {}
-
                     showToast("تم تحديد الإحداثيات بنجاح! 📍")
                 }
             }
@@ -682,224 +339,58 @@ class SettingsActivity : BaseActivity() {
             "khobar" to "الخبر",
             "madinah" to "المدينة المنورة",
             "medina" to "المدينة المنورة",
-            "abha" to "أبها",
-            "taif" to "الطائف",
-            "tabuk" to "تبوك",
-            "jizan" to "جيزان",
-            "najran" to "نجران",
-            "baha" to "الباحة",
-            "hail" to "حائل",
-            "qassim" to "القصيم",
-            "buraidah" to "بريدة",
-            "unaizah" to "عنيزة",
-            "jubail" to "الجبيل",
-            "yanbu" to "ينبع",
-            "ahsa" to "الأحساء",
-            "hofuf" to "الهفوف",
-            "qatif" to "القطيف",
             "sanaa" to "صنعاء",
-            "sana" to "صنعاء",
             "aden" to "عدن",
             "taiz" to "تعز",
-            "taizz" to "تعز",
-            "alhudaydah" to "الحديدة",
-            "hodeidah" to "الحديدة",
-            "hodeida" to "الحديدة",
-            "hudaydah" to "الحديدة",
             "almukalla" to "المكلا",
-            "mukalla" to "المكلا",
-            "ibb" to "إب",
-            "dhamar" to "ذمار",
-            "amran" to "عمران",
-            "sayyan" to "سيان"
+            "mukalla" to "المكلا"
         )
         return translations[englishName.lowercase(Locale.ROOT)] ?: englishName
     }
 
-    private fun showLogoutConfirmationDialog() {
-        val dialog = android.app.Dialog(this)
-        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.dialog_logout_confirm)
-        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
-        dialog.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.9).toInt(),
-            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-
-        val btnCancel = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_cancel)
-        val btnConfirm = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_confirm)
-
-        btnCancel.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        btnConfirm.setOnClickListener {
-            dialog.dismiss()
-            com.bagomri.fajrloop.auth.FcmTokenManager.unregisterToken()
-            // مسح جميع بيانات الحلقة والمستخدم المخزنة محلياً عند تسجيل الخروج
-            val prefs = getSharedPreferences(com.bagomri.fajrloop.alarm.AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit()
-                .remove("current_halqa_id")
-                .remove("current_halqa_name")
-                .remove("cached_user_display_name")
-                .remove("cached_user_photo_url")
-                .remove("cached_awake_count_text")
-                .remove("cached_today_summary_text")
-                .apply()
-            
-            AuthManager.signOut()
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+    private fun openAutoStartSettings() {
+        try {
+            val intent = Intent().apply {
+                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                data = Uri.fromParts("package", packageName, null)
+            }
             startActivity(intent)
-            finish()
+            showToast("يرجى تفعيل التشغيل التلقائي (Auto-Start) في إعدادات التطبيق")
+        } catch (e: Exception) {
+            showToast("تعذر فتح الإعدادات تلقائياً")
         }
+    }
 
-        dialog.show()
+    private fun openBatteryOptimizationSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                startActivity(intent)
+            } catch (e: Exception) {
+                showToast("تعذر فتح إعدادات البطارية تلقائياً")
+            }
+        }
+    }
+
+    private fun logout() {
+        FcmTokenManager.unregisterToken()
+        prefs.edit()
+            .remove("current_halqa_id")
+            .remove("current_halqa_name")
+            .remove("cached_user_display_name")
+            .remove("cached_user_photo_url")
+            .remove("cached_awake_count_text")
+            .remove("cached_today_summary_text")
+            .apply()
+
+        AuthManager.signOut()
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
-
-    private var previewPlayer: android.media.MediaPlayer? = null
-    private val previewHandler = android.os.Handler(android.os.Looper.getMainLooper())
-    private var stopPreviewRunnable: Runnable? = null
-
-    private fun showAlarmSoundDialog() {
-        val currentChoice = prefs.getString("alarm_sound_choice", "default") ?: "default"
-
-        val dialog = BottomSheetDialog(this, R.style.DarkBottomSheetTheme)
-        val view = layoutInflater.inflate(R.layout.dialog_settings_alarm_sound, null)
-        dialog.setContentView(view)
-        dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundColor(Color.TRANSPARENT)
-
-        val btnAfasy = view.findViewById<LinearLayout>(R.id.btn_sound_afasy)
-        val btnAbdulbasit = view.findViewById<LinearLayout>(R.id.btn_sound_abdulbasit)
-        val btnIslamic = view.findViewById<LinearLayout>(R.id.btn_sound_islamic)
-        val btnDefault = view.findViewById<LinearLayout>(R.id.btn_sound_default)
-
-        val textAfasy = view.findViewById<TextView>(R.id.text_sound_afasy)
-        val textAbdulbasit = view.findViewById<TextView>(R.id.text_sound_abdulbasit)
-        val textIslamic = view.findViewById<TextView>(R.id.text_sound_islamic)
-        val textDefault = view.findViewById<TextView>(R.id.text_sound_default)
-
-        val playAfasy = view.findViewById<ImageView>(R.id.btn_preview_afasy)
-        val playAbdulbasit = view.findViewById<ImageView>(R.id.btn_preview_abdulbasit)
-        val playIslamic = view.findViewById<ImageView>(R.id.btn_preview_islamic)
-        val playDefault = view.findViewById<ImageView>(R.id.btn_preview_default)
-
-        var selectedChoice = currentChoice
-
-        fun updateUI() {
-            btnAfasy.setBackgroundResource(R.drawable.bg_code_container)
-            btnAbdulbasit.setBackgroundResource(R.drawable.bg_code_container)
-            btnIslamic.setBackgroundResource(R.drawable.bg_code_container)
-            btnDefault.setBackgroundResource(R.drawable.bg_code_container)
-
-            textAfasy.setTextColor(Color.parseColor("#B0B0C5"))
-            textAbdulbasit.setTextColor(Color.parseColor("#B0B0C5"))
-            textIslamic.setTextColor(Color.parseColor("#B0B0C5"))
-            textDefault.setTextColor(Color.parseColor("#B0B0C5"))
-
-            when (selectedChoice) {
-                "afasy" -> {
-                    btnAfasy.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textAfasy.setTextColor(Color.parseColor("#FFD700"))
-                }
-                "abdulbasit" -> {
-                    btnAbdulbasit.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textAbdulbasit.setTextColor(Color.parseColor("#FFD700"))
-                }
-                "islamic" -> {
-                    btnIslamic.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textIslamic.setTextColor(Color.parseColor("#FFD700"))
-                }
-                "default" -> {
-                    btnDefault.setBackgroundResource(R.drawable.bg_chat_bubble_motivational)
-                    textDefault.setTextColor(Color.parseColor("#FFD700"))
-                }
-            }
-        }
-
-        btnAfasy.setOnClickListener { selectedChoice = "afasy"; updateUI() }
-        btnAbdulbasit.setOnClickListener { selectedChoice = "abdulbasit"; updateUI() }
-        btnIslamic.setOnClickListener { selectedChoice = "islamic"; updateUI() }
-        btnDefault.setOnClickListener { selectedChoice = "default"; updateUI() }
-
-        val startPreview = { choice: String, previewBtn: ImageView ->
-            stopPreview()
-            previewBtn.setImageResource(android.R.drawable.ic_media_pause)
-
-            try {
-                previewPlayer = android.media.MediaPlayer().apply {
-                    val uri = when (choice) {
-                        "afasy" -> Uri.parse("android.resource://$packageName/${R.raw.adhan_afasy}")
-                        "abdulbasit" -> Uri.parse("android.resource://$packageName/${R.raw.adhan_abdulbasit}")
-                        "islamic" -> Uri.parse("android.resource://$packageName/${R.raw.islamic_tone}")
-                        else -> android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
-                            ?: android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION)
-                    }
-                    setDataSource(this@SettingsActivity, uri)
-                    setAudioAttributes(
-                        android.media.AudioAttributes.Builder()
-                            .setUsage(android.media.AudioAttributes.USAGE_ALARM)
-                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build()
-                    )
-                    prepare()
-                    start()
-                }
-
-                stopPreviewRunnable = Runnable {
-                    stopPreview()
-                    previewBtn.setImageResource(android.R.drawable.ic_media_play)
-                }
-                previewHandler.postDelayed(stopPreviewRunnable!!, 5000)
-            } catch (e: Exception) {
-                showToast("خطأ في تشغيل المعاينة")
-                previewBtn.setImageResource(android.R.drawable.ic_media_play)
-            }
-        }
-
-        playAfasy.setOnClickListener { startPreview("afasy", playAfasy) }
-        playAbdulbasit.setOnClickListener { startPreview("abdulbasit", playAbdulbasit) }
-        playIslamic.setOnClickListener { startPreview("islamic", playIslamic) }
-        playDefault.setOnClickListener { startPreview("default", playDefault) }
-
-        updateUI()
-
-        view.findViewById<View>(R.id.btn_save_sound).setOnClickListener {
-            prefs.edit().putString("alarm_sound_choice", selectedChoice).apply()
-            binding.textAlarmSoundValue.text = mapSoundChoiceToText(selectedChoice)
-            showToast("تم تحديث نغمة المنبه")
-            stopPreview()
-            dialog.dismiss()
-        }
-
-        view.findViewById<View>(R.id.btn_close_sound).setOnClickListener {
-            stopPreview()
-            dialog.dismiss()
-        }
-        dialog.setOnDismissListener {
-            stopPreview()
-        }
-        dialog.show()
-    }
-
-    private fun stopPreview() {
-        stopPreviewRunnable?.let { previewHandler.removeCallbacks(it) }
-        stopPreviewRunnable = null
-        try {
-            previewPlayer?.let {
-                if (it.isPlaying) it.stop()
-                it.release()
-            }
-        } catch (e: Exception) {}
-        previewPlayer = null
-    }
-
-    override fun onDestroy() {
-        stopPreview()
-        super.onDestroy()
     }
 }
