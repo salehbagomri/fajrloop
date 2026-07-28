@@ -54,7 +54,6 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
         compose = true
     }
 }
@@ -63,7 +62,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
@@ -75,7 +73,6 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.activity)
     implementation(libs.compose.viewmodel)
-    implementation(libs.compose.runtime.livedata)
     implementation(libs.compose.navigation)
     debugImplementation(libs.compose.ui.tooling)
 
@@ -103,12 +100,6 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
 
-    // CircleImageView for circular user avatar
-    implementation("de.hdodenhof:circleimageview:3.1.0")
-
-    // Glide for image loading (user avatars)
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-
     // Adhan-Java for prayer time calculations
     implementation(libs.adhan)
 
@@ -119,5 +110,3 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
-
-

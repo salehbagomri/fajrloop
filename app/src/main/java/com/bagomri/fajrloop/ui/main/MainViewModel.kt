@@ -3,8 +3,6 @@ package com.bagomri.fajrloop.ui.main
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.bagomri.fajrloop.alarm.AlarmPreferences
 import com.bagomri.fajrloop.data.*
 import com.google.firebase.database.DataSnapshot
@@ -16,7 +14,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -54,70 +51,44 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         prefs.getString("cached_awake_count_text", "") ?: ""
     }
 
-    // UI state LiveData & StateFlow
-    private val _userProfile = MutableLiveData<UserProfile?>(initialProfile)
-    val userProfile: LiveData<UserProfile?> = _userProfile
+    // StateFlows
     private val _userProfileFlow = MutableStateFlow<UserProfile?>(initialProfile)
     val userProfileFlow: StateFlow<UserProfile?> = _userProfileFlow.asStateFlow()
 
-    private val _halqaId = MutableLiveData<String?>(initialHalqaId)
-    val halqaId: LiveData<String?> = _halqaId
     private val _halqaIdFlow = MutableStateFlow<String?>(initialHalqaId)
     val halqaIdFlow: StateFlow<String?> = _halqaIdFlow.asStateFlow()
 
-    private val _halqaName = MutableLiveData<String>(initialHalqaName)
-    val halqaName: LiveData<String> = _halqaName
     private val _halqaNameFlow = MutableStateFlow<String>(initialHalqaName)
     val halqaNameFlow: StateFlow<String> = _halqaNameFlow.asStateFlow()
 
-    private val _isCurrentUserAdmin = MutableLiveData<Boolean>(false)
-    val isCurrentUserAdmin: LiveData<Boolean> = _isCurrentUserAdmin
     private val _isCurrentUserAdminFlow = MutableStateFlow<Boolean>(false)
     val isCurrentUserAdminFlow: StateFlow<Boolean> = _isCurrentUserAdminFlow.asStateFlow()
 
-    private val _loopMembers = MutableLiveData<List<LoopMemberItem>>(emptyList())
-    val loopMembers: LiveData<List<LoopMemberItem>> = _loopMembers
     private val _loopMembersFlow = MutableStateFlow<List<LoopMemberItem>>(emptyList())
     val loopMembersFlow: StateFlow<List<LoopMemberItem>> = _loopMembersFlow.asStateFlow()
 
-    private val _todaySummaryText = MutableLiveData<String>(initialTodaySummary)
-    val todaySummaryText: LiveData<String> = _todaySummaryText
     private val _todaySummaryTextFlow = MutableStateFlow<String>(initialTodaySummary)
     val todaySummaryTextFlow: StateFlow<String> = _todaySummaryTextFlow.asStateFlow()
 
-    private val _awakeCountText = MutableLiveData<String>(initialAwakeCount)
-    val awakeCountText: LiveData<String> = _awakeCountText
     private val _awakeCountTextFlow = MutableStateFlow<String>(initialAwakeCount)
     val awakeCountTextFlow: StateFlow<String> = _awakeCountTextFlow.asStateFlow()
 
-    private val _friendWakeAlert = MutableLiveData<FriendWakeAlert?>(null)
-    val friendWakeAlert: LiveData<FriendWakeAlert?> = _friendWakeAlert
     private val _friendWakeAlertFlow = MutableStateFlow<FriendWakeAlert?>(null)
     val friendWakeAlertFlow: StateFlow<FriendWakeAlert?> = _friendWakeAlertFlow.asStateFlow()
 
     // Countdown and Prayer times
-    private val _fajrTimeStr = MutableLiveData<String>("")
-    val fajrTimeStr: LiveData<String> = _fajrTimeStr
     private val _fajrTimeStrFlow = MutableStateFlow<String>("")
     val fajrTimeStrFlow: StateFlow<String> = _fajrTimeStrFlow.asStateFlow()
 
-    private val _sunriseTimeStr = MutableLiveData<String>("")
-    val sunriseTimeStr: LiveData<String> = _sunriseTimeStr
     private val _sunriseTimeStrFlow = MutableStateFlow<String>("")
     val sunriseTimeStrFlow: StateFlow<String> = _sunriseTimeStrFlow.asStateFlow()
 
-    private val _countdownText = MutableLiveData<String>("")
-    val countdownText: LiveData<String> = _countdownText
     private val _countdownTextFlow = MutableStateFlow<String>("")
     val countdownTextFlow: StateFlow<String> = _countdownTextFlow.asStateFlow()
 
-    private val _countdownColor = MutableLiveData<String>("#2ECC71")
-    val countdownColor: LiveData<String> = _countdownColor
     private val _countdownColorFlow = MutableStateFlow<String>("#2ECC71")
     val countdownColorFlow: StateFlow<String> = _countdownColorFlow.asStateFlow()
 
-    private val _countdownCardBorderMode = MutableLiveData<Int>(0)
-    val countdownCardBorderMode: LiveData<Int> = _countdownCardBorderMode
     private val _countdownCardBorderModeFlow = MutableStateFlow<Int>(0)
     val countdownCardBorderModeFlow: StateFlow<Int> = _countdownCardBorderModeFlow.asStateFlow()
 
@@ -133,10 +104,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val uid = userRepository.getUserId()
         if (uid != null) {
             userProfileListener = userRepository.observeUserProfile(uid) { profile ->
-                _userProfile.value = profile
                 _userProfileFlow.value = profile
                 val hId = if (profile != null && profile.currentHalqaId.isNotEmpty()) profile.currentHalqaId else null
-                _halqaId.value = hId
                 _halqaIdFlow.value = hId
 
                 // مزامنة مع SharedPreferences
@@ -152,28 +121,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 editor.apply()
 
-                // إعادة جدولة أو إلغاء المنبه فورياً عند تغيير الحلقة
                 startFajrCountdown()
             }
 
             halqaListener = halqaRepository.observeUserHalqa { snapshot ->
                 val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
                 if (snapshot == null || !snapshot.exists()) {
-                    _halqaName.value = ""
                     _halqaNameFlow.value = ""
-                    _isCurrentUserAdmin.value = false
                     _isCurrentUserAdminFlow.value = false
-                    _loopMembers.value = emptyList()
                     _loopMembersFlow.value = emptyList()
-                    _todaySummaryText.value = ""
                     _todaySummaryTextFlow.value = ""
-                    _awakeCountText.value = ""
                     _awakeCountTextFlow.value = ""
-                    _friendWakeAlert.value = null
                     _friendWakeAlertFlow.value = null
                     stopObservingDailyRecords()
 
-                    // مسح المعرف والاسم والإحصائيات في SharedPreferences
                     prefs.edit()
                         .remove("current_halqa_id")
                         .remove("current_halqa_name")
@@ -182,7 +143,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         .apply()
                 } else {
                     val name = snapshot.child("name").value as? String ?: "حلقة"
-                    _halqaName.value = name
                     _halqaNameFlow.value = name
 
                     val chain = (snapshot.child("chain").value as? List<*>)
@@ -191,11 +151,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val membersSnap = snapshot.child("members")
                     val currentUid = userRepository.getUserId()
                     val isAdmin = membersSnap.child(currentUid ?: "").child("role").value as? String == "admin"
-                    _isCurrentUserAdmin.value = isAdmin
                     _isCurrentUserAdminFlow.value = isAdmin
 
                     val halqaId = snapshot.key!!
-                    // حفظ المعرف والاسم في SharedPreferences
                     prefs.edit()
                         .putString("current_halqa_id", halqaId)
                         .putString("current_halqa_name", name)
@@ -226,7 +184,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun stopObservingDailyRecords() {
         dailyRecordsListener?.let {
-            val currentId = _userProfile.value?.currentHalqaId
+            val currentId = _userProfileFlow.value?.currentHalqaId
             if (!currentId.isNullOrEmpty()) {
                 val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
                 FirebaseDatabase.getInstance()
@@ -289,24 +247,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
 
-        _loopMembers.value = membersList
         _loopMembersFlow.value = membersList
-        _friendWakeAlert.value = alertFriend
         _friendWakeAlertFlow.value = alertFriend
 
         val total = chain.size
         val countText = "$awakeCount / $total"
-        _awakeCountText.value = countText
         _awakeCountTextFlow.value = countText
         val summaryText = if (awakeCount == total && total > 0) {
             "ما شاء الله! استيقظت الحلقة بالكامل 🎉"
         } else {
             "استيقظ $awakeCount من أصل $total أعضاء حتى الآن."
         }
-        _todaySummaryText.value = summaryText
         _todaySummaryTextFlow.value = summaryText
 
-        // حفظ في SharedPreferences للمرة القادمة
         val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit()
             .putString("cached_awake_count_text", countText)
@@ -316,7 +269,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun confirmFriendWake(friendUid: String, onResult: (Boolean, String?) -> Unit) {
         val currentUid = userRepository.getUserId() ?: return
-        val halqaId = _userProfile.value?.currentHalqaId ?: return
+        val halqaId = _userProfileFlow.value?.currentHalqaId ?: return
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
         FirebaseDatabase.getInstance()
@@ -350,9 +303,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val timeFormat = SimpleDateFormat("hh:mm a", arLocale)
         val fajrStr = timeFormat.format(Date(prayerTimes.fajr))
         val sunriseStr = timeFormat.format(Date(prayerTimes.sunrise))
-        _fajrTimeStr.value = fajrStr
         _fajrTimeStrFlow.value = fajrStr
-        _sunriseTimeStr.value = sunriseStr
         _sunriseTimeStrFlow.value = sunriseStr
 
         val config = alarmRepository.getAlarmConfig()
@@ -395,7 +346,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(remaining) % 60
                     val seconds = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(remaining) % 60
                     val cText = String.format("%02d:%02d:%02d", hours, minutes, seconds)
-                    _countdownText.value = cText
                     _countdownTextFlow.value = cText
 
                     val totalMinutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(remaining)
@@ -404,7 +354,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         totalMinutes in 15..59 -> "#FFD700"
                         else -> "#E74C3C"
                     }
-                    _countdownColor.value = textColor
                     _countdownColorFlow.value = textColor
 
                     val borderMode = when {
@@ -413,14 +362,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         totalMinutes < 60 -> 1
                         else -> 0
                     }
-                    _countdownCardBorderMode.value = borderMode
                     _countdownCardBorderModeFlow.value = borderMode
                 } else {
-                    _countdownText.value = "00:00:00"
                     _countdownTextFlow.value = "00:00:00"
-                    _countdownColor.value = "#E74C3C"
                     _countdownColorFlow.value = "#E74C3C"
-                    _countdownCardBorderMode.value = 2
                     _countdownCardBorderModeFlow.value = 2
                 }
                 handler.postDelayed(this, 1000)
@@ -428,7 +373,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         handler.post(countdownRunnable!!)
     }
-
 
     override fun onCleared() {
         super.onCleared()
@@ -446,9 +390,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 }
 
-/**
- * LoopMemberItem — نموذج بيانات مبسط لعضو الحلقة يعرض بالواجهة
- */
 data class LoopMemberItem(
     val userId: String,
     val displayName: String,
@@ -457,9 +398,6 @@ data class LoopMemberItem(
     val isCurrentUser: Boolean
 )
 
-/**
- * FriendWakeAlert — نموذج تنبيه استيقاظ الصديق المسؤولين عنه
- */
 data class FriendWakeAlert(
     val uid: String,
     val displayName: String,

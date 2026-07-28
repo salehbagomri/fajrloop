@@ -15,13 +15,15 @@ import android.view.KeyEvent
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import com.bagomri.fajrloop.alarm.AlarmPreferences
 import com.bagomri.fajrloop.alarm.AlarmSoundService
-import com.bagomri.fajrloop.ui.BaseActivity
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.SimpleDateFormat
@@ -31,7 +33,7 @@ import java.util.Locale
 /**
  * AlarmRingingActivity — شاشة رنين المنبه الإلزامية (Jetpack Compose with LockScreen Enforcer)
  */
-class AlarmRingingActivity : BaseActivity() {
+class AlarmRingingActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_ALARM_LABEL = "extra_alarm_label"
@@ -336,60 +338,69 @@ class AlarmRingingActivity : BaseActivity() {
     }
 
     private fun setupObservers() {
-        viewModel.isChallengeSolved.observe(this) { solved ->
-            if (solved) {
-                showToast("🎉 تم تجاوز التحدي بنجاح!")
-                try {
-                    val duration = (System.currentTimeMillis() - startRingingTime) / 1000
-                    com.bagomri.fajrloop.data.AnalyticsHelper.logChallengeSolved(challengeType, "normal", duration)
-                } catch (e: Exception) {
-                    android.util.Log.e(TAG, "Failed to log challenge_solved", e)
-                }
-                startService(Intent(this, AlarmSoundService::class.java).apply {
-                    action = AlarmSoundService.ACTION_SOFTEN_ALARM
-                })
-                isVolumeEnforced = false
-                handler.removeCallbacks(volumeEnforcer)
-            }
-        }
-
-        viewModel.isPanicActive.observe(this) { panic ->
-            if (panic) {
-                startService(Intent(this, AlarmSoundService::class.java).apply {
-                    action = AlarmSoundService.ACTION_SOFTEN_ALARM
-                })
-                isVolumeEnforced = false
-                handler.removeCallbacks(volumeEnforcer)
-                showToast("🚨 تم إرسال نداء استغاثة عاجل لأعضاء الحلقة")
-            }
-        }
-
-        viewModel.dismissFinished.observe(this) { finished ->
-            if (finished && !isFinishing && !adhkarLaunched) {
-                adhkarLaunched = true
-                isAlarmDismissed = true
-                handler.removeCallbacks(volumeEnforcer)
-                startService(Intent(this, AlarmSoundService::class.java).apply {
-                    action = AlarmSoundService.ACTION_STOP_ALARM
-                })
-
-                if (!isSnoozed) {
+        lifecycleScope.launch {
+            viewModel.isChallengeSolvedFlow.collect { solved ->
+                if (solved) {
+                    showToast("🎉 تم تجاوز التحدي بنجاح!")
                     try {
                         val duration = (System.currentTimeMillis() - startRingingTime) / 1000
-                        com.bagomri.fajrloop.data.AnalyticsHelper.logWakeConfirmed(duration)
+                        com.bagomri.fajrloop.data.AnalyticsHelper.logChallengeSolved(challengeType, "normal", duration)
                     } catch (e: Exception) {
-                        android.util.Log.e(TAG, "Failed to log wake_confirmed", e)
+                        android.util.Log.e(TAG, "Failed to log challenge_solved", e)
                     }
-
-                    val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-                    val showAdhkar = prefs.getBoolean("show_adhkar_after_alarm", true)
-                    if (showAdhkar) {
-                        val adhkarIntent = Intent(this, com.bagomri.fajrloop.ui.adhkar.MorningAdhkarActivity::class.java)
-                        startActivity(adhkarIntent)
-                    }
+                    startService(Intent(this@AlarmRingingActivity, AlarmSoundService::class.java).apply {
+                        action = AlarmSoundService.ACTION_SOFTEN_ALARM
+                    })
+                    isVolumeEnforced = false
+                    handler.removeCallbacks(volumeEnforcer)
                 }
+            }
+        }
 
-                finish()
+        lifecycleScope.launch {
+            viewModel.isPanicActiveFlow.collect { panic ->
+                if (panic) {
+                    startService(Intent(this@AlarmRingingActivity, AlarmSoundService::class.java).apply {
+                        action = AlarmSoundService.ACTION_SOFTEN_ALARM
+                    })
+                    isVolumeEnforced = false
+                    handler.removeCallbacks(volumeEnforcer)
+                    showToast("🚨 تم إرسال نداء استغاثة عاجل لأعضاء الحلقة")
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.dismissFinishedFlow.collect { finished ->
+                if (finished && !isFinishing && !adhkarLaunched) {
+                    adhkarLaunched = true
+                    isAlarmDismissed = true
+                    handler.removeCallbacks(volumeEnforcer)
+                    startService(Intent(this@AlarmRingingActivity, AlarmSoundService::class.java).apply {
+                        action = AlarmSoundService.ACTION_STOP_ALARM
+                    })
+
+                    if (!isSnoozed) {
+                        try {
+                            val duration = (System.currentTimeMillis() - startRingingTime) / 1000
+                            com.bagomri.fajrloop.data.AnalyticsHelper.logWakeConfirmed(duration)
+                        } catch (e: Exception) {
+                            android.util.Log.e(TAG, "Failed to log wake_confirmed", e)
+                        }
+
+                        val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+                        val showAdhkar = prefs.getBoolean("show_adhkar_after_alarm", true)
+                        if (showAdhkar) {
+                            val mainIntent = Intent(this@AlarmRingingActivity, com.bagomri.fajrloop.ui.main.MainActivity::class.java).apply {
+                                putExtra("navigate_to", "morning_adhkar")
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                            }
+                            startActivity(mainIntent)
+                        }
+                    }
+
+                    finish()
+                }
             }
         }
     }
@@ -481,7 +492,7 @@ class AlarmRingingActivity : BaseActivity() {
         isLaunchingDialer = false
         wasInActiveCall = false
         handler.removeCallbacks(dialerWatchdog)
-        if (challengeType == "shake" && !viewModel.isChallengeSolved.value!!) {
+        if (challengeType == "shake" && !viewModel.isChallengeSolvedFlow.value) {
             registerShakeSensor()
         }
     }

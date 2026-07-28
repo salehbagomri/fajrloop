@@ -1,0 +1,321 @@
+package com.bagomri.fajrloop.ui.navigation
+
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import com.bagomri.fajrloop.alarm.AlarmPreferences
+import com.bagomri.fajrloop.auth.AuthManager
+import com.bagomri.fajrloop.ui.adhkar.AdhkarScreen
+import com.bagomri.fajrloop.ui.auth.LoginScreen
+import com.bagomri.fajrloop.ui.auth.LoginViewModel
+import com.bagomri.fajrloop.ui.chat.ChatScreen
+import com.bagomri.fajrloop.ui.chat.ChatViewModel
+import com.bagomri.fajrloop.ui.main.HomeScreen
+import com.bagomri.fajrloop.ui.main.MainViewModel
+import com.bagomri.fajrloop.ui.onboarding.OnboardingScreen
+import com.bagomri.fajrloop.ui.permissions.PermissionItemData
+import com.bagomri.fajrloop.ui.permissions.PermissionScreen
+import com.bagomri.fajrloop.ui.settings.*
+import com.bagomri.fajrloop.ui.stats.StatsScreen
+import com.bagomri.fajrloop.ui.stats.StatsViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlin.math.absoluteValue
+
+sealed class Screen(val route: String) {
+    object Onboarding : Screen("onboarding")
+    object Login : Screen("login")
+    object PermissionSetup : Screen("permission_setup")
+    object Home : Screen("home")
+    object Settings : Screen("settings")
+    object TravelMode : Screen("travel_mode")
+    object Guide : Screen("guide")
+    object BackupCode : Screen("backup_code")
+    object Stats : Screen("stats")
+    object Chat : Screen("chat")
+    object MorningAdhkar : Screen("morning_adhkar")
+}
+
+@Composable
+fun FajrLoopNavGraph(
+    navController: NavHostController,
+    startDestination: String,
+    onFallbackLegacyLogin: (Intent) -> Unit,
+    permissionsList: List<PermissionItemData>,
+    allPermissionsGranted: Boolean,
+    onRefreshPermissions: () -> Unit,
+    mainViewModel: MainViewModel,
+    settingsViewModel: SettingsViewModel,
+    statsViewModel: StatsViewModel,
+    loginViewModel: LoginViewModel,
+    chatViewModel: ChatViewModel,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+
+    NavHost(
+        navController = navController,
+        startDestination = startDestination,
+        modifier = modifier
+    ) {
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen(
+                onComplete = {
+                    val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+                    prefs.edit().putBoolean("onboarding_completed", true).apply()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Login.route) {
+            val isLoading by loginViewModel.isLoadingFlow.collectAsState()
+            val loginSuccess by loginViewModel.loginSuccessFlow.collectAsState()
+            val errorMessage by loginViewModel.errorMessageFlow.collectAsState()
+
+            LaunchedEffect(loginSuccess) {
+                if (loginSuccess) {
+                    navController.navigate(Screen.PermissionSetup.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            }
+
+            LaunchedEffect(errorMessage) {
+                errorMessage?.let { msg ->
+                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                }
+            }
+
+            LoginScreen(
+                onGoogleSignInClick = {
+                    loginViewModel.startGoogleSignInFlow(context, onFallbackLegacyLogin)
+                },
+                isLoading = isLoading
+            )
+        }
+
+        composable(Screen.PermissionSetup.route) {
+            LaunchedEffect(Unit) {
+                onRefreshPermissions()
+            }
+
+            PermissionScreen(
+                permissions = permissionsList,
+                allGranted = allPermissionsGranted,
+                onDoneClick = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.PermissionSetup.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Home.route) {
+            val userProfile by mainViewModel.userProfileFlow.collectAsState()
+            val halqaId by mainViewModel.halqaIdFlow.collectAsState()
+            val friendWakeAlert by mainViewModel.friendWakeAlertFlow.collectAsState()
+            val fajrTimeStr by mainViewModel.fajrTimeStrFlow.collectAsState()
+            val sunriseTimeStr by mainViewModel.sunriseTimeStrFlow.collectAsState()
+            val countdownText by mainViewModel.countdownTextFlow.collectAsState()
+            val countdownColor by mainViewModel.countdownColorFlow.collectAsState()
+            val countdownBorderMode by mainViewModel.countdownCardBorderModeFlow.collectAsState()
+
+            HomeScreen(
+                userName = userProfile?.displayName ?: "",
+                userPhotoUrl = userProfile?.photoUrl ?: "",
+                isInHalqa = halqaId != null,
+                fajrTimeStr = fajrTimeStr,
+                sunriseTimeStr = sunriseTimeStr,
+                countdownText = countdownText,
+                countdownColorHex = countdownColor,
+                countdownBorderMode = countdownBorderMode,
+                friendWakeAlert = friendWakeAlert,
+                hasPermissionWarning = !allPermissionsGranted,
+                onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                onHalqaDetailsClick = {},
+                onChatClick = {
+                    if (!halqaId.isNullOrEmpty()) {
+                        navController.navigate(Screen.Chat.route)
+                    } else {
+                        Toast.makeText(context, "⚠️ يجب الانضمام لحلقة أولاً للدردشة", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onStatsClick = { navController.navigate(Screen.Stats.route) },
+                onInviteClick = {},
+                onCreateHalqaClick = {},
+                onJoinHalqaClick = {},
+                onConfirmFriendWake = { friendUid ->
+                    mainViewModel.confirmFriendWake(friendUid) { success, error ->
+                        if (success) {
+                            Toast.makeText(context, "تم إيقاف منبه صديقك بنجاح. كتب الله أجرك! 🟢", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "فشل تأكيد الاستيقاظ: $error", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
+                onFixPermissionsClick = { navController.navigate(Screen.PermissionSetup.route) }
+            )
+        }
+
+        composable(Screen.Settings.route) {
+            val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+
+            var userCity by remember { mutableStateOf("المدينة: مكة المكرمة 📍") }
+            var calcMethod by remember { mutableStateOf(prefs.getString("prayer_calc_method", "جامعة أم القرى (مكة المكرمة)") ?: "جامعة أم القرى (مكة المكرمة)") }
+            var alarmTimingDesc by remember { mutableStateOf(prefs.getString("alarm_timing_desc", "مع أذان الفجر بالضبط 🕌") ?: "مع أذان الفجر بالضبط 🕌") }
+            var challengeText by remember { mutableStateOf("حل المعادلة - متوسط") }
+            var alarmSoundText by remember { mutableStateOf("نغمة النظام الافتراضية") }
+            var travelModeStatus by remember { mutableStateOf("غير نشط حالياً") }
+
+            var isVibrateEnabled by remember { mutableStateOf(prefs.getBoolean("vibrate_on_alarm", true)) }
+            var isAdhkarEnabled by remember { mutableStateOf(prefs.getBoolean("show_adhkar_after_alarm", true)) }
+            var isDuaEnabled by remember { mutableStateOf(prefs.getBoolean("daily_dua_notification", true)) }
+
+            SettingsScreen(
+                userCity = userCity,
+                calcMethod = calcMethod,
+                alarmTimingDesc = alarmTimingDesc,
+                challengeText = challengeText,
+                alarmSoundText = alarmSoundText,
+                travelModeStatus = travelModeStatus,
+                isVibrateEnabled = isVibrateEnabled,
+                isAdhkarEnabled = isAdhkarEnabled,
+                isDuaEnabled = isDuaEnabled,
+                onVibrateChange = { checked ->
+                    isVibrateEnabled = checked
+                    prefs.edit().putBoolean("vibrate_on_alarm", checked).apply()
+                },
+                onAdhkarChange = { checked ->
+                    isAdhkarEnabled = checked
+                    prefs.edit().putBoolean("show_adhkar_after_alarm", checked).apply()
+                },
+                onDuaChange = { checked ->
+                    isDuaEnabled = checked
+                    prefs.edit().putBoolean("daily_dua_notification", checked).apply()
+                },
+                onLocationClick = { Toast.makeText(context, "تحديث التوقيت والموقع من الشاشة الرئيسية تلقائياً", Toast.LENGTH_SHORT).show() },
+                onTravelModeClick = { navController.navigate(Screen.TravelMode.route) },
+                onBackupCodeClick = { navController.navigate(Screen.BackupCode.route) },
+                onManageHalqasClick = { Toast.makeText(context, "إدارة وتعدد الحلقات — قريباً في الإصدار السحابي المحدث", Toast.LENGTH_SHORT).show() },
+                onSaveCalcMethod = { method ->
+                    calcMethod = method
+                    prefs.edit().putString("prayer_calc_method", method).apply()
+                },
+                onSaveAlarmTiming = { type, offset, desc ->
+                    alarmTimingDesc = desc
+                    prefs.edit().putString("alarm_timing_type", type).putInt("alarm_timing_offset_minutes", offset).putString("alarm_timing_desc", desc).apply()
+                },
+                onSaveChallenge = { type, diff ->
+                    challengeText = "$type - $diff"
+                    prefs.edit().putString("challenge_type", type).putString("challenge_difficulty", diff).apply()
+                },
+                onSaveAlarmSound = { code, title ->
+                    alarmSoundText = title
+                    prefs.edit().putString("alarm_sound_choice", code).apply()
+                },
+                onAutoStartClick = {},
+                onBatteryClick = {},
+                onTestAlarmClick = {
+                    com.bagomri.fajrloop.alarm.AlarmScheduler.scheduleTestAlarm(context, 10)
+                    Toast.makeText(context, "🧪 تم جدولة منبه تجريبي بعد 10 ثوانٍ!", Toast.LENGTH_SHORT).show()
+                },
+                onGuideClick = { navController.navigate(Screen.Guide.route) },
+                onPrivacyClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://salehbagomri.github.io/fajrloop-privacy/"))
+                    context.startActivity(intent)
+                },
+                onLogoutClick = {
+                    AuthManager.signOut()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.TravelMode.route) {
+            val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+            val isEnabled = prefs.getBoolean("travel_mode_enabled", false)
+            val type = prefs.getString("travel_mode_type", "permanent") ?: "permanent"
+            val until = prefs.getString("travel_mode_until", "حتى الإلغاء اليدوي") ?: "حتى الإلغاء اليدوي"
+
+            TravelModeScreen(
+                initialEnabled = isEnabled,
+                initialType = type,
+                initialUntil = until,
+                onSaveTravelMode = { enabled, t, u ->
+                    prefs.edit()
+                        .putBoolean("travel_mode_enabled", enabled)
+                        .putString("travel_mode_type", t)
+                        .putString("travel_mode_until", u)
+                        .apply()
+                    Toast.makeText(context, "تم حفظ وضع السفر بنجاح", Toast.LENGTH_SHORT).show()
+                    navController.popBackStack()
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Guide.route) {
+            GuideScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.BackupCode.route) {
+            val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+            val halqaId = prefs.getString("current_halqa_id", null)
+            val dateStr = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
+            val seed = ((dateStr + (halqaId ?: "")).hashCode()).absoluteValue
+            val totpCode = ((seed % 900000) + 100000).toString()
+
+            BackupCodeScreen(
+                halqaId = halqaId,
+                totpCode = totpCode,
+                isAlarmEnabled = true,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Stats.route) {
+            val statsUiState by statsViewModel.uiState.collectAsState()
+            val currentUid = AuthManager.getUserId() ?: ""
+
+            StatsScreen(
+                state = statsUiState,
+                currentUid = currentUid,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Chat.route) {
+            val messages by chatViewModel.messagesFlow.collectAsState()
+            val halqaName by chatViewModel.halqaNameFlow.collectAsState()
+
+            ChatScreen(
+                title = halqaName,
+                messages = messages,
+                currentUid = chatViewModel.currentUid,
+                onSendMessage = { text, type -> chatViewModel.sendMessage(text, type) },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.MorningAdhkar.route) {
+            AdhkarScreen(
+                onFinish = { navController.popBackStack() }
+            )
+        }
+    }
+}

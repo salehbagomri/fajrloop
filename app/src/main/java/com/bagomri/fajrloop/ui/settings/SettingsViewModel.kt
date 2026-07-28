@@ -2,8 +2,6 @@ package com.bagomri.fajrloop.ui.settings
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.bagomri.fajrloop.data.*
 import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,8 +13,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val userRepository = UserRepository()
     private val prayerTimesRepository = PrayerTimesRepository(application)
 
-    private val _userProfile = MutableLiveData<UserProfile?>()
-    val userProfile: LiveData<UserProfile?> = _userProfile
     private val _userProfileFlow = MutableStateFlow<UserProfile?>(null)
     val userProfileFlow: StateFlow<UserProfile?> = _userProfileFlow.asStateFlow()
 
@@ -26,12 +22,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         val uid = userRepository.getUserId()
         if (uid != null) {
             userProfileListener = userRepository.observeUserProfile(uid) { profile ->
-                _userProfile.value = profile
                 _userProfileFlow.value = profile
             }
         }
     }
-
 
     /**
      * تحديث الإعدادات سحابياً
@@ -48,7 +42,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         val uid = userRepository.getUserId() ?: return
         userRepository.updateUserLocation(uid, location) { success ->
             if (success) {
-                val method = _userProfile.value?.settings?.prayerCalcMethod ?: "umm_al_qura"
+                val method = _userProfileFlow.value?.settings?.prayerCalcMethod ?: "umm_al_qura"
                 prayerTimesRepository.saveLocationAndMethod(location.latitude, location.longitude, location.cityName, method)
             }
             onComplete(success)

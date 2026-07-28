@@ -2,10 +2,7 @@ package com.bagomri.fajrloop.ui.alarm
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.bagomri.fajrloop.alarm.AlarmPreferences
-import com.bagomri.fajrloop.auth.AuthManager
 import com.bagomri.fajrloop.data.*
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -21,49 +18,32 @@ import kotlin.math.absoluteValue
 class AlarmRingingViewModel(application: Application) : AndroidViewModel(application) {
 
     private val userRepository = UserRepository()
-    private val alarmRepository = AlarmRepository(application)
 
-    private val _isChallengeSolved = MutableLiveData(false)
-    val isChallengeSolved: LiveData<Boolean> = _isChallengeSolved
     private val _isChallengeSolvedFlow = MutableStateFlow(false)
     val isChallengeSolvedFlow: StateFlow<Boolean> = _isChallengeSolvedFlow.asStateFlow()
 
-    private val _isAlarmDismissed = MutableLiveData(false)
-    val isAlarmDismissed: LiveData<Boolean> = _isAlarmDismissed
     private val _isAlarmDismissedFlow = MutableStateFlow(false)
     val isAlarmDismissedFlow: StateFlow<Boolean> = _isAlarmDismissedFlow.asStateFlow()
 
-    private val _isPanicActive = MutableLiveData(false)
-    val isPanicActive: LiveData<Boolean> = _isPanicActive
     private val _isPanicActiveFlow = MutableStateFlow(false)
     val isPanicActiveFlow: StateFlow<Boolean> = _isPanicActiveFlow.asStateFlow()
 
-    private val _supervisorName = MutableLiveData("المسؤول")
-    val supervisorName: LiveData<String> = _supervisorName
     private val _supervisorNameFlow = MutableStateFlow("المسؤول")
     val supervisorNameFlow: StateFlow<String> = _supervisorNameFlow.asStateFlow()
 
-    private val _supervisorPhone = MutableLiveData("")
-    val supervisorPhone: LiveData<String> = _supervisorPhone
     private val _supervisorPhoneFlow = MutableStateFlow("")
     val supervisorPhoneFlow: StateFlow<String> = _supervisorPhoneFlow.asStateFlow()
 
-    private val _dismissFinished = MutableLiveData(false)
-    val dismissFinished: LiveData<Boolean> = _dismissFinished
     private val _dismissFinishedFlow = MutableStateFlow(false)
     val dismissFinishedFlow: StateFlow<Boolean> = _dismissFinishedFlow.asStateFlow()
 
-    private val _snoozeCountLeft = MutableLiveData(2)
-    val snoozeCountLeft: LiveData<Int> = _snoozeCountLeft
     private val _snoozeCountLeftFlow = MutableStateFlow(2)
     val snoozeCountLeftFlow: StateFlow<Int> = _snoozeCountLeftFlow.asStateFlow()
-
 
     private var dailyRecordListener: ValueEventListener? = null
     private var supervisorRecordListener: ValueEventListener? = null
     private var supervisorUid: String? = null
 
-    // تحديات
     private var scrambledWords = listOf(
         Pair("ج ر ف", "فجر"),
         Pair("ة ا ل ص", "صلاة"),
@@ -75,11 +55,9 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
     )
 
     fun onChallengePassed() {
-        _isChallengeSolved.value = true
         _isChallengeSolvedFlow.value = true
         updateDailyStatus("challenge_done")
 
-        // تحقق مما إذا كان المشرف (المسؤول) مستيقظاً بالفعل لحسم التأكيد التلقائي
         val sUid = supervisorUid
         val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
         val halqaId = prefs.getString("current_halqa_id", null)
@@ -125,8 +103,8 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
     }
 
     private fun checkAndAutoConfirm(halqaId: String, sUid: String) {
-        val isSolved = _isChallengeSolved.value == true
-        if (isSolved && _isAlarmDismissed.value != true) {
+        val isSolved = _isChallengeSolvedFlow.value
+        if (isSolved && !_isAlarmDismissedFlow.value) {
             val uid = userRepository.getUserId() ?: return
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
             val recordRef = FirebaseDatabase.getInstance()
@@ -150,25 +128,21 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun triggerEmergencySos() {
-        _isPanicActive.value = true
         _isPanicActiveFlow.value = true
         updateDailyStatus("panic")
     }
 
     fun dismissAlarm(status: String) {
-        _isAlarmDismissed.value = true
         _isAlarmDismissedFlow.value = true
         updateDailyStatus(status)
-        _dismissFinished.value = true
         _dismissFinishedFlow.value = true
     }
 
     fun triggerSnooze(halqaId: String) {
-        val currentLeft = _snoozeCountLeft.value ?: 2
+        val currentLeft = _snoozeCountLeftFlow.value
         if (currentLeft <= 0) return
 
         val newLeft = currentLeft - 1
-        _snoozeCountLeft.value = newLeft
         _snoozeCountLeftFlow.value = newLeft
 
         val uid = userRepository.getUserId() ?: return
@@ -179,23 +153,17 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
             .child(currentDate)
             .child(uid)
 
-        // Increment snoozeCount in Firebase
         val countRef = recordRef.child("snoozeCount")
         val currentSnoozes = 2 - currentLeft
         countRef.setValue(currentSnoozes + 1)
 
-        // Schedule snooze alarm 5 minutes later
         val snoozeTimeMillis = System.currentTimeMillis() + 5 * 60 * 1000L
         com.bagomri.fajrloop.alarm.AlarmScheduler.scheduleAlarm(getApplication(), snoozeTimeMillis, "غفوة صلاة الفجر")
 
-        // Save new snooze alarm time in preferences
         val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
         prefs.edit().putLong(AlarmPreferences.KEY_ALARM_TIME_MILLIS, snoozeTimeMillis).apply()
 
-        // Terminate active ringing activity
-        _isAlarmDismissed.value = true
         _isAlarmDismissedFlow.value = true
-        _dismissFinished.value = true
         _dismissFinishedFlow.value = true
     }
 
@@ -261,7 +229,6 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
                     val count = snapshot.child("snoozeCount").value as? Long
                     if (count != null) {
                         val left = (2 - count.toInt()).coerceAtLeast(0)
-                        _snoozeCountLeft.value = left
                         _snoozeCountLeftFlow.value = left
                     }
                 }
@@ -285,7 +252,6 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
                             if (respFor == uid && member.key != uid) {
                                 supervisorUid = member.key
                                 val name = member.child("displayName").value as? String ?: "المسؤول"
-                                _supervisorName.value = name
                                 _supervisorNameFlow.value = name
                                 break
                             }
@@ -296,7 +262,6 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
                                 if (member.key != uid) {
                                     supervisorUid = member.key
                                     val name = member.child("displayName").value as? String ?: "المسؤول"
-                                    _supervisorName.value = name
                                     _supervisorNameFlow.value = name
                                     break
                                 }
@@ -313,7 +278,6 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
                                         val phone = userSnap.child("phone").value as? String 
                                             ?: userSnap.child("phoneNumber").value as? String 
                                             ?: ""
-                                        _supervisorPhone.value = phone
                                         _supervisorPhoneFlow.value = phone
                                     }
                                     override fun onCancelled(error: DatabaseError) {}
@@ -325,7 +289,6 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
                 override fun onCancelled(error: DatabaseError) {}
             })
     }
-
 
     fun updateDailyStatus(status: String) {
         val uid = userRepository.getUserId()
@@ -344,7 +307,7 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
             val recordMap = mapOf(
                 "status" to status,
                 "updatedAt" to isoDate,
-                "alarmTime" to getIso8601String(Date()), // can be overridden by triggerTime if passed
+                "alarmTime" to getIso8601String(Date()),
                 "challengeDoneAt" to isoDate
             )
             recordRef.setValue(recordMap)

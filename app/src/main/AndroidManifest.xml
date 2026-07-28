@@ -55,10 +55,10 @@
         tools:targetApi="36">
 
         <!-- ===================================================== -->
-        <!--  النشاطات (Activities)                                -->
+        <!--  النشاطات (Activities) — Single Activity Architecture -->
         <!-- ===================================================== -->
 
-        <!-- النشاط الرئيسي — نقطة الدخول للتطبيق -->
+        <!-- النشاط الرئيسي الوحيد — نقطة الدخول للتطبيق بـ Jetpack Navigation -->
         <activity
             android:name=".ui.main.MainActivity"
             android:exported="true"
@@ -71,7 +71,7 @@
         </activity>
 
         <!--
-            شاشة رنين المنبه:
+            شاشة رنين المنبه المستقلة الإلزامية:
             - showOnLockScreen=true لإظهارها فوق قفل الشاشة
             - turnScreenOn=true لإيقاظ الشاشة تلقائياً
             - noHistory=true لمنع تراكم الشاشات في Stack
@@ -87,62 +87,10 @@
             android:taskAffinity="com.bagomri.fajrloop.alarm"
             android:excludeFromRecents="true" />
 
-        <!-- شاشة الترحيب والتعريف -->
-        <activity
-            android:name=".ui.onboarding.OnboardingActivity"
-            android:exported="false" />
-
-        <!-- نشاط طلب الصلاحيات (يُعرض عند أول تشغيل) -->
-        <activity
-            android:name=".ui.permissions.PermissionSetupActivity"
-            android:exported="false" />
-
-        <!-- شاشة تسجيل الدخول بواسطة Google -->
-        <activity
-            android:name=".ui.auth.LoginActivity"
-            android:exported="false"
-            android:launchMode="singleTop" />
-
-        <!-- شاشات الإعدادات والخيارات -->
-        <activity
-            android:name=".ui.settings.SettingsActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-        <activity
-            android:name=".ui.settings.TravelModeActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.settings.GuideActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.settings.BackupCodeActivity"
-            android:exported="false" />
-
-        <!-- شاشة أذكار الصباح التفاعلية -->
-        <activity
-            android:name=".ui.adhkar.MorningAdhkarActivity"
-            android:exported="false" />
-
-        <!-- شات الحلقة -->
-        <activity
-            android:name=".ui.chat.ChatActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-
-        <!-- سجل الإحصائيات والإنجازات -->
-        <activity
-            android:name=".ui.stats.StatsActivity"
-            android:exported="false" />
-
         <!-- ===================================================== -->
         <!--  الخدمات (Services)                                   -->
         <!-- ===================================================== -->
 
-        <!--
-            خدمة الرنين الأمامية:
-            - foregroundServiceType="specialUse" لدعم Android 14+
-            - هذه الخدمة تحمي صوت المنبه من القتل بواسطة النظام
-        -->
         <service
             android:name=".alarm.AlarmSoundService"
             android:exported="false"
@@ -153,7 +101,6 @@
                 android:value="alarm" />
         </service>
 
-        <!-- خدمة استقبال رسائل الـ FCM السحابية -->
         <service
             android:name=".alarm.FajrLoopMessagingService"
             android:exported="false">
@@ -166,15 +113,10 @@
         <!--  المستقبلات (Broadcast Receivers)                     -->
         <!-- ===================================================== -->
 
-        <!-- مستقبل تشغيل المنبه (يُشغَّل من AlarmManager) -->
         <receiver
             android:name=".alarm.AlarmReceiver"
             android:exported="false" />
 
-        <!--
-            مستقبل إعادة التشغيل:
-            يُعيد جدولة المنبهات تلقائياً بعد إعادة تشغيل الجهاز
-        -->
         <receiver
             android:name=".alarm.BootReceiver"
             android:exported="true"
@@ -182,19 +124,15 @@
             <intent-filter android:priority="1000">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <!-- دعم أجهزة HTC -->
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
-                <!-- دعم أجهزة Samsung -->
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <!-- مستقبل إيقاف المنبه (عبر زر الإشعار) -->
         <receiver
             android:name=".alarm.AlarmDismissReceiver"
             android:exported="false" />
 
-        <!-- مستقبل تأجيل المنبه (Snooze - للمستقبل) -->
         <receiver
             android:name=".alarm.AlarmSnoozeReceiver"
             android:exported="false" />
