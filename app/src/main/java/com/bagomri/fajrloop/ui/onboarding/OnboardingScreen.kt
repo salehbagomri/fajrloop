@@ -2,17 +2,19 @@ package com.bagomri.fajrloop.ui.onboarding
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Alarm
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.NightsStay
 import androidx.compose.material.icons.outlined.RocketLaunch
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -27,11 +29,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bagomri.fajrloop.ui.components.FajrBackground
 import com.bagomri.fajrloop.ui.components.FajrCard
-import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
-import com.bagomri.fajrloop.ui.components.FajrSecondaryButton
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Radius
 import com.bagomri.fajrloop.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
@@ -79,10 +80,29 @@ fun OnboardingScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Spacing.xxl, vertical = Spacing.section),
+                .padding(horizontal = Spacing.xl, vertical = Spacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(Spacing.lg))
+            // Top Bar — Skip button without card
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (!isLastPage) {
+                    TextButton(onClick = onComplete) {
+                        Text(
+                            text = "تخطي",
+                            fontFamily = PpNmArabic,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 15.sp,
+                            color = FajrLoopColors.TextSecondary
+                        )
+                    }
+                }
+            }
 
             // Pager content
             HorizontalPager(
@@ -99,43 +119,55 @@ fun OnboardingScreen(
                     FajrCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = Spacing.lg)
+                            .padding(vertical = Spacing.md)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(Spacing.xxl),
+                                .padding(horizontal = Spacing.xxl, vertical = Spacing.section),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            // أيقونة Outlined بدل إيموجي
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = null,
-                                tint = FajrLoopColors.Primary,
+                            // Icon Badge Container
+                            Box(
                                 modifier = Modifier
-                                    .size(48.dp)
-                                    .padding(bottom = Spacing.lg)
-                            )
+                                    .size(80.dp)
+                                    .clip(CircleShape)
+                                    .background(FajrLoopColors.PrimaryContainer)
+                                    .border(1.dp, FajrLoopColors.Primary.copy(alpha = 0.4f), CircleShape)
+                                    .padding(bottom = 0.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = null,
+                                    tint = FajrLoopColors.Primary,
+                                    modifier = Modifier.size(40.dp)
+                                )
+                            }
 
+                            Spacer(modifier = Modifier.height(Spacing.xxl))
+
+                            // Title
                             Text(
                                 text = item.title,
                                 fontFamily = PpNmArabic,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 22.sp,
+                                fontSize = 26.sp,
                                 color = FajrLoopColors.Primary,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.padding(bottom = Spacing.md)
                             )
 
+                            // Description
                             Text(
                                 text = item.desc,
                                 fontFamily = PpNmArabic,
                                 fontWeight = FontWeight.Normal,
-                                fontSize = 15.sp,
+                                fontSize = 16.sp,
                                 color = FajrLoopColors.TextPrimary,
                                 textAlign = TextAlign.Center,
-                                lineHeight = 24.sp
+                                lineHeight = 26.sp
                             )
                         }
                     }
@@ -144,14 +176,14 @@ fun OnboardingScreen(
 
             // Dot indicators
             Row(
-                modifier = Modifier.padding(vertical = Spacing.xl),
+                modifier = Modifier.padding(vertical = Spacing.lg),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 repeat(onboardingItems.size) { index ->
                     val isSelected = pagerState.currentPage == index
                     val width by animateDpAsState(
-                        targetValue = if (isSelected) 24.dp else 8.dp,
+                        targetValue = if (isSelected) 28.dp else 8.dp,
                         label = "dotWidth"
                     )
                     Box(
@@ -168,33 +200,33 @@ fun OnboardingScreen(
                 }
             }
 
-            // Action buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (!isLastPage) {
-                    FajrSecondaryButton(
-                        text = "تخطي",
-                        onClick = onComplete,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                FajrPrimaryButton(
-                    text = if (isLastPage) "ابدأ" else "التالي",
-                    onClick = {
-                        if (isLastPage) {
-                            onComplete()
-                        } else {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                            }
+            Spacer(modifier = Modifier.height(Spacing.sm))
+
+            // Circular Next / Start Button at bottom center
+            IconButton(
+                onClick = {
+                    if (isLastPage) {
+                        onComplete()
+                    } else {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }
-                    },
-                    modifier = Modifier.weight(if (isLastPage) 2f else 1f)
+                    }
+                },
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(FajrLoopColors.Primary)
+            ) {
+                Icon(
+                    imageVector = if (isLastPage) Icons.Outlined.Check else Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = if (isLastPage) "ابدأ" else "التالي",
+                    tint = FajrLoopColors.Background,
+                    modifier = Modifier.size(28.dp)
                 )
             }
+
+            Spacer(modifier = Modifier.height(Spacing.lg))
         }
     }
 }
