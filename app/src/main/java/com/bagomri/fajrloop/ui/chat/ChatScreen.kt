@@ -13,14 +13,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Diamond
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Send
+import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.WbTwilight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,20 +45,31 @@ import com.bagomri.fajrloop.ui.theme.Spacing
 import java.text.SimpleDateFormat
 import java.util.*
 
+data class QuickChipItem(
+    val text: String,
+    val icon: ImageVector
+)
+
+data class MotivationalPresetItem(
+    val text: String,
+    val category: String,
+    val icon: ImageVector
+)
+
 val quickChips = listOf(
-    "🕌 الصلاة خير من النوم",
-    "⚡ همتكم يا أبطال الفجر",
-    "✨ فجر مبارك للجميع",
-    "📖 لا تنسوا الأذكار"
+    QuickChipItem("الصلاة خير من النوم", Icons.Outlined.WbTwilight),
+    QuickChipItem("همّتكم يا أبطال الفجر", Icons.Outlined.Bolt),
+    QuickChipItem("فجر مبارك للجميع", Icons.Outlined.AutoAwesome),
+    QuickChipItem("لا تنسوا الأذكار", Icons.Outlined.MenuBook)
 )
 
 val motivationalPresets = listOf(
-    Pair("الصلاة خير من النوم 🕌", "حديث شريف"),
-    Pair("همّتكم يا أبطال الفجر ⚡", "تنافس إيماني"),
-    Pair("فجر مبارك للجميع ✨", "تحية الصباح"),
-    Pair("لا تنسوا أذكار الصباح 📖", "تذكير بالتحصين"),
-    Pair("ألا إن سلعة الله غالية، ألا إن سلعة الله الجنة 💎", "حديث شريف"),
-    Pair("من صلى الفجر في جماعة فهو في ذمة الله 🛡️", "صحيح مسلم")
+    MotivationalPresetItem("الصلاة خير من النوم", "حديث شريف", Icons.Outlined.WbTwilight),
+    MotivationalPresetItem("همّتكم يا أبطال الفجر", "تنافس إيماني", Icons.Outlined.Bolt),
+    MotivationalPresetItem("فجر مبارك للجميع", "تحية الصباح", Icons.Outlined.AutoAwesome),
+    MotivationalPresetItem("لا تنسوا أذكار الصباح", "تذكير بالتحصين", Icons.Outlined.MenuBook),
+    MotivationalPresetItem("ألا إن سلعة الله غالية، ألا إن سلعة الله الجنة", "حديث شريف", Icons.Outlined.Diamond),
+    MotivationalPresetItem("من صلى الفجر في جماعة فهو في ذمة الله", "صحيح مسلم", Icons.Outlined.Shield)
 )
 
 private fun formatShortName(fullName: String): String {
@@ -176,14 +193,14 @@ fun ChatScreen(
                 }
             }
 
-            // Quick Chips Bar
+            // Quick Chips Bar with Outlined Icons
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.md, vertical = Spacing.xs),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
             ) {
-                items(quickChips) { chipText ->
+                items(quickChips) { chip ->
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(Radius.full))
@@ -193,21 +210,30 @@ fun ChatScreen(
                                 FajrLoopColors.Primary.copy(alpha = 0.35f),
                                 RoundedCornerShape(Radius.full)
                             )
-                            .clickable { onSendMessage(chipText, "normal") }
+                            .clickable { onSendMessage(chip.text, "normal") }
                             .padding(horizontal = Spacing.md, vertical = 6.dp)
                     ) {
-                        Text(
-                            text = chipText,
-                            fontFamily = PpNmArabic,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 12.sp,
-                            color = FajrLoopColors.Primary
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = chip.icon,
+                                contentDescription = null,
+                                tint = FajrLoopColors.Primary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = chip.text,
+                                fontFamily = PpNmArabic,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp,
+                                color = FajrLoopColors.Primary
+                            )
+                        }
                     }
                 }
             }
 
-            // Floating Input Row without dark background box behind it
+            // Floating Input Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -263,7 +289,7 @@ fun ChatScreen(
             }
         }
 
-        // Motivational BottomSheet
+        // Motivational BottomSheet with Outlined Icons
         if (showMotivationalSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showMotivationalSheet = false },
@@ -286,10 +312,10 @@ fun ChatScreen(
                     )
 
                     Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                        motivationalPresets.forEach { (text, category) ->
+                        motivationalPresets.forEach { preset ->
                             Surface(
                                 onClick = {
-                                    onSendMessage(text, "motivational")
+                                    onSendMessage(preset.text, "motivational")
                                     showMotivationalSheet = false
                                 },
                                 shape = RoundedCornerShape(Radius.md),
@@ -304,15 +330,22 @@ fun ChatScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(
-                                        text = text,
-                                        fontFamily = PpNmArabic,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 14.sp,
-                                        color = FajrLoopColors.TextPrimary,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    Spacer(modifier = Modifier.width(Spacing.xs))
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                        Icon(
+                                            imageVector = preset.icon,
+                                            contentDescription = null,
+                                            tint = FajrLoopColors.Primary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(Spacing.sm))
+                                        Text(
+                                            text = preset.text,
+                                            fontFamily = PpNmArabic,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 14.sp,
+                                            color = FajrLoopColors.TextPrimary
+                                        )
+                                    }
                                     Box(
                                         modifier = Modifier
                                             .clip(CircleShape)
@@ -320,7 +353,7 @@ fun ChatScreen(
                                             .padding(horizontal = 8.dp, vertical = 2.dp)
                                     ) {
                                         Text(
-                                            text = category,
+                                            text = preset.category,
                                             fontFamily = PpNmArabic,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 10.sp,
@@ -503,7 +536,7 @@ private fun ChatScreenPreview() {
             title = "حلقة الأبرار",
             messages = listOf(
                 ChatMessage("1", "u1", "صالح باقومري", "", "السلام عليكم ورحمة الله وبركاته 🌅", "normal", System.currentTimeMillis()),
-                ChatMessage("2", "u2", "أحمد عبدالله", "", "الصلاة خير من النوم 🕌", "motivational", System.currentTimeMillis())
+                ChatMessage("2", "u2", "أحمد عبدالله", "", "الصلاة خير من النوم", "motivational", System.currentTimeMillis())
             ),
             currentUid = "u1",
             onSendMessage = { _, _ -> },

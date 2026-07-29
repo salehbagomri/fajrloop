@@ -5,11 +5,16 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.outlined.WbTwilight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,7 +37,7 @@ fun SpiritualContentCard(
         Pair("وَسَبِّحْ بِحَمْدِ رَبِّكَ قَبْلَ طُلُوعِ الشَّمْسِ وَقَبْلَ غُرُوبِهَا", "طه: 130"),
         Pair("وَالْفَجْرِ ∘ وَلَيَالٍ عَشْرٍ", "الفجر: 1-2"),
         Pair("حَافِظُوا عَلَى الصَّلَوَاتِ وَالصَّلَاةِ الْوُسْطَىٰ وَقُومُوا لِلَّهِ قَانِتِينَ", "البقرة: 238"),
-        Pair("إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا", "النساء: 103"),
+        Pair("إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوقُوتًا", "النساء: 103"),
         Pair("وَأَقِمِ الصَّلَاةَ ۖ إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنكَرِ", "العنكبوت: 45"),
         Pair("وَاسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ وَإِنَّهَا لَكَبِيرَةٌ إِلَّا عَلَى الْخَاشِعِينَ", "البقرة: 45"),
         Pair("فَسُبْحَانَ اللَّهِ حِينَ تُمْسُونَ وَحِينَ تُصْبِحُونَ", "الروم: 17"),
@@ -77,12 +82,14 @@ fun SpiritualContentCard(
             ) {
                 TabChip(
                     text = "آية اليوم",
+                    icon = Icons.Outlined.MenuBook,
                     isSelected = selectedTab == 0,
                     onClick = { selectedTab = 0 }
                 )
                 Spacer(modifier = Modifier.width(Spacing.sm))
                 TabChip(
                     text = "حديث اليوم",
+                    icon = Icons.Outlined.WbTwilight,
                     isSelected = selectedTab == 1,
                     onClick = { selectedTab = 1 }
                 )
@@ -112,6 +119,7 @@ fun SpiritualContentCard(
 @Composable
 private fun TabChip(
     text: String,
+    icon: ImageVector,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -129,12 +137,21 @@ private fun TabChip(
             .clickable { onClick() }
             .padding(horizontal = Spacing.md, vertical = Spacing.xs)
     ) {
-        Text(
-            text = text,
-            fontFamily = PpNmArabic,
-            fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
-            color = if (isSelected) FajrLoopColors.Primary else FajrLoopColors.TextSecondary
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (isSelected) FajrLoopColors.Primary else FajrLoopColors.TextSecondary,
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = text,
+                fontFamily = PpNmArabic,
+                fontSize = 12.sp,
+                fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                color = if (isSelected) FajrLoopColors.Primary else FajrLoopColors.TextSecondary
+            )
+        }
     }
 }
