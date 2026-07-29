@@ -18,7 +18,6 @@ import com.bagomri.fajrloop.ui.settings.dialogs.AlarmSoundDialog
 import com.bagomri.fajrloop.ui.settings.dialogs.AlarmTimingDialog
 import com.bagomri.fajrloop.ui.settings.dialogs.CalcMethodDialog
 import com.bagomri.fajrloop.ui.settings.dialogs.ChallengeSettingsDialog
-import com.bagomri.fajrloop.ui.settings.dialogs.CitySelectionDialog
 import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
@@ -38,7 +37,7 @@ fun SettingsScreen(
     onVibrateChange: (Boolean) -> Unit,
     onAdhkarChange: (Boolean) -> Unit,
     onDuaChange: (Boolean) -> Unit,
-    onSaveLocation: (cityName: String, lat: Double, lng: Double) -> Unit,
+    onLocationClick: () -> Unit,
     onTravelModeClick: () -> Unit,
     onBackupCodeClick: () -> Unit,
     onSaveCalcMethod: (String) -> Unit,
@@ -54,7 +53,6 @@ fun SettingsScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showCityDialog by remember { mutableStateOf(false) }
     var showCalcDialog by remember { mutableStateOf(false) }
     var showTimingDialog by remember { mutableStateOf(false) }
     var showChallengeDialog by remember { mutableStateOf(false) }
@@ -100,7 +98,7 @@ fun SettingsScreen(
                         title = "المدينة الحالية (GPS)",
                         subtitle = userCity,
                         icon = FajrIcons.Location,
-                        onClick = { showCityDialog = true }
+                        onClick = onLocationClick
                     )
                     HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
@@ -214,14 +212,6 @@ fun SettingsScreen(
         }
 
         // Dialogs
-        if (showCityDialog) {
-            CitySelectionDialog(
-                currentCity = userCity,
-                onCitySelect = onSaveLocation,
-                onDismiss = { showCityDialog = false }
-            )
-        }
-
         if (showCalcDialog) {
             CalcMethodDialog(
                 currentMethod = calcMethod,
@@ -289,7 +279,7 @@ private fun SettingsScreenPreview() {
             onVibrateChange = {},
             onAdhkarChange = {},
             onDuaChange = {},
-            onSaveLocation = { _, _, _ -> },
+            onLocationClick = {},
             onTravelModeClick = {},
             onBackupCodeClick = {},
             onSaveCalcMethod = {},

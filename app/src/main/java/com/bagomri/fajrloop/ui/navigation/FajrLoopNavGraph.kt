@@ -1,14 +1,21 @@
 package com.bagomri.fajrloop.ui.navigation
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.LocationManager
+import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import java.util.Locale
 import com.bagomri.fajrloop.alarm.AlarmPreferences
 import com.bagomri.fajrloop.auth.AuthManager
 import com.bagomri.fajrloop.data.*
@@ -30,7 +37,6 @@ import com.bagomri.fajrloop.ui.stats.StatsScreen
 import com.bagomri.fajrloop.ui.stats.StatsViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 import kotlin.math.absoluteValue
 
 sealed class Screen(val route: String) {
@@ -369,20 +375,64 @@ fun FajrLoopNavGraph(
                     isDuaEnabled = checked
                     prefs.edit().putBoolean("daily_dua_notification", checked).apply()
                 },
-                onSaveLocation = { cityName, lat, lng ->
-                    userCity = cityName
-                    prefs.edit().apply {
-                        putString("user_city", cityName)
-                        putFloat("user_latitude", lat.toFloat())
-                        putFloat("user_longitude", lng.toFloat())
-                        apply()
-                    }
-                    val uid = AuthManager.getUserId()
-                    if (uid != null) {
-                        UserRepository().updateUserLocation(
-                            uid,
-                            UserLocation(latitude = lat, longitude = lng, cityName = cityName)
-                        ) {}
+                onLocationClick = {
+                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                    val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                                       locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+
+                    val hasFinePermission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    val hasCoarsePermission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+                    if (!isGpsEnabled) {
+                        Toast.makeText(context, "جاري فتح إعدادات الموقع لتفعيل الـ GPS", Toast.LENGTH_LONG).show()
+                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        context.startActivity(intent)
+                    } else if (!hasFinePermission && !hasCoarsePermission) {
+                        Toast.makeText(context, "الرجاء منح صلاحية تحديد الموقع للتطبيق", Toast.LENGTH_LONG).show()
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = android.net.Uri.fromParts("package", context.packageName, null)
+                        }
+                        context.startActivity(intent)
+                    } else {
+                        try {
+                            val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                                ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+
+                            if (location != null) {
+                                var detectedName = "موقعي الحالي"
+                                try {
+                                    val geocoder = Geocoder(context, Locale("ar"))
+                                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                                    if (!addresses.isNullOrEmpty()) {
+                                        val addr = addresses[0]
+                                        detectedName = addr.locality ?: addr.subAdminArea ?: addr.adminArea ?: "موقعي الحالي"
+                                    }
+                                } catch (e: Exception) {
+                                    detectedName = "موقعي الحالي"
+                                }
+
+                                userCity = detectedName
+                                prefs.edit()
+                                    .putString("user_city", detectedName)
+                                    .putFloat("user_latitude", location.latitude.toFloat())
+                                    .putFloat("user_longitude", location.longitude.toFloat())
+                                    .apply()
+
+                                val uid = AuthManager.getUserId()
+                                if (uid != null) {
+                                    UserRepository().updateUserLocation(
+                                        uid,
+                                        UserLocation(latitude = location.latitude, longitude = location.longitude, cityName = detectedName)
+                                    ) {}
+                                }
+
+                                Toast.makeText(context, "تم تحديد موقعك بنجاح: $detectedName", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "جاري تحديد إحداثيات GPS، يرجى المحاولة بعد لحظات", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "حدث خطأ أثناء تحديد الموقع: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 },
                 onTravelModeClick = { navController.navigate(Screen.TravelMode.route) },
