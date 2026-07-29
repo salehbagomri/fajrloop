@@ -529,8 +529,9 @@ fun FajrLoopNavGraph(
                     prefs.edit().putString("alarm_sound_choice", code).apply()
                     Toast.makeText(context, "تم حفظ نغمة المنبه: $title", Toast.LENGTH_SHORT).show()
                 },
-                onAutoStartClick = {},
-                onBatteryClick = {},
+                onPermissionsManageClick = {
+                    navController.navigate(Screen.PermissionSetup.route)
+                },
                 onTestAlarmClick = {
                     com.bagomri.fajrloop.alarm.AlarmScheduler.scheduleTestAlarm(context, 10)
                     Toast.makeText(context, "🧪 تم جدولة منبه تجريبي بعد 10 ثوانٍ!", Toast.LENGTH_SHORT).show()

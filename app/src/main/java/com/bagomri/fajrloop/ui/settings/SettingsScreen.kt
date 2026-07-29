@@ -49,8 +49,7 @@ fun SettingsScreen(
     onSaveAlarmTiming: (String, Int, String) -> Unit,
     onSaveChallenge: (String, String) -> Unit,
     onSaveAlarmSound: (String, String) -> Unit,
-    onAutoStartClick: () -> Unit,
-    onBatteryClick: () -> Unit,
+    onPermissionsManageClick: () -> Unit,
     onTestAlarmClick: () -> Unit,
     onGuideClick: () -> Unit,
     onPrivacyClick: () -> Unit,
@@ -162,17 +161,10 @@ fun SettingsScreen(
                 // Section 4: Permissions & Test
                 SettingsSection(title = "الصلاحيات والاختبار") {
                     SettingsRow(
-                        title = "التشغيل التلقائي (Auto-Start)",
-                        subtitle = "مطلوب لبعض الأجهزة (Xiaomi, Huawei)",
-                        icon = FajrIcons.AutoStart,
-                        onClick = onAutoStartClick
-                    )
-                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
-                    SettingsRow(
-                        title = "تجاهل تحسين البطارية",
-                        subtitle = "حماية الخدمة من الإغلاق في الخلفية",
+                        title = "فحص وإدارة جميع الصلاحيات",
+                        subtitle = "مراجعة وتفعيل كافة صلاحيات المنبه والبطارية",
                         icon = FajrIcons.Battery,
-                        onClick = onBatteryClick
+                        onClick = onPermissionsManageClick
                     )
                     HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
@@ -291,8 +283,7 @@ private fun SettingsScreenPreview() {
             onSaveAlarmTiming = { _, _, _ -> },
             onSaveChallenge = { _, _ -> },
             onSaveAlarmSound = { _, _ -> },
-            onAutoStartClick = {},
-            onBatteryClick = {},
+            onPermissionsManageClick = {},
             onTestAlarmClick = {},
             onGuideClick = {},
             onPrivacyClick = {},
