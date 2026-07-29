@@ -442,7 +442,7 @@ fun AdhkarScreen(
             // Bottom action button
             Spacer(modifier = Modifier.height(Spacing.md))
             FajrPrimaryButton(
-                text = if (isAllCompleted) "تم الأذكار — العودة للرئيسية 🤲" else "إغلاق الأذكار",
+                text = if (isAllCompleted) "تم الأذكار - العودة للرئيسية 🤲" else "إغلاق الأذكار",
                 onClick = onFinish,
                 modifier = Modifier.fillMaxWidth()
             )

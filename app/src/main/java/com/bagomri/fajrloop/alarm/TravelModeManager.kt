@@ -9,7 +9,7 @@ import java.util.Calendar
 import java.util.Locale
 
 /**
- * TravelModeManager — إدارة وضع السفر الحقيقي (إيقاف وتفعيل المنبه، فحص انتهاء الصلاحية، والمزامنة السحابية)
+ * TravelModeManager - إدارة وضع السفر الحقيقي (إيقاف وتفعيل المنبه، فحص انتهاء الصلاحية، والمزامنة السحابية)
  */
 object TravelModeManager {
 
@@ -46,11 +46,11 @@ object TravelModeManager {
         if (!isTravelModeActive(context)) return "غير نشط حالياً"
         val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
         val untilText = prefs.getString("travel_mode_until", "حتى الإلغاء اليدوي") ?: "حتى الإلغاء اليدوي"
-        return "نشط — $untilText"
+        return "نشط - $untilText"
     }
 
     /**
-     * ضبط وحفظ وضع السفر (تفعيل أو تعطيل، إلغاء/إعادة جدولة المنبه، والمزامنة السحابية)
+     * ضبط وحفظ وضع السفر (تفعيل أو تعطيل، إلغاء/إعادة جدولة المنبه، والمزامنة السحابية اللحظية)
      */
     fun setTravelMode(
         context: Context,
@@ -77,13 +77,42 @@ object TravelModeManager {
             Log.d(TAG, "🔔 Travel mode DISABLED. Rescheduled local alarm.")
         }
 
-        // 3. مزامنة حالة السفر سحابياً في Firebase ليعلم باقي أعضاء الحلقة أن هذا العضو مسافر
+        // 3. مزامنة حالة السفر اللحظية سحابياً في Firebase (في ملف المستخدم وفي عقدة الحلقة النشطة)
         val uid = AuthManager.getUserId()
         if (uid != null) {
             try {
-                val userSettingsRef = FirebaseDatabase.getInstance().getReference("users").child(uid).child("settings")
-                userSettingsRef.child("travelMode").setValue(enabled)
-                userSettingsRef.child("travelModeExpiry").setValue(if (enabled) untilText else "")
+                val db = FirebaseDatabase.getInstance()
+                val userRef = db.getReference("users").child(uid)
+                
+                userRef.child("settings").child("travelMode").setValue(enabled)
+                userRef.child("settings").child("travelModeExpiry").setValue(if (enabled) untilText else "")
+                userRef.child("status").setValue(if (enabled) "travel" else "active")
+
+                // المزامنة الحية داخل عقدة اعضاء الحلقة لتظهر فوراً لدى الأصدقاء
+                val halqaId = prefs.getString("current_halqa_id", null)
+                if (!halqaId.isNullOrEmpty()) {
+                    db.getReference("halqas")
+                        .child(halqaId)
+                        .child("members")
+                        .child(uid)
+                        .child("status")
+                        .setValue(if (enabled) "travel" else "active")
+                    Log.d(TAG, "✅ Realtime synced travel status to Halqa: $halqaId")
+                } else {
+                    userRef.child("currentHalqaId").get().addOnSuccessListener { snap ->
+                        val hId = snap.value as? String
+                        if (!hId.isNullOrEmpty()) {
+                            db.getReference("halqas")
+                                .child(hId)
+                                .child("members")
+                                .child(uid)
+                                .child("status")
+                                .setValue(if (enabled) "travel" else "active")
+                            prefs.edit().putString("current_halqa_id", hId).apply()
+                            Log.d(TAG, "✅ Realtime synced travel status to Halqa via user node: $hId")
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to update Firebase travel mode", e)
             }

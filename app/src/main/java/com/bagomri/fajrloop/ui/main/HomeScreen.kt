@@ -146,7 +146,7 @@ fun HomeScreen(
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "✈️ وضع السفر نشط — المنبه متوقف مؤقتاً",
+                                text = "✈️ وضع السفر نشط - المنبه متوقف مؤقتاً",
                                 fontFamily = PpNmArabic,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,

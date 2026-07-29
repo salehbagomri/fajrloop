@@ -167,7 +167,7 @@ fun TravelModeScreen(
                                 color = FajrLoopColors.TextPrimary
                             )
                             Text(
-                                text = if (isEnabled) "نشط حالياً — المنبه متوقف مؤقتاً" else "غير نشط — المنبه يعمل بشكل طبيعي",
+                                text = if (isEnabled) "نشط حالياً - المنبه متوقف مؤقتاً" else "غير نشط - المنبه يعمل بشكل طبيعي",
                                 fontFamily = PpNmArabic,
                                 fontSize = 12.sp,
                                 color = if (isEnabled) FajrLoopColors.Primary else FajrLoopColors.TextSecondary,

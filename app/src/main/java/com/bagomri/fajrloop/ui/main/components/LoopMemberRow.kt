@@ -71,7 +71,7 @@ fun LoopMemberRow(
 
     val statusText = when (member.status) {
         "travel" -> "مسافر"
-        "challenge_done" -> "حل التحدي — بانتظار التأكيد"
+        "challenge_done" -> "حل التحدي - بانتظار التأكيد"
         "awake" -> "مستيقظ"
         "panic" -> "نداء استغاثة"
         "ringing" -> "يرن المنبه"
