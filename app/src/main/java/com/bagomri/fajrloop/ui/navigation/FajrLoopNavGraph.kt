@@ -371,7 +371,7 @@ fun FajrLoopNavGraph(
                 onLocationClick = { Toast.makeText(context, "تحديث التوقيت والموقع من الشاشة الرئيسية تلقائياً", Toast.LENGTH_SHORT).show() },
                 onTravelModeClick = { navController.navigate(Screen.TravelMode.route) },
                 onBackupCodeClick = { navController.navigate(Screen.BackupCode.route) },
-                onManageHalqasClick = { Toast.makeText(context, "إدارة وتعدد الحلقات — قريباً في الإصدار السحابي المحدث", Toast.LENGTH_SHORT).show() },
+
                 onSaveCalcMethod = { method ->
                     calcMethod = method
                     prefs.edit().putString("prayer_calc_method", method).apply()

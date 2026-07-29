@@ -40,7 +40,7 @@ fun SettingsScreen(
     onLocationClick: () -> Unit,
     onTravelModeClick: () -> Unit,
     onBackupCodeClick: () -> Unit,
-    onManageHalqasClick: () -> Unit,
+
     onSaveCalcMethod: (String) -> Unit,
     onSaveAlarmTiming: (String, Int, String) -> Unit,
     onSaveChallenge: (String, String) -> Unit,
@@ -76,8 +76,8 @@ fun SettingsScreen(
                     .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(Spacing.lg)
             ) {
-                // Section 1: Halqa & Travel Mode
-                SettingsSection(title = "الحلقة والسفر") {
+                // Section 1: Travel & Emergency
+                SettingsSection(title = "السفر والطوارئ") {
                     SettingsRow(
                         title = "وضع السفر",
                         subtitle = travelModeStatus,
@@ -86,17 +86,10 @@ fun SettingsScreen(
                     )
                     HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
-                        title = "كود الطوارئ لليوم (TOTP)",
-                        subtitle = "رمز طوارئ يومي لإلغاء المنبه",
+                        title = "كود الطوارئ (TOTP)",
+                        subtitle = "رمز مؤقت لإيقاف المنبه عند الطوارئ",
                         icon = FajrIcons.EmergencyCode,
                         onClick = onBackupCodeClick
-                    )
-                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
-                    SettingsRow(
-                        title = "إدارة ودائرة الحلقات",
-                        subtitle = "تعدد الحلقات والتنقل بينها",
-                        icon = FajrIcons.Group,
-                        onClick = onManageHalqasClick
                     )
                 }
 
@@ -290,7 +283,7 @@ private fun SettingsScreenPreview() {
             onLocationClick = {},
             onTravelModeClick = {},
             onBackupCodeClick = {},
-            onManageHalqasClick = {},
+
             onSaveCalcMethod = {},
             onSaveAlarmTiming = { _, _, _ -> },
             onSaveChallenge = { _, _ -> },
