@@ -50,21 +50,12 @@ import kotlin.math.absoluteValue
  * The code rotates every 30 minutes automatically.
  */
 fun generateTotpCode(halqaId: String): String {
-    val now = System.currentTimeMillis()
-    val windowIndex = now / (30 * 60 * 1000L) // 30-minute time windows
-    val seed = "$halqaId-$windowIndex".hashCode().absoluteValue
-    val code = ((seed % 900000) + 100000).toString()
-    return "${code.substring(0, 3)} ${code.substring(3, 6)}"
+    val rawCode = com.bagomri.fajrloop.alarm.EmergencyCodeUtils.generateTotpCode(halqaId)
+    return com.bagomri.fajrloop.alarm.EmergencyCodeUtils.formatTotpDisplay(rawCode)
 }
 
-/**
- * Returns remaining seconds until the current 30-minute window expires.
- */
 fun getRemainingSeconds(): Int {
-    val now = System.currentTimeMillis()
-    val windowMs = 30 * 60 * 1000L
-    val elapsed = now % windowMs
-    return ((windowMs - elapsed) / 1000).toInt()
+    return com.bagomri.fajrloop.alarm.EmergencyCodeUtils.getRemainingSecondsInWindow()
 }
 
 fun formatTimeRemaining(totalSeconds: Int): String {

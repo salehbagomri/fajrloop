@@ -60,6 +60,7 @@ fun AlarmRingingScreen(
     var mathInput by remember { mutableStateOf("") }
     var wordInput by remember { mutableStateOf("") }
     var totpInput by remember { mutableStateOf("") }
+    var showEmergencyInput by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         FajrBackground()
@@ -312,54 +313,63 @@ fun AlarmRingingScreen(
 
             Spacer(modifier = Modifier.height(Spacing.lg))
 
-            // Secondary Action Buttons (SOS, Snooze, Emergency TOTP)
+            // Secondary Action Buttons (SOS & Hidden Emergency TOTP)
             if (!isChallengeSolved && !isPanicActive) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-                ) {
-                    if (snoozeCountLeft > 0) {
-                        FajrSecondaryButton(
-                            text = "غفوة ($snoozeCountLeft)",
-                            onClick = onSnoozeClick,
-                            leadingIcon = Icons.Outlined.Notifications,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    FajrDestructiveButton(
-                        text = "استغاثة",
-                        onClick = onSosClick,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                FajrDestructiveButton(
+                    text = "إرسال نداء استغاثة للحلقة 🚨",
+                    onClick = onSosClick,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 Spacer(modifier = Modifier.height(Spacing.lg))
 
-                // TOTP Backup Code Card
-                FajrCard(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(Spacing.md),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        FajrTextField(
-                            value = totpInput,
-                            onValueChange = { totpInput = it },
-                            placeholder = "كود الطوارئ",
-                            modifier = Modifier.weight(1f)
+                if (!showEmergencyInput) {
+                    TextButton(onClick = { showEmergencyInput = true }) {
+                        Text(
+                            text = "حالة طارئة؟ إدخال كود الطوارئ 🔑",
+                            fontFamily = PpNmArabic,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = FajrLoopColors.TextSecondary
                         )
+                    }
+                } else {
+                    FajrCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Spacing.md)
+                        ) {
+                            Text(
+                                text = "رمز الطوارئ المؤقت (TOTP)",
+                                fontFamily = PpNmArabic,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = FajrLoopColors.Primary,
+                                modifier = Modifier.padding(bottom = Spacing.xs)
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                FajrTextField(
+                                    value = totpInput,
+                                    onValueChange = { totpInput = it },
+                                    placeholder = "6 أرقام...",
+                                    modifier = Modifier.weight(1f)
+                                )
 
-                        Spacer(modifier = Modifier.width(Spacing.sm))
+                                Spacer(modifier = Modifier.width(Spacing.sm))
 
-                        FajrPrimaryButton(
-                            text = "إلغاء",
-                            onClick = {
-                                onTotpSubmit(totpInput.trim())
-                                totpInput = ""
+                                FajrPrimaryButton(
+                                    text = "إلغاء المنبه",
+                                    onClick = {
+                                        onTotpSubmit(totpInput.trim())
+                                        totpInput = ""
+                                    }
+                                )
                             }
-                        )
+                        }
                     }
                 }
             }

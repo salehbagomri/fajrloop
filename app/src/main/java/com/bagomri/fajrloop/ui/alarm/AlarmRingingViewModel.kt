@@ -202,12 +202,7 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun verifyTotpCode(userInput: String, halqaId: String): Boolean {
-        val dateStr = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
-        val seed = (dateStr + halqaId).hashCode().absoluteValue
-        val expectedCode = (seed % 900000) + 100000
-
-        val userCodeVal = userInput.replace(" ", "").trim().toIntOrNull()
-        return userCodeVal == expectedCode
+        return com.bagomri.fajrloop.alarm.EmergencyCodeUtils.verifyTotpCode(userInput, halqaId)
     }
 
     fun startObservingDailyRecord(halqaId: String) {
