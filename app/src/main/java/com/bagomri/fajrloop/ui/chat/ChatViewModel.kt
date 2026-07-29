@@ -2,6 +2,7 @@ package com.bagomri.fajrloop.ui.chat
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import com.bagomri.fajrloop.alarm.AlarmPreferences
 import com.bagomri.fajrloop.data.ChatMessage
@@ -35,22 +36,41 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private var messagesListener: ValueEventListener? = null
 
     init {
-        val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        halqaId = prefs.getString("current_halqa_id", null)
+        startListening()
+    }
 
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser != null && !halqaId.isNullOrEmpty()) {
-            currentUid = currentUser.uid
-            currentDisplayName = currentUser.displayName ?: "عضو"
-            currentPhotoUrl = currentUser.photoUrl?.toString() ?: ""
+    fun startListening(activeHalqaId: String? = null) {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        currentUid = currentUser.uid
+        currentDisplayName = currentUser.displayName ?: "عضو"
+        currentPhotoUrl = currentUser.photoUrl?.toString() ?: ""
 
-            databaseRef = FirebaseDatabase.getInstance()
-                .getReference("chatMessages")
-                .child(halqaId!!)
+        val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        val targetHalqaId = activeHalqaId
+            ?: prefs.getString("current_halqa_id", null)
 
-            loadHalqaName()
-            setupFirebaseListener()
+        if (targetHalqaId.isNullOrEmpty()) {
+            Log.w("ChatViewModel", "⚠️ targetHalqaId is null or empty, cannot start listening")
+            return
         }
+
+        if (halqaId == targetHalqaId && databaseRef != null) {
+            // Already listening to this halqa
+            return
+        }
+
+        // Clean up previous listener if switching halqas
+        messagesListener?.let { listener ->
+            databaseRef?.removeEventListener(listener)
+        }
+
+        halqaId = targetHalqaId
+        databaseRef = FirebaseDatabase.getInstance()
+            .getReference("chatMessages")
+            .child(targetHalqaId)
+
+        loadHalqaName()
+        setupFirebaseListener()
     }
 
     private fun loadHalqaName() {
@@ -81,17 +101,28 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 newList.sortBy { it.timestamp }
                 _messagesFlow.value = newList
+                Log.d("ChatViewModel", "✅ Loaded ${newList.size} chat messages for halqa $halqaId")
             }
 
             override fun onCancelled(error: DatabaseError) {
                 _errorFlow.value = "فشل تحميل المحادثة: ${error.message}"
+                Log.e("ChatViewModel", "❌ Failed to load chat messages", error.toException())
             }
         }
         ref.addValueEventListener(messagesListener!!)
     }
 
     fun sendMessage(text: String, type: String) {
-        val ref = databaseRef ?: return
+        if (databaseRef == null) {
+            startListening()
+        }
+        val ref = databaseRef
+        if (ref == null) {
+            Log.e("ChatViewModel", "❌ Cannot send message: databaseRef is null")
+            _errorFlow.value = "فشل الإرسال: غير متصل بحلقة فعالة"
+            return
+        }
+
         val msgId = ref.push().key ?: return
         val chatMsg = ChatMessage(
             id = msgId,
@@ -104,8 +135,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         )
 
         ref.child(msgId).setValue(chatMsg)
+            .addOnSuccessListener {
+                Log.d("ChatViewModel", "✅ Sent message: $text")
+            }
             .addOnFailureListener { e ->
                 _errorFlow.value = "فشل الإرسال: ${e.message}"
+                Log.e("ChatViewModel", "❌ Failed to send message", e)
             }
     }
 

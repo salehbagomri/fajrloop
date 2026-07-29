@@ -467,8 +467,13 @@ fun FajrLoopNavGraph(
         }
 
         composable(Screen.Chat.route) {
+            val activeHalqaId by mainViewModel.halqaIdFlow.collectAsState()
             val messages by chatViewModel.messagesFlow.collectAsState()
             val halqaName by chatViewModel.halqaNameFlow.collectAsState()
+
+            LaunchedEffect(activeHalqaId) {
+                chatViewModel.startListening(activeHalqaId)
+            }
 
             ChatScreen(
                 title = halqaName,
