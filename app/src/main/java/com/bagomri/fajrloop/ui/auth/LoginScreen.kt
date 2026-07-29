@@ -39,24 +39,25 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(Spacing.xxl),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = Spacing.xxl, vertical = Spacing.xl),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // App Logo
+            Spacer(modifier = Modifier.height(Spacing.xl))
+
+            // App Logo — تكبير الشعار إلى 170dp
             Image(
                 painter = painterResource(id = R.drawable.ic_app_logo),
                 contentDescription = "شعار حلقة الفجر",
                 modifier = Modifier
-                    .size(130.dp)
-                    .padding(bottom = Spacing.md)
+                    .size(170.dp)
+                    .padding(bottom = Spacing.sm)
             )
 
             Text(
                 text = "حلقة الفجر",
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Bold,
-                fontSize = 28.sp,
+                fontSize = 30.sp,
                 color = FajrLoopColors.Primary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = Spacing.xs)
@@ -68,11 +69,13 @@ fun LoginScreen(
                 fontWeight = FontWeight.Normal,
                 fontSize = 14.sp,
                 color = FajrLoopColors.TextSecondary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = Spacing.section)
+                textAlign = TextAlign.Center
             )
 
-            // Sign-in card
+            // دفع كارد تسجيل الدخول لأسفل الصفحة
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Sign-in card (في أسفل الصفحة)
             FajrCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -125,13 +128,6 @@ fun LoginScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Center
                             ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_google),
-                                    contentDescription = "Google",
-                                    tint = androidx.compose.ui.graphics.Color.Unspecified,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                                Spacer(modifier = Modifier.width(Spacing.md))
                                 Text(
                                     text = "تسجيل الدخول عبر Google",
                                     fontFamily = PpNmArabic,
@@ -139,13 +135,20 @@ fun LoginScreen(
                                     fontSize = 15.sp,
                                     color = FajrLoopColors.Background
                                 )
+                                Spacer(modifier = Modifier.width(Spacing.md))
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_google),
+                                    contentDescription = "Google",
+                                    tint = androidx.compose.ui.graphics.Color.Unspecified,
+                                    modifier = Modifier.size(22.dp)
+                                )
                             }
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.xxl))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
             // Privacy notice
             Text(
@@ -155,6 +158,8 @@ fun LoginScreen(
                 color = FajrLoopColors.TextTertiary,
                 textAlign = TextAlign.Center
             )
+
+            Spacer(modifier = Modifier.height(Spacing.sm))
         }
     }
 }
