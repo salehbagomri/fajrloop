@@ -49,21 +49,26 @@ fun HomeScreen(
     onFixPermissionsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    ) {
         FajrBackground()
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(Spacing.xl),
+                .padding(horizontal = Spacing.xl, vertical = Spacing.md),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(Spacing.lg))
-
-            // Header Bar
+            // Header Bar — Padded away from status bar
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = Spacing.sm),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -74,23 +79,23 @@ fun HomeScreen(
                     UserAvatar(
                         photoUrl = userPhotoUrl,
                         userName = userName,
-                        size = 44.dp
+                        size = 52.dp
                     )
 
                     Spacer(modifier = Modifier.width(Spacing.md))
 
                     Column {
                         Text(
-                            text = "أهلاً بك",
+                            text = "أهلاً بك 🖐️",
                             fontFamily = PpNmArabic,
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             color = FajrLoopColors.TextSecondary
                         )
                         Text(
                             text = userName.ifEmpty { "مستخدم" },
                             fontFamily = PpNmArabic,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp,
+                            fontSize = 19.sp,
                             color = FajrLoopColors.Primary
                         )
                     }
@@ -100,12 +105,13 @@ fun HomeScreen(
                     Icon(
                         imageVector = FajrIcons.Settings,
                         contentDescription = "الإعدادات",
-                        tint = FajrLoopColors.TextSecondary
+                        tint = FajrLoopColors.TextPrimary,
+                        modifier = Modifier.size(26.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.xl))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
             // Permissions Warning Card
             if (hasPermissionWarning) {
@@ -127,13 +133,13 @@ fun HomeScreen(
                             contentDescription = null,
                             tint = FajrLoopColors.Warning,
                             modifier = Modifier
-                                .size(20.dp)
+                                .size(22.dp)
                                 .padding(end = Spacing.sm)
                         )
                         Text(
                             text = "بعض الصلاحيات ناقصة. اضغط لإعدادها لضمان عمل المنبه.",
                             fontFamily = PpNmArabic,
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             color = FajrLoopColors.TextPrimary,
                             modifier = Modifier.weight(1f)
                         )

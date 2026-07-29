@@ -1,12 +1,15 @@
 package com.bagomri.fajrloop.ui.main.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -15,6 +18,7 @@ import com.bagomri.fajrloop.ui.components.FajrCard
 import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Radius
 import com.bagomri.fajrloop.ui.theme.Spacing
 
 @Composable
@@ -29,6 +33,15 @@ fun QuickActionsGrid(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "الإجراءات السريعة",
+            fontFamily = PpNmArabic,
+            fontWeight = FontWeight.Bold,
+            fontSize = 17.sp,
+            color = FajrLoopColors.TextPrimary,
+            modifier = Modifier.padding(bottom = Spacing.md)
+        )
+
         if (isInHalqa) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -111,22 +124,31 @@ private fun ActionCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.lg),
+                .padding(horizontal = Spacing.lg, vertical = Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = FajrLoopColors.Primary,
+            Box(
                 modifier = Modifier
-                    .size(22.dp)
-                    .padding(end = Spacing.sm)
-            )
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(Radius.sm))
+                    .background(FajrLoopColors.PrimaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = FajrLoopColors.Primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(Spacing.md))
+
             Text(
                 text = title,
                 fontFamily = PpNmArabic,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
                 color = FajrLoopColors.TextPrimary
             )
         }

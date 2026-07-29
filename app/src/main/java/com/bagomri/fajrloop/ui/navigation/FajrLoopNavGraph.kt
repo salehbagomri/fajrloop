@@ -19,6 +19,9 @@ import com.bagomri.fajrloop.ui.chat.ChatViewModel
 import com.bagomri.fajrloop.ui.main.HomeScreen
 import com.bagomri.fajrloop.ui.main.MainViewModel
 import com.bagomri.fajrloop.ui.onboarding.OnboardingScreen
+import com.bagomri.fajrloop.ui.main.components.HalqaMemberItem
+import com.bagomri.fajrloop.ui.main.dialogs.*
+import com.bagomri.fajrloop.ui.main.sheets.HalqaDetailsSheet
 import com.bagomri.fajrloop.ui.permissions.PermissionItemData
 import com.bagomri.fajrloop.ui.permissions.PermissionScreen
 import com.bagomri.fajrloop.ui.settings.*
@@ -126,6 +129,9 @@ fun FajrLoopNavGraph(
         composable(Screen.Home.route) {
             val userProfile by mainViewModel.userProfileFlow.collectAsState()
             val halqaId by mainViewModel.halqaIdFlow.collectAsState()
+            val halqaName by mainViewModel.halqaNameFlow.collectAsState()
+            val loopMembers by mainViewModel.loopMembersFlow.collectAsState()
+            val isAdmin by mainViewModel.isCurrentUserAdminFlow.collectAsState()
             val friendWakeAlert by mainViewModel.friendWakeAlertFlow.collectAsState()
             val fajrTimeStr by mainViewModel.fajrTimeStrFlow.collectAsState()
             val sunriseTimeStr by mainViewModel.sunriseTimeStrFlow.collectAsState()
@@ -133,10 +139,16 @@ fun FajrLoopNavGraph(
             val countdownColor by mainViewModel.countdownColorFlow.collectAsState()
             val countdownBorderMode by mainViewModel.countdownCardBorderModeFlow.collectAsState()
 
+            var showHalqaDetailsSheet by remember { mutableStateOf(false) }
+            var showCreateHalqaDialog by remember { mutableStateOf(false) }
+            var showJoinHalqaDialog by remember { mutableStateOf(false) }
+            var showInviteCodeDialog by remember { mutableStateOf(false) }
+            var showLeaveHalqaDialog by remember { mutableStateOf(false) }
+
             HomeScreen(
                 userName = userProfile?.displayName ?: "",
                 userPhotoUrl = userProfile?.photoUrl ?: "",
-                isInHalqa = halqaId != null,
+                isInHalqa = !halqaId.isNullOrEmpty(),
                 fajrTimeStr = fajrTimeStr,
                 sunriseTimeStr = sunriseTimeStr,
                 countdownText = countdownText,
@@ -145,7 +157,13 @@ fun FajrLoopNavGraph(
                 friendWakeAlert = friendWakeAlert,
                 hasPermissionWarning = !allPermissionsGranted,
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
-                onHalqaDetailsClick = {},
+                onHalqaDetailsClick = {
+                    if (!halqaId.isNullOrEmpty()) {
+                        showHalqaDetailsSheet = true
+                    } else {
+                        Toast.makeText(context, "⚠️ لست في حلقة حالياً", Toast.LENGTH_SHORT).show()
+                    }
+                },
                 onChatClick = {
                     if (!halqaId.isNullOrEmpty()) {
                         navController.navigate(Screen.Chat.route)
@@ -154,9 +172,15 @@ fun FajrLoopNavGraph(
                     }
                 },
                 onStatsClick = { navController.navigate(Screen.Stats.route) },
-                onInviteClick = {},
-                onCreateHalqaClick = {},
-                onJoinHalqaClick = {},
+                onInviteClick = {
+                    if (!halqaId.isNullOrEmpty()) {
+                        showInviteCodeDialog = true
+                    } else {
+                        Toast.makeText(context, "⚠️ قم بإنشاء حلقة أولاً للحصول على كود الدعوة", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onCreateHalqaClick = { showCreateHalqaDialog = true },
+                onJoinHalqaClick = { showJoinHalqaDialog = true },
                 onConfirmFriendWake = { friendUid ->
                     mainViewModel.confirmFriendWake(friendUid) { success, error ->
                         if (success) {
@@ -168,6 +192,90 @@ fun FajrLoopNavGraph(
                 },
                 onFixPermissionsClick = { navController.navigate(Screen.PermissionSetup.route) }
             )
+
+            // Bottom Sheets & Dialogs
+            if (showHalqaDetailsSheet) {
+                val sheetMembers = loopMembers.mapIndexed { idx, m ->
+                    HalqaMemberItem(
+                        uid = m.userId,
+                        displayName = m.displayName,
+                        photoUrl = m.photoUrl,
+                        role = if (m.isCurrentUser && isAdmin) "admin" else "member",
+                        responsibleForUserId = "",
+                        targetName = "",
+                        status = m.status,
+                        isCurrentUser = m.isCurrentUser,
+                        position = idx + 1
+                    )
+                }
+                HalqaDetailsSheet(
+                    halqaName = halqaName,
+                    members = sheetMembers,
+                    isAdmin = isAdmin,
+                    onDismiss = { showHalqaDetailsSheet = false },
+                    onLeaveClick = {
+                        showHalqaDetailsSheet = false
+                        showLeaveHalqaDialog = true
+                    },
+                    onConfirmWake = { friendUid ->
+                        mainViewModel.confirmFriendWake(friendUid) { success, error ->
+                            if (success) {
+                                Toast.makeText(context, "تم تأكيد الاستيقاظ!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "خطأ: $error", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    onCallClick = {},
+                    onMoveUp = {},
+                    onMoveDown = {},
+                    onRemoveMember = { _, _ -> }
+                )
+            }
+
+            if (showCreateHalqaDialog) {
+                CreateHalqaDialog(
+                    onDismiss = { showCreateHalqaDialog = false },
+                    onConfirm = { name ->
+                        showCreateHalqaDialog = false
+                        Toast.makeText(context, "جاري إنشاء حلقة «$name»...", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
+            if (showJoinHalqaDialog) {
+                JoinHalqaDialog(
+                    onDismiss = { showJoinHalqaDialog = false },
+                    onConfirm = { code ->
+                        showJoinHalqaDialog = false
+                        Toast.makeText(context, "جاري الانضمام باستخدام الكود «$code»...", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
+            if (showInviteCodeDialog) {
+                InviteCodeDialog(
+                    halqaName = halqaName.ifEmpty { "حلقة الفجر" },
+                    inviteCode = halqaId ?: "FAJR123",
+                    onCopy = {
+                        Toast.makeText(context, "تم نسخ كود الدعوة!", Toast.LENGTH_SHORT).show()
+                    },
+                    onShare = {
+                        Toast.makeText(context, "مشاركة كود الدعوة...", Toast.LENGTH_SHORT).show()
+                    },
+                    onDismiss = { showInviteCodeDialog = false }
+                )
+            }
+
+            if (showLeaveHalqaDialog) {
+                LeaveHalqaDialog(
+                    onDismiss = { showLeaveHalqaDialog = false },
+                    onConfirm = {
+                        showLeaveHalqaDialog = false
+                        Toast.makeText(context, "تمت مغادرة الحلقة", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
         }
 
         composable(Screen.Settings.route) {
