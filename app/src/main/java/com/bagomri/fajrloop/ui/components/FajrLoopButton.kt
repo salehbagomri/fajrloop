@@ -30,6 +30,7 @@ fun FajrPrimaryButton(
     enabled: Boolean = true,
     leadingIcon: ImageVector? = null
 ) {
+    val darkTextColor = Color(0xFF0D0B1A)
     Button(
         onClick = onClick,
         modifier = modifier.height(48.dp),
@@ -37,15 +38,16 @@ fun FajrPrimaryButton(
         shape = RoundedCornerShape(Radius.md),
         colors = ButtonDefaults.buttonColors(
             containerColor = FajrLoopColors.Primary,
-            contentColor = Color(0xFF0D0B1A),
+            contentColor = darkTextColor,
             disabledContainerColor = FajrLoopColors.Primary.copy(alpha = 0.4f),
-            disabledContentColor = Color(0xFF0D0B1A).copy(alpha = 0.5f)
+            disabledContentColor = darkTextColor.copy(alpha = 0.5f)
         )
     ) {
         if (leadingIcon != null) {
             Icon(
                 imageVector = leadingIcon,
                 contentDescription = null,
+                tint = darkTextColor,
                 modifier = Modifier
                     .size(20.dp)
                     .padding(end = Spacing.xs)
@@ -55,7 +57,8 @@ fun FajrPrimaryButton(
             text = text,
             fontFamily = PpNmArabic,
             fontWeight = FontWeight.Bold,
-            fontSize = 15.sp
+            fontSize = 15.sp,
+            color = darkTextColor
         )
     }
 }
@@ -85,6 +88,7 @@ fun FajrSecondaryButton(
             Icon(
                 imageVector = leadingIcon,
                 contentDescription = null,
+                tint = FajrLoopColors.Primary,
                 modifier = Modifier
                     .size(20.dp)
                     .padding(end = Spacing.xs)
@@ -94,7 +98,8 @@ fun FajrSecondaryButton(
             text = text,
             fontFamily = PpNmArabic,
             fontWeight = FontWeight.Medium,
-            fontSize = 15.sp
+            fontSize = 15.sp,
+            color = FajrLoopColors.Primary
         )
     }
 }
@@ -125,6 +130,7 @@ fun FajrDestructiveButton(
             Icon(
                 imageVector = leadingIcon,
                 contentDescription = null,
+                tint = FajrLoopColors.Danger,
                 modifier = Modifier
                     .size(20.dp)
                     .padding(end = Spacing.xs)
@@ -134,7 +140,8 @@ fun FajrDestructiveButton(
             text = text,
             fontFamily = PpNmArabic,
             fontWeight = FontWeight.Bold,
-            fontSize = 15.sp
+            fontSize = 15.sp,
+            color = FajrLoopColors.Danger
         )
     }
 }

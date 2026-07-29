@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -128,7 +129,7 @@ fun LoginScreen(
                             shape = RoundedCornerShape(Radius.md),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = FajrLoopColors.Primary,
-                                contentColor = FajrLoopColors.Background
+                                contentColor = Color(0xFF0D0B1A)
                             )
                         ) {
                             Row(
@@ -140,7 +141,7 @@ fun LoginScreen(
                                     fontFamily = PpNmArabic,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 15.sp,
-                                    color = FajrLoopColors.Background
+                                    color = Color(0xFF0D0B1A)
                                 )
                                 Spacer(modifier = Modifier.width(Spacing.md))
                                 Icon(

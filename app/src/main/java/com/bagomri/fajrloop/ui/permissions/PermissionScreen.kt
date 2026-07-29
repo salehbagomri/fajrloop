@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -189,7 +190,7 @@ fun PermissionScreen(
                     shape = RoundedCornerShape(Radius.md),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = FajrLoopColors.Primary,
-                        contentColor = FajrLoopColors.Background
+                        contentColor = Color(0xFF0D0B1A)
                     )
                 ) {
                     Row(
@@ -201,13 +202,13 @@ fun PermissionScreen(
                             fontFamily = PpNmArabic,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
-                            color = FajrLoopColors.Background
+                            color = Color(0xFF0D0B1A)
                         )
                         Spacer(modifier = Modifier.width(Spacing.md))
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
                             contentDescription = null,
-                            tint = FajrLoopColors.Background,
+                            tint = Color(0xFF0D0B1A),
                             modifier = Modifier.size(20.dp)
                         )
                     }

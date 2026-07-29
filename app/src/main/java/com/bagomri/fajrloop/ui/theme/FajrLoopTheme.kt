@@ -90,80 +90,67 @@ val FajrLoopTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Bold,
-        fontSize = 48.sp,
-        color = FajrLoopColors.TextPrimary
+        fontSize = 48.sp
     ),
     headlineLarge = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        color = FajrLoopColors.TextPrimary
+        fontSize = 24.sp
     ),
     headlineMedium = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp,
-        color = FajrLoopColors.TextPrimary
+        fontSize = 20.sp
     ),
     headlineSmall = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        color = FajrLoopColors.TextPrimary
+        fontSize = 18.sp
     ),
     titleLarge = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 17.sp,
-        color = FajrLoopColors.TextPrimary
+        fontSize = 17.sp
     ),
     titleMedium = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Medium,
-        fontSize = 15.sp,
-        color = FajrLoopColors.TextPrimary
+        fontSize = 15.sp
     ),
     titleSmall = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        color = FajrLoopColors.TextSecondary
+        fontSize = 14.sp
     ),
     bodyLarge = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Normal,
-        fontSize = 15.sp,
-        color = FajrLoopColors.TextPrimary
+        fontSize = 15.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        color = FajrLoopColors.TextPrimary
+        fontSize = 14.sp
     ),
     bodySmall = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Normal,
-        fontSize = 13.sp,
-        color = FajrLoopColors.TextSecondary
+        fontSize = 13.sp
     ),
     labelLarge = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        color = FajrLoopColors.TextSecondary
+        fontSize = 12.sp
     ),
     labelMedium = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Normal,
-        fontSize = 11.sp,
-        color = FajrLoopColors.TextTertiary
+        fontSize = 11.sp
     ),
     labelSmall = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Normal,
-        fontSize = 10.sp,
-        color = FajrLoopColors.TextTertiary
+        fontSize = 10.sp
     )
 )
 
@@ -172,11 +159,11 @@ val FajrLoopTypography = Typography(
 // ─────────────────────────────────────────────────────────────
 private val DarkColorScheme = darkColorScheme(
     primary = FajrLoopColors.Primary,
-    onPrimary = FajrLoopColors.Background,
+    onPrimary = Color(0xFF0D0B1A), // Dark text/icons on primary gold buttons
     primaryContainer = FajrLoopColors.PrimaryContainer,
     onPrimaryContainer = FajrLoopColors.TextPrimary,
     secondary = FajrLoopColors.Info,
-    onSecondary = FajrLoopColors.Background,
+    onSecondary = Color(0xFF0D0B1A),
     surface = FajrLoopColors.Surface,
     onSurface = FajrLoopColors.TextPrimary,
     surfaceVariant = FajrLoopColors.SurfaceVariant,

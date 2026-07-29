@@ -215,7 +215,7 @@ fun InviteCodeDialog(
                         shape = RoundedCornerShape(Radius.full),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = FajrLoopColors.Primary,
-                            contentColor = FajrLoopColors.Background
+                            contentColor = Color(0xFF0D0B1A)
                         )
                     ) {
                         Row(
@@ -225,7 +225,7 @@ fun InviteCodeDialog(
                             Icon(
                                 imageVector = Icons.Outlined.Link,
                                 contentDescription = null,
-                                tint = FajrLoopColors.Background,
+                                tint = Color(0xFF0D0B1A),
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(Spacing.xs))
@@ -234,7 +234,7 @@ fun InviteCodeDialog(
                                 fontFamily = PpNmArabic,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
-                                color = FajrLoopColors.Background
+                                color = Color(0xFF0D0B1A)
                             )
                         }
                     }

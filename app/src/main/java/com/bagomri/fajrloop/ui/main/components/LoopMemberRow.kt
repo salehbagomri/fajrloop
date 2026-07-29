@@ -197,11 +197,11 @@ fun LoopMemberRow(
             if (member.status == "challenge_done") {
                 Button(
                     onClick = { onConfirmWake(member.uid) },
-                    colors = ButtonDefaults.buttonColors(containerColor = FajrLoopColors.Primary),
+                    colors = ButtonDefaults.buttonColors(containerColor = FajrLoopColors.Primary, contentColor = Color(0xFF0D0B1A)),
                     shape = RoundedCornerShape(Radius.sm),
                     contentPadding = PaddingValues(horizontal = Spacing.sm, vertical = Spacing.xs)
                 ) {
-                    Text("تأكيد", fontFamily = PpNmArabic, color = FajrLoopColors.Background, fontSize = 11.sp)
+                    Text("تأكيد", fontFamily = PpNmArabic, color = Color(0xFF0D0B1A), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             } else if (member.status == "panic") {
                 Button(

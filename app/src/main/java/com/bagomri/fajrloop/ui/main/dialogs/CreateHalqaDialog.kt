@@ -158,7 +158,7 @@ fun CreateHalqaDialog(
                         shape = RoundedCornerShape(Radius.full),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = FajrLoopColors.Primary,
-                            contentColor = FajrLoopColors.Background
+                            contentColor = Color(0xFF0D0B1A)
                         )
                     ) {
                         Text(
@@ -166,7 +166,7 @@ fun CreateHalqaDialog(
                             fontFamily = PpNmArabic,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
-                            color = FajrLoopColors.Background
+                            color = Color(0xFF0D0B1A)
                         )
                     }
                 }
