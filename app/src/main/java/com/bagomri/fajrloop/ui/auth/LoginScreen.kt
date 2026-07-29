@@ -39,40 +39,47 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Spacing.xxl, vertical = Spacing.xl),
+                .padding(horizontal = Spacing.xxl, vertical = Spacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(Spacing.xl))
+            // Spacer فوق الشعار لتحقيق التوسيط الرأسي للمنطقة العلوية
+            Spacer(modifier = Modifier.weight(1f))
 
-            // App Logo — تكبير الشعار إلى 170dp
-            Image(
-                painter = painterResource(id = R.drawable.ic_app_logo),
-                contentDescription = "شعار حلقة الفجر",
-                modifier = Modifier
-                    .size(170.dp)
-                    .padding(bottom = Spacing.sm)
-            )
+            // App Logo & Text Block (متوسط أفقياً ورأسياً)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_app_logo),
+                    contentDescription = "شعار حلقة الفجر",
+                    modifier = Modifier
+                        .size(210.dp)
+                        .padding(bottom = Spacing.sm)
+                )
 
-            Text(
-                text = "حلقة الفجر",
-                fontFamily = PpNmArabic,
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
-                color = FajrLoopColors.Primary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = Spacing.xs)
-            )
+                Text(
+                    text = "حلقة الفجر",
+                    fontFamily = PpNmArabic,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 32.sp,
+                    color = FajrLoopColors.Primary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = Spacing.xs)
+                )
 
-            Text(
-                text = "استيقظ لصلاة الفجر جماعة مع أصدقائك",
-                fontFamily = PpNmArabic,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                color = FajrLoopColors.TextSecondary,
-                textAlign = TextAlign.Center
-            )
+                Text(
+                    text = "استيقظ لصلاة الفجر جماعة مع أصدقائك",
+                    fontFamily = PpNmArabic,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 14.sp,
+                    color = FajrLoopColors.TextSecondary,
+                    textAlign = TextAlign.Center
+                )
+            }
 
-            // دفع كارد تسجيل الدخول لأسفل الصفحة
+            // Spacer تحت الشعار والنصوص
             Spacer(modifier = Modifier.weight(1f))
 
             // Sign-in card (في أسفل الصفحة)
@@ -148,7 +155,7 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.lg))
+            Spacer(modifier = Modifier.height(Spacing.md))
 
             // Privacy notice
             Text(
@@ -159,7 +166,7 @@ fun LoginScreen(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(Spacing.sm))
+            Spacer(modifier = Modifier.height(Spacing.xs))
         }
     }
 }

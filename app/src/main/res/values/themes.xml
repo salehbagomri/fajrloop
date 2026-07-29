@@ -12,7 +12,7 @@
         <item name="android:colorBackground">@color/dark_bg</item>
         <item name="colorOnBackground">@color/text_primary</item>
 
-        <!-- الخط الافتراضي — يُحكَم من design_tokens.xml (@font/pp_nm_arabic) -->
+        <!-- الخط الافتراضي -->
         <item name="fontFamily">@font/pp_nm_arabic</item>
         <item name="android:fontFamily">@font/pp_nm_arabic</item>
 
@@ -41,14 +41,14 @@
         <item name="android:windowBackground">@color/dark_bg</item>
     </style>
 
-    <!-- نمط مخصص للمفاتيح التفاعلية (Switches) بألوان التطبيق الهندسية -->
+    <!-- نمط مخصص للمفاتيح التفاعلية (Switches) -->
     <style name="Theme.FajrLoop.Switch" parent="Widget.AppCompat.CompoundButton.Switch">
         <item name="colorControlActivated">#FFD700</item>
         <item name="colorSwitchThumbNormal">#B0B0C5</item>
         <item name="android:colorForeground">#25254A</item>
     </style>
 
-    <!-- ثيم BottomSheetDialog الداكن الزجاجي لنافذة الرسائل التحفيزية -->
+    <!-- ثيم BottomSheetDialog الداكن الزجاجي -->
     <style name="DarkBottomSheetTheme" parent="Theme.MaterialComponents.BottomSheetDialog">
         <item name="android:windowIsFloating">false</item>
         <item name="android:backgroundDimEnabled">true</item>
@@ -61,10 +61,10 @@
         <item name="backgroundTint">@android:color/transparent</item>
     </style>
 
-    <!-- ثيم شاشة البدء (SplashScreen Theme) متوافق مع Android 12+ -->
+    <!-- ثيم شاشة البدء (SplashScreen Theme) بالشعار الشفاف الجديد -->
     <style name="Theme.FajrLoop.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/surface_dark</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_round</item>
+        <item name="windowSplashScreenBackground">#07071B</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_app_logo</item>
         <item name="windowSplashScreenAnimationDuration">800</item>
         <item name="postSplashScreenTheme">@style/Theme.FajrLoop</item>
     </style>
