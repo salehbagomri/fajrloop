@@ -247,13 +247,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         var awakeCount = 0
         var alertFriend: FriendWakeAlert? = null
 
-        for (mId in chain) {
+        for ((idx, mId) in chain.withIndex()) {
             val mSnap = membersSnap.child(mId)
             if (!mSnap.exists()) continue
 
             val displayName = mSnap.child("displayName").value as? String ?: "عضو"
             val photoUrl = mSnap.child("photoUrl").value as? String ?: ""
+            val role = mSnap.child("role").value as? String ?: "member"
             val responsibleForUserId = mSnap.child("responsibleForUserId").value as? String ?: ""
+
+            val targetSnap = membersSnap.child(responsibleForUserId)
+            val targetName = targetSnap.child("displayName").value as? String ?: ""
 
             var status = "pending"
             val profileStatus = mSnap.child("status").value as? String
@@ -282,7 +286,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     displayName = displayName,
                     photoUrl = photoUrl,
                     status = status,
-                    isCurrentUser = mId == currentUid
+                    isCurrentUser = mId == currentUid,
+                    role = role,
+                    responsibleForUserId = responsibleForUserId,
+                    targetName = targetName,
+                    position = idx + 1
                 )
             )
         }
@@ -414,6 +422,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         handler.post(countdownRunnable!!)
     }
 
+    fun reorderMember(fromIndex: Int, toIndex: Int, onResult: (Boolean, String?) -> Unit) {
+        val halqaId = _halqaIdFlow.value ?: return
+        val currentMembers = _loopMembersFlow.value
+        if (fromIndex !in currentMembers.indices || toIndex !in currentMembers.indices) return
+
+        val newChain = currentMembers.map { it.userId }.toMutableList()
+        val movedId = newChain.removeAt(fromIndex)
+        newChain.add(toIndex, movedId)
+
+        halqaRepository.reorderChain(halqaId, newChain, onResult)
+    }
+
+    fun removeMemberFromHalqa(targetUid: String, onResult: (Boolean, String?) -> Unit) {
+        val halqaId = _halqaIdFlow.value ?: return
+        HalqaManager.removeMemberFromHalqa(halqaId, targetUid, onResult)
+    }
+
     override fun onCleared() {
         super.onCleared()
         countdownRunnable?.let { handler.removeCallbacks(it) }
@@ -435,7 +460,11 @@ data class LoopMemberItem(
     val displayName: String,
     val photoUrl: String,
     val status: String,
-    val isCurrentUser: Boolean
+    val isCurrentUser: Boolean,
+    val role: String = "member",
+    val responsibleForUserId: String = "",
+    val targetName: String = "",
+    val position: Int = 1
 )
 
 data class FriendWakeAlert(

@@ -200,9 +200,9 @@ fun FajrLoopNavGraph(
                         uid = m.userId,
                         displayName = m.displayName,
                         photoUrl = m.photoUrl,
-                        role = if (m.isCurrentUser && isAdmin) "admin" else "member",
-                        responsibleForUserId = "",
-                        targetName = "",
+                        role = m.role,
+                        responsibleForUserId = m.responsibleForUserId,
+                        targetName = m.targetName,
                         status = m.status,
                         isCurrentUser = m.isCurrentUser,
                         position = idx + 1
@@ -227,9 +227,33 @@ fun FajrLoopNavGraph(
                         }
                     },
                     onCallClick = {},
-                    onMoveUp = {},
-                    onMoveDown = {},
-                    onRemoveMember = { _, _ -> }
+                    onMoveUp = { fromIndex ->
+                        if (fromIndex > 0) {
+                            mainViewModel.reorderMember(fromIndex, fromIndex - 1) { success, err ->
+                                if (!success && err != null) {
+                                    Toast.makeText(context, "خطأ: $err", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    },
+                    onMoveDown = { fromIndex ->
+                        if (fromIndex < sheetMembers.size - 1) {
+                            mainViewModel.reorderMember(fromIndex, fromIndex + 1) { success, err ->
+                                if (!success && err != null) {
+                                    Toast.makeText(context, "خطأ: $err", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    },
+                    onRemoveMember = { targetUid, name ->
+                        mainViewModel.removeMemberFromHalqa(targetUid) { success, err ->
+                            if (success) {
+                                Toast.makeText(context, "تم حذف $name من الحلقة", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "خطأ: $err", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
                 )
             }
 

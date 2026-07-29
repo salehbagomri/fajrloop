@@ -230,7 +230,7 @@ fun InviteCodeDialog(
                             )
                             Spacer(modifier = Modifier.width(Spacing.xs))
                             Text(
-                                text = "مشاركة الرمز",
+                                text = "مشاركة",
                                 fontFamily = PpNmArabic,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
