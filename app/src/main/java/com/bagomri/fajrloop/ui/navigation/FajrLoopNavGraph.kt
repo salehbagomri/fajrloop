@@ -253,15 +253,25 @@ fun FajrLoopNavGraph(
                 )
             }
 
+            val inviteCode by mainViewModel.inviteCodeFlow.collectAsState()
+
             if (showInviteCodeDialog) {
                 InviteCodeDialog(
                     halqaName = halqaName.ifEmpty { "حلقة الفجر" },
-                    inviteCode = halqaId ?: "FAJR123",
+                    inviteCode = inviteCode.ifEmpty { halqaId ?: "" },
                     onCopy = {
-                        Toast.makeText(context, "تم نسخ كود الدعوة!", Toast.LENGTH_SHORT).show()
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        val clip = android.content.ClipData.newPlainText("Invite Code", inviteCode.ifEmpty { halqaId ?: "" })
+                        clipboard.setPrimaryClip(clip)
+                        Toast.makeText(context, "تم نسخ كود الدعوة بنجاح! 📋", Toast.LENGTH_SHORT).show()
                     },
                     onShare = {
-                        Toast.makeText(context, "مشاركة كود الدعوة...", Toast.LENGTH_SHORT).show()
+                        val codeToShare = inviteCode.ifEmpty { halqaId ?: "" }
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, "انضم معي إلى حلقة «$halqaName» في تطبيق حلقة الفجر! 🌅\nكود الدعوة الخاص بنا هو: $codeToShare")
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "مشاركة كود الدعوة"))
                     },
                     onDismiss = { showInviteCodeDialog = false }
                 )

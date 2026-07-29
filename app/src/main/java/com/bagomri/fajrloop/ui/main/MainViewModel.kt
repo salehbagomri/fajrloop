@@ -61,6 +61,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _halqaNameFlow = MutableStateFlow<String>(initialHalqaName)
     val halqaNameFlow: StateFlow<String> = _halqaNameFlow.asStateFlow()
 
+    private val _inviteCodeFlow = MutableStateFlow<String>("")
+    val inviteCodeFlow: StateFlow<String> = _inviteCodeFlow.asStateFlow()
+
     private val _isCurrentUserAdminFlow = MutableStateFlow<Boolean>(false)
     val isCurrentUserAdminFlow: StateFlow<Boolean> = _isCurrentUserAdminFlow.asStateFlow()
 
@@ -149,7 +152,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         .apply()
                 } else {
                     val name = snapshot.child("name").value as? String ?: "حلقة"
+                    val inviteCode = snapshot.child("inviteCode").value as? String ?: ""
                     _halqaNameFlow.value = name
+                    _inviteCodeFlow.value = inviteCode
 
                     val chain = (snapshot.child("chain").value as? List<*>)
                         ?.filterIsInstance<String>() ?: emptyList()
