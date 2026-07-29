@@ -628,7 +628,13 @@ fun FajrLoopNavGraph(
 
         composable(Screen.MorningAdhkar.route) {
             AdhkarScreen(
-                onFinish = { navController.popBackStack() }
+                onFinish = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                }
             )
         }
     }
