@@ -263,6 +263,13 @@ fun FajrLoopNavGraph(
                     onConfirm = { name ->
                         showCreateHalqaDialog = false
                         Toast.makeText(context, "جاري إنشاء حلقة «$name»...", Toast.LENGTH_SHORT).show()
+                        mainViewModel.createHalqa(name) { success, result ->
+                            if (success) {
+                                Toast.makeText(context, "تم إنشاء حلقة «$name» بنجاح! 🥳", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "فشل إنشاء الحلقة: $result", Toast.LENGTH_LONG).show()
+                            }
+                        }
                     }
                 )
             }
@@ -272,7 +279,14 @@ fun FajrLoopNavGraph(
                     onDismiss = { showJoinHalqaDialog = false },
                     onConfirm = { code ->
                         showJoinHalqaDialog = false
-                        Toast.makeText(context, "جاري الانضمام باستخدام الكود «$code»...", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "جاري الانضمام إلى الحلقة...", Toast.LENGTH_SHORT).show()
+                        mainViewModel.joinHalqa(code) { success, result ->
+                            if (success) {
+                                Toast.makeText(context, "تم الانضمام للحلقة بنجاح! 🥳", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "فشل الانضمام: $result", Toast.LENGTH_LONG).show()
+                            }
+                        }
                     }
                 )
             }

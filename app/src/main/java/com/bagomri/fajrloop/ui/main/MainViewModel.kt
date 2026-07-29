@@ -463,6 +463,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun createHalqa(name: String, onResult: (Boolean, String?) -> Unit) {
+        halqaRepository.createHalqa(name) { success, result ->
+            if (success) {
+                refreshUserData()
+            }
+            onResult(success, result)
+        }
+    }
+
+    fun joinHalqa(inviteCode: String, onResult: (Boolean, String?) -> Unit) {
+        halqaRepository.joinHalqa(inviteCode) { success, result ->
+            if (success) {
+                refreshUserData()
+            }
+            onResult(success, result)
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         countdownRunnable?.let { handler.removeCallbacks(it) }
