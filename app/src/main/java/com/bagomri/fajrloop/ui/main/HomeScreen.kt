@@ -5,10 +5,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.FlightTakeoff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -49,6 +53,10 @@ fun HomeScreen(
     onFixPermissionsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val isTravelActive = remember(context) { com.bagomri.fajrloop.alarm.TravelModeManager.isTravelModeActive(context) }
+    val travelStatusText = remember(context) { com.bagomri.fajrloop.alarm.TravelModeManager.getTravelModeStatusText(context) }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -112,6 +120,48 @@ fun HomeScreen(
             }
 
             Spacer(modifier = Modifier.height(Spacing.lg))
+
+            // Travel Mode Banner (If Active)
+            if (isTravelActive) {
+                Surface(
+                    onClick = onSettingsClick,
+                    shape = RoundedCornerShape(Radius.md),
+                    color = FajrLoopColors.PrimaryContainer.copy(alpha = 0.35f),
+                    border = BorderStroke(1.dp, FajrLoopColors.Primary.copy(alpha = 0.6f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Spacing.md)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(Spacing.md),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.FlightTakeoff,
+                            contentDescription = null,
+                            tint = FajrLoopColors.Primary,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .padding(end = Spacing.sm)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "✈️ وضع السفر نشط — المنبه متوقف مؤقتاً",
+                                fontFamily = PpNmArabic,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = FajrLoopColors.Primary
+                            )
+                            Text(
+                                text = travelStatusText,
+                                fontFamily = PpNmArabic,
+                                fontSize = 11.sp,
+                                color = FajrLoopColors.TextSecondary
+                            )
+                        }
+                    }
+                }
+            }
 
             // Permissions Warning Card
             if (hasPermissionWarning) {

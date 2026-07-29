@@ -91,6 +91,11 @@ class AlarmReceiver : BroadcastReceiver() {
         val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
 
         if (intent.action == ACTION_ALARM_FIRE) {
+            if (TravelModeManager.isTravelModeActive(context)) {
+                Log.d(TAG, "✈️ Travel mode is ACTIVE. Skipping Fajr alarm ring.")
+                return
+            }
+
             // تفعيل حالة رنين المنبه النشط في التفضيلات لمنع الإغلاق
             prefs.edit().putBoolean("alarm_active_ringing", true).apply()
 

@@ -382,7 +382,7 @@ fun FajrLoopNavGraph(
             var alarmSoundCode by remember { mutableStateOf(savedSoundCode) }
             var alarmSoundText by remember { mutableStateOf(formatSoundName(savedSoundCode)) }
 
-            var travelModeStatus by remember { mutableStateOf("غير نشط حالياً") }
+            var travelModeStatus by remember { mutableStateOf(com.bagomri.fajrloop.alarm.TravelModeManager.getTravelModeStatusText(context)) }
 
             var isVibrateEnabled by remember { mutableStateOf(prefs.getBoolean("vibrate_on_alarm", true)) }
             var isAdhkarEnabled by remember { mutableStateOf(prefs.getBoolean("show_adhkar_after_alarm", true)) }
@@ -555,21 +555,24 @@ fun FajrLoopNavGraph(
 
         composable(Screen.TravelMode.route) {
             val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-            val isEnabled = prefs.getBoolean("travel_mode_enabled", false)
-            val type = prefs.getString("travel_mode_type", "permanent") ?: "permanent"
+            val isEnabled = com.bagomri.fajrloop.alarm.TravelModeManager.isTravelModeActive(context)
+            val type = prefs.getString("travel_mode_type", "indefinite") ?: "indefinite"
             val until = prefs.getString("travel_mode_until", "حتى الإلغاء اليدوي") ?: "حتى الإلغاء اليدوي"
 
             TravelModeScreen(
                 initialEnabled = isEnabled,
                 initialType = type,
                 initialUntil = until,
-                onSaveTravelMode = { enabled, t, u ->
-                    prefs.edit()
-                        .putBoolean("travel_mode_enabled", enabled)
-                        .putString("travel_mode_type", t)
-                        .putString("travel_mode_until", u)
-                        .apply()
-                    Toast.makeText(context, "تم حفظ وضع السفر بنجاح", Toast.LENGTH_SHORT).show()
+                onSaveTravelMode = { enabled, t, untilText, untilTimestamp ->
+                    com.bagomri.fajrloop.alarm.TravelModeManager.setTravelMode(
+                        context = context,
+                        enabled = enabled,
+                        type = t,
+                        untilText = untilText,
+                        untilTimestamp = untilTimestamp
+                    )
+                    val msg = if (enabled) "✈️ تم تفعيل وضع السفر وإيقاف المنبه" else "🔔 تم إيقاف وضع السفر واستعادة المنبه"
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                     navController.popBackStack()
                 },
                 onBackClick = { navController.popBackStack() }

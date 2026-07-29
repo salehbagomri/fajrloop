@@ -43,7 +43,7 @@ fun TravelModeScreen(
     initialEnabled: Boolean,
     initialType: String,
     initialUntil: String,
-    onSaveTravelMode: (Boolean, String, String) -> Unit,
+    onSaveTravelMode: (Boolean, String, String, Long) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -288,29 +288,14 @@ fun TravelModeScreen(
                 Spacer(modifier = Modifier.weight(1f))
 
                 FajrPrimaryButton(
-                    text = if (isEnabled) "حفظ وتفعيل وضع السفر" else "حفظ الإعدادات",
+                    text = if (isEnabled) "حفظ وتفعيل وضع السفر" else "حفظ الإعدادات وإلغاء وضع السفر",
                     onClick = {
-                        var untilText = "حتى الإلغاء اليدوي"
-                        if (isEnabled) {
-                            val cal = Calendar.getInstance()
-                            untilText = when (selectedType) {
-                                "1_day" -> {
-                                    cal.add(Calendar.DAY_OF_MONTH, 1)
-                                    SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(cal.time)
-                                }
-                                "3_days" -> {
-                                    cal.add(Calendar.DAY_OF_MONTH, 3)
-                                    SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(cal.time)
-                                }
-                                "7_days" -> {
-                                    cal.add(Calendar.DAY_OF_MONTH, 7)
-                                    SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(cal.time)
-                                }
-                                "custom" -> customDate.ifEmpty { "حتى الإلغاء اليدوي" }
-                                else -> "حتى الإلغاء اليدوي"
-                            }
+                        val (untilText, untilTimestamp) = if (isEnabled) {
+                            com.bagomri.fajrloop.alarm.TravelModeManager.calculateUntilTimestamp(selectedType, customDate)
+                        } else {
+                            Pair("غير نشط حالياً", 0L)
                         }
-                        onSaveTravelMode(isEnabled, selectedType, untilText)
+                        onSaveTravelMode(isEnabled, selectedType, untilText, untilTimestamp)
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -329,7 +314,7 @@ private fun TravelModeScreenPreview() {
             initialEnabled = true,
             initialType = "3_days",
             initialUntil = "2026/08/01",
-            onSaveTravelMode = { _, _, _ -> },
+            onSaveTravelMode = { _, _, _, _ -> },
             onBackClick = {}
         )
     }
