@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Send
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,10 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bagomri.fajrloop.data.ChatMessage
 import com.bagomri.fajrloop.ui.components.FajrBackground
-import com.bagomri.fajrloop.ui.components.FajrCard
 import com.bagomri.fajrloop.ui.components.FajrLoopTopBar
 import com.bagomri.fajrloop.ui.components.UserAvatar
-import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
@@ -90,16 +87,28 @@ fun ChatScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .statusBarsPadding()
             .navigationBarsPadding()
+            .imePadding()
     ) {
         FajrBackground()
 
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header Bar
+            // Header Bar with Top Motivational Button
             FajrLoopTopBar(
                 title = title.ifEmpty { "محادثة الحلقة" },
-                onBackClick = onBackClick
+                onBackClick = onBackClick,
+                actions = {
+                    IconButton(
+                        onClick = { showMotivationalSheet = true }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.AutoAwesome,
+                            contentDescription = "رسائل تحفيزية",
+                            tint = FajrLoopColors.Primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
             )
 
             // Messages Container
@@ -198,81 +207,58 @@ fun ChatScreen(
                 }
             }
 
-            // Input Bar Container
-            Surface(
-                color = Color(0xFF131222),
-                tonalElevation = 8.dp,
-                border = BorderStroke(1.dp, Color(0xFF26233B)),
-                modifier = Modifier.fillMaxWidth()
+            // Floating Input Row without dark background box behind it
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.md, vertical = Spacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
             ) {
-                Row(
+                // Input Text Field
+                OutlinedTextField(
+                    value = inputText,
+                    onValueChange = { inputText = it },
+                    placeholder = {
+                        Text(
+                            text = "اكتب رسالة للحلقة...",
+                            fontFamily = PpNmArabic,
+                            fontSize = 14.sp,
+                            color = FajrLoopColors.TextTertiary
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(Radius.full),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = FajrLoopColors.Primary,
+                        unfocusedBorderColor = Color(0xFF332F4B),
+                        focusedTextColor = FajrLoopColors.TextPrimary,
+                        unfocusedTextColor = FajrLoopColors.TextPrimary,
+                        focusedContainerColor = Color(0xFF1B192C),
+                        unfocusedContainerColor = Color(0xFF1B192C)
+                    ),
+                    singleLine = true
+                )
+
+                // Send Button
+                IconButton(
+                    onClick = {
+                        if (inputText.isNotBlank()) {
+                            onSendMessage(inputText.trim(), "normal")
+                            inputText = ""
+                        }
+                    },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.md, vertical = Spacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(FajrLoopColors.Primary)
                 ) {
-                    // Star Button for Motivational Preset Dialog
-                    IconButton(
-                        onClick = { showMotivationalSheet = true },
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF221E36))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.AutoAwesome,
-                            contentDescription = "رسائل تحفيزية",
-                            tint = FajrLoopColors.Primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    // Input Text Field
-                    OutlinedTextField(
-                        value = inputText,
-                        onValueChange = { inputText = it },
-                        placeholder = {
-                            Text(
-                                text = "اكتب رسالة للحلقة...",
-                                fontFamily = PpNmArabic,
-                                fontSize = 14.sp,
-                                color = FajrLoopColors.TextTertiary
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(Radius.full),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = FajrLoopColors.Primary,
-                            unfocusedBorderColor = Color(0xFF332F4B),
-                            focusedTextColor = FajrLoopColors.TextPrimary,
-                            unfocusedTextColor = FajrLoopColors.TextPrimary,
-                            focusedContainerColor = Color(0xFF1B192C),
-                            unfocusedContainerColor = Color(0xFF1B192C)
-                        ),
-                        singleLine = true
+                    Icon(
+                        imageVector = Icons.Outlined.Send,
+                        contentDescription = "إرسال",
+                        tint = FajrLoopColors.Background,
+                        modifier = Modifier.size(20.dp)
                     )
-
-                    // Send Button
-                    IconButton(
-                        onClick = {
-                            if (inputText.isNotBlank()) {
-                                onSendMessage(inputText.trim(), "normal")
-                                inputText = ""
-                            }
-                        },
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(FajrLoopColors.Primary)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Send,
-                            contentDescription = "إرسال",
-                            tint = FajrLoopColors.Background,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
                 }
             }
         }
@@ -364,105 +350,145 @@ fun ChatBubbleItem(
     val isMotivational = message.type == "motivational"
     val senderShortName = formatShortName(message.senderName)
 
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = if (isCurrentUser) Alignment.End else Alignment.Start
-    ) {
-        Row(
-            horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start,
-            verticalAlignment = Alignment.Bottom,
-            modifier = Modifier.fillMaxWidth()
+    if (isMotivational) {
+        // Full-width Centered Banner for Motivational Messages
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = Spacing.xs, horizontal = Spacing.xs)
+                .clip(RoundedCornerShape(Radius.md))
+                .background(Color(0xFF221C12))
+                .border(1.dp, FajrLoopColors.Primary.copy(alpha = 0.5f), RoundedCornerShape(Radius.md))
+                .padding(Spacing.md),
+            contentAlignment = Alignment.Center
         ) {
-            if (!isCurrentUser) {
-                UserAvatar(
-                    photoUrl = message.senderPhotoUrl,
-                    userName = message.senderName,
-                    size = 34.dp,
-                    modifier = Modifier.padding(end = Spacing.xs, bottom = Spacing.xxs)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.AutoAwesome,
+                        contentDescription = null,
+                        tint = FajrLoopColors.Primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "رسالة تحفيزية إيمانية",
+                        fontFamily = PpNmArabic,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
+                        color = FajrLoopColors.Primary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.xs))
+
+                Text(
+                    text = message.message,
+                    fontFamily = PpNmArabic,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 22.sp
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.xs))
+
+                Text(
+                    text = "بواسطة: $senderShortName · $formattedTime",
+                    fontFamily = PpNmArabic,
+                    fontSize = 10.sp,
+                    color = FajrLoopColors.TextSecondary,
+                    textAlign = TextAlign.Center
                 )
             }
-
-            Box(
-                modifier = Modifier
-                    .widthIn(max = 290.dp)
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = Radius.lg,
-                            topEnd = Radius.lg,
-                            bottomStart = if (isCurrentUser) Radius.lg else Radius.xs,
-                            bottomEnd = if (isCurrentUser) Radius.xs else Radius.lg
-                        )
-                    )
-                    .background(
-                        if (isCurrentUser) Color(0xFF2B2518)
-                        else Color(0xFF1C1A2E)
-                    )
-                    .border(
-                        1.dp,
-                        if (isCurrentUser) FajrLoopColors.Primary.copy(alpha = 0.45f)
-                        else Color(0xFF2D2A45),
-                        RoundedCornerShape(
-                            topStart = Radius.lg,
-                            topEnd = Radius.lg,
-                            bottomStart = if (isCurrentUser) Radius.lg else Radius.xs,
-                            bottomEnd = if (isCurrentUser) Radius.xs else Radius.lg
-                        )
-                    )
-                    .padding(horizontal = Spacing.md, vertical = Spacing.sm)
+        }
+    } else {
+        // Regular Chat Bubble
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            horizontalAlignment = if (isCurrentUser) Alignment.End else Alignment.Start
+        ) {
+            Row(
+                horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start,
+                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column {
-                    // Sender Name for other members
-                    if (!isCurrentUser) {
-                        Text(
-                            text = senderShortName,
-                            fontFamily = PpNmArabic,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            color = FajrLoopColors.Primary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(bottom = 2.dp)
-                        )
-                    }
+                if (!isCurrentUser) {
+                    UserAvatar(
+                        photoUrl = message.senderPhotoUrl,
+                        userName = message.senderName,
+                        size = 34.dp,
+                        modifier = Modifier.padding(end = Spacing.xs, bottom = Spacing.xxs)
+                    )
+                }
 
-                    // Motivational Badge if applicable
-                    if (isMotivational) {
-                        Box(
-                            modifier = Modifier
-                                .padding(bottom = 4.dp)
-                                .clip(RoundedCornerShape(Radius.xs))
-                                .background(FajrLoopColors.PrimaryContainer)
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
+                Box(
+                    modifier = Modifier
+                        .widthIn(max = 290.dp)
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = Radius.lg,
+                                topEnd = Radius.lg,
+                                bottomStart = if (isCurrentUser) Radius.lg else Radius.xs,
+                                bottomEnd = if (isCurrentUser) Radius.xs else Radius.lg
+                            )
+                        )
+                        .background(
+                            if (isCurrentUser) Color(0xFF2B2518)
+                            else Color(0xFF1C1A2E)
+                        )
+                        .border(
+                            1.dp,
+                            if (isCurrentUser) FajrLoopColors.Primary.copy(alpha = 0.45f)
+                            else Color(0xFF2D2A45),
+                            RoundedCornerShape(
+                                topStart = Radius.lg,
+                                topEnd = Radius.lg,
+                                bottomStart = if (isCurrentUser) Radius.lg else Radius.xs,
+                                bottomEnd = if (isCurrentUser) Radius.xs else Radius.lg
+                            )
+                        )
+                        .padding(horizontal = Spacing.md, vertical = Spacing.sm)
+                ) {
+                    Column {
+                        if (!isCurrentUser) {
                             Text(
-                                text = "✨ رسالة تحفيزية",
+                                text = senderShortName,
                                 fontFamily = PpNmArabic,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 9.sp,
-                                color = FajrLoopColors.Primary
+                                fontSize = 12.sp,
+                                color = FajrLoopColors.Primary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(bottom = 2.dp)
                             )
                         }
+
+                        Text(
+                            text = message.message,
+                            fontFamily = PpNmArabic,
+                            fontSize = 14.sp,
+                            color = FajrLoopColors.TextPrimary,
+                            lineHeight = 21.sp
+                        )
+
+                        Text(
+                            text = formattedTime,
+                            fontFamily = PpNmArabic,
+                            fontSize = 10.sp,
+                            color = FajrLoopColors.TextTertiary,
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(top = Spacing.xs)
+                        )
                     }
-
-                    // Message Content
-                    Text(
-                        text = message.message,
-                        fontFamily = PpNmArabic,
-                        fontSize = 14.sp,
-                        color = FajrLoopColors.TextPrimary,
-                        lineHeight = 21.sp
-                    )
-
-                    // Timestamp
-                    Text(
-                        text = formattedTime,
-                        fontFamily = PpNmArabic,
-                        fontSize = 10.sp,
-                        color = FajrLoopColors.TextTertiary,
-                        modifier = Modifier
-                            .align(Alignment.End)
-                            .padding(top = Spacing.xs)
-                    )
                 }
             }
         }
@@ -477,7 +503,7 @@ private fun ChatScreenPreview() {
             title = "حلقة الأبرار",
             messages = listOf(
                 ChatMessage("1", "u1", "صالح باقومري", "", "السلام عليكم ورحمة الله وبركاته 🌅", "normal", System.currentTimeMillis()),
-                ChatMessage("2", "u2", "أحمد عبدالله", "", "وعليكم السلام، جاهز لصلاة الفجر إن شاء الله! 🕌", "motivational", System.currentTimeMillis())
+                ChatMessage("2", "u2", "أحمد عبدالله", "", "الصلاة خير من النوم 🕌", "motivational", System.currentTimeMillis())
             ),
             currentUid = "u1",
             onSendMessage = { _, _ -> },
