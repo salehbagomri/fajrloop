@@ -1,30 +1,30 @@
 package com.bagomri.fajrloop.ui.main
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.main.FriendWakeAlert
-import com.bagomri.fajrloop.ui.components.AnimatedGradientBackground
+import com.bagomri.fajrloop.ui.components.FajrBackground
 import com.bagomri.fajrloop.ui.components.UserAvatar
 import com.bagomri.fajrloop.ui.main.components.CountdownCard
 import com.bagomri.fajrloop.ui.main.components.FriendWakeAlertCard
 import com.bagomri.fajrloop.ui.main.components.QuickActionsGrid
 import com.bagomri.fajrloop.ui.main.components.SpiritualContentCard
+import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Radius
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 @Composable
 fun HomeScreen(
@@ -50,18 +50,18 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground()
+        FajrBackground()
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(Spacing.xl),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
-            // Header Bar (Greeting, User Avatar, Settings Icon)
+            // Header Bar
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -73,72 +73,80 @@ fun HomeScreen(
                 ) {
                     UserAvatar(
                         photoUrl = userPhotoUrl,
+                        userName = userName,
                         size = 44.dp
                     )
 
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(Spacing.md))
 
                     Column {
                         Text(
-                            text = "أهلاً بك 👋",
+                            text = "أهلاً بك",
                             fontFamily = PpNmArabic,
                             fontSize = 12.sp,
                             color = FajrLoopColors.TextSecondary
                         )
                         Text(
-                            text = userName.ifEmpty { "مستخدم جديد" },
+                            text = userName.ifEmpty { "مستخدم" },
                             fontFamily = PpNmArabic,
                             fontWeight = FontWeight.Bold,
                             fontSize = 17.sp,
-                            color = FajrLoopColors.Gold
+                            color = FajrLoopColors.Primary
                         )
                     }
                 }
 
-                IconButton(
-                    onClick = onSettingsClick,
-                    modifier = Modifier
-                        .clip(CircleShape)
-                ) {
-                    Text("⚙️", fontSize = 22.sp)
+                IconButton(onClick = onSettingsClick) {
+                    Icon(
+                        imageVector = FajrIcons.Settings,
+                        contentDescription = "الإعدادات",
+                        tint = FajrLoopColors.TextSecondary
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(Spacing.xl))
 
-            // Permissions Warning Card (if needed)
+            // Permissions Warning Card
             if (hasPermissionWarning) {
                 Surface(
                     onClick = onFixPermissionsClick,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
-                    color = FajrLoopColors.DangerRed.copy(alpha = 0.2f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, FajrLoopColors.DangerRed),
+                    shape = RoundedCornerShape(Radius.md),
+                    color = FajrLoopColors.Warning.copy(alpha = 0.1f),
+                    border = BorderStroke(1.dp, FajrLoopColors.Warning.copy(alpha = 0.4f)),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = Spacing.lg)
                 ) {
                     Row(
-                        modifier = Modifier.padding(14.dp),
+                        modifier = Modifier.padding(Spacing.md),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("⚠️", fontSize = 20.sp, modifier = Modifier.padding(end = 10.dp))
+                        Icon(
+                            imageVector = FajrIcons.Warning,
+                            contentDescription = null,
+                            tint = FajrLoopColors.Warning,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .padding(end = Spacing.sm)
+                        )
                         Text(
-                            text = "تنبه! بعض الصلاحيات لا تزال ناقصة، قد لا يرن المنبه بدقة. اضغط للضبط الآن.",
+                            text = "بعض الصلاحيات ناقصة. اضغط لإعدادها لضمان عمل المنبه.",
                             fontFamily = PpNmArabic,
                             fontSize = 12.sp,
-                            color = Color.White,
+                            color = FajrLoopColors.TextPrimary,
                             modifier = Modifier.weight(1f)
                         )
                     }
                 }
             }
 
-            // Friend Wake Alert Card (if active)
+            // Friend Wake Alert Card
             if (friendWakeAlert != null) {
                 FriendWakeAlertCard(
                     alert = friendWakeAlert,
                     onConfirmClick = onConfirmFriendWake,
-                    modifier = Modifier.padding(bottom = 20.dp)
+                    modifier = Modifier.padding(bottom = Spacing.xl)
                 )
             }
 
@@ -149,12 +157,12 @@ fun HomeScreen(
                 countdownText = countdownText,
                 countdownColorHex = countdownColorHex,
                 borderMode = countdownBorderMode,
-                modifier = Modifier.padding(bottom = 20.dp)
+                modifier = Modifier.padding(bottom = Spacing.xl)
             )
 
-            // Spiritual Content (Ayah / Hadith)
+            // Spiritual Content
             SpiritualContentCard(
-                modifier = Modifier.padding(bottom = 20.dp)
+                modifier = Modifier.padding(bottom = Spacing.xl)
             )
 
             // Quick Actions Grid
@@ -168,14 +176,14 @@ fun HomeScreen(
                 onJoinHalqaClick = onJoinHalqaClick
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.xxl))
         }
     }
 }
 
 @Preview
 @Composable
-fun HomeScreenPreview() {
+private fun HomeScreenPreview() {
     FajrLoopTheme {
         HomeScreen(
             userName = "صالح باقومري",
@@ -184,7 +192,7 @@ fun HomeScreenPreview() {
             fajrTimeStr = "04:30",
             sunriseTimeStr = "05:50",
             countdownText = "03:45:12",
-            countdownColorHex = "#FFD700",
+            countdownColorHex = "#D4A54A",
             countdownBorderMode = 1,
             friendWakeAlert = null,
             hasPermissionWarning = false,

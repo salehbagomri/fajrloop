@@ -1,5 +1,7 @@
 package com.bagomri.fajrloop.ui.main.dialogs
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -7,15 +9,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.bagomri.fajrloop.ui.components.GlassCard
-import com.bagomri.fajrloop.ui.components.GoldButton
+import com.bagomri.fajrloop.ui.components.FajrCard
+import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
+import com.bagomri.fajrloop.ui.components.FajrSecondaryButton
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Radius
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 @Composable
 fun InviteCodeDialog(
@@ -26,20 +32,20 @@ fun InviteCodeDialog(
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
+        FajrCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(Spacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "كود الدعوة للحلقة 🔗",
+                    text = "كود الدعوة للحلقة",
                     fontFamily = PpNmArabic,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    color = FajrLoopColors.Gold,
-                    modifier = Modifier.padding(bottom = 6.dp)
+                    color = FajrLoopColors.Primary,
+                    modifier = Modifier.padding(bottom = Spacing.xs)
                 )
 
                 Text(
@@ -47,49 +53,50 @@ fun InviteCodeDialog(
                     fontFamily = PpNmArabic,
                     fontSize = 14.sp,
                     color = FajrLoopColors.TextSecondary,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = Spacing.lg)
                 )
 
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.5f),
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clip(RoundedCornerShape(Radius.md))
+                        .background(FajrLoopColors.SurfaceVariant)
+                        .border(1.dp, FajrLoopColors.Border, RoundedCornerShape(Radius.md))
                         .clickable { onCopy() }
-                        .padding(bottom = 16.dp)
+                        .padding(vertical = Spacing.md),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = inviteCode,
                         fontFamily = PpNmArabic,
                         fontWeight = FontWeight.Bold,
                         fontSize = 28.sp,
-                        color = FajrLoopColors.Gold,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(vertical = 12.dp)
+                        color = FajrLoopColors.Primary,
+                        textAlign = TextAlign.Center
                     )
                 }
 
+                Spacer(modifier = Modifier.height(Spacing.xs))
+
                 Text(
-                    text = "اضغط على الكود للنسخ السريع 📋",
+                    text = "اضغط على الكود للنسخ السريع",
                     fontFamily = PpNmArabic,
                     fontSize = 12.sp,
                     color = FajrLoopColors.TextSecondary,
-                    modifier = Modifier.padding(bottom = 20.dp)
+                    modifier = Modifier.padding(bottom = Spacing.xl)
                 )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.md)
                 ) {
-                    OutlinedButton(
+                    FajrSecondaryButton(
+                        text = "مشاركة",
                         onClick = onShare,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("مشاركة 📲", fontFamily = PpNmArabic, color = FajrLoopColors.Gold)
-                    }
+                        modifier = Modifier.weight(1f)
+                    )
 
-                    GoldButton(
+                    FajrPrimaryButton(
                         text = "إغلاق",
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)

@@ -1,22 +1,26 @@
 package com.bagomri.fajrloop.ui.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.components.AnimatedGradientBackground
-import com.bagomri.fajrloop.ui.components.GlassCard
-import com.bagomri.fajrloop.ui.components.GoldButton
+import com.bagomri.fajrloop.R
+import com.bagomri.fajrloop.ui.components.FajrBackground
+import com.bagomri.fajrloop.ui.components.FajrCard
+import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 @Composable
 fun LoginScreen(
@@ -25,94 +29,107 @@ fun LoginScreen(
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground()
+        FajrBackground()
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(Spacing.xxl),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // App Logo & Header
-            Text(
-                text = "🌙",
-                fontSize = 72.sp,
-                modifier = Modifier.padding(bottom = 16.dp)
+            // App Logo — أيقونة التطبيق الفعلية
+            Image(
+                painter = painterResource(id = R.mipmap.ic_launcher_foreground),
+                contentDescription = "شعار حلقة الفجر",
+                modifier = Modifier
+                    .size(96.dp)
+                    .padding(bottom = Spacing.lg)
             )
 
             Text(
                 text = "حلقة الفجر",
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Bold,
-                fontSize = 32.sp,
-                color = FajrLoopColors.Gold,
+                fontSize = 28.sp,
+                color = FajrLoopColors.Primary,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = Spacing.sm)
             )
 
             Text(
-                text = "استيقظ لصلاة الفجر جماعة مع أصدقائك",
+                text = "استيقظ لصلاة الفجر مع أصدقائك",
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Normal,
-                fontSize = 16.sp,
+                fontSize = 15.sp,
                 color = FajrLoopColors.TextSecondary,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 36.dp)
+                modifier = Modifier.padding(bottom = Spacing.section)
             )
 
             // Sign-in card
-            GlassCard(
+            FajrCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
+                        .padding(Spacing.xxl),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "تسجيل الدخول",
                         fontFamily = PpNmArabic,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 17.sp,
                         color = FajrLoopColors.TextPrimary,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = Spacing.sm)
                     )
 
                     Text(
-                        text = "قم بتسجيل الدخول بحساب Google للبدء في استخدام التطبيق والإنضمام للحلقات",
+                        text = "سجّل دخولك بحساب Google للبدء",
                         fontFamily = PpNmArabic,
                         fontWeight = FontWeight.Normal,
                         fontSize = 14.sp,
                         color = FajrLoopColors.TextSecondary,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(bottom = 24.dp)
+                        modifier = Modifier.padding(bottom = Spacing.xxl)
                     )
 
                     if (isLoading) {
                         CircularProgressIndicator(
-                            color = FajrLoopColors.Gold,
+                            color = FajrLoopColors.Primary,
                             modifier = Modifier
                                 .size(44.dp)
-                                .padding(vertical = 4.dp)
+                                .padding(vertical = Spacing.xs)
                         )
                     } else {
-                        GoldButton(
-                            text = "تسجيل الدخول عبر Google  🔍",
+                        FajrPrimaryButton(
+                            text = "سجّل الدخول بحساب Google",
                             onClick = onGoogleSignInClick,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(Spacing.xxl))
+
+            // Privacy notice
+            Text(
+                text = "بتسجيل الدخول، توافق على سياسة الخصوصية",
+                fontFamily = PpNmArabic,
+                fontSize = 11.sp,
+                color = FajrLoopColors.TextTertiary,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
 
 @Preview
 @Composable
-fun LoginScreenPreview() {
+private fun LoginScreenPreview() {
     FajrLoopTheme {
         LoginScreen(
             onGoogleSignInClick = {},

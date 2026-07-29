@@ -1,19 +1,20 @@
 package com.bagomri.fajrloop.ui.main.dialogs
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.bagomri.fajrloop.ui.components.GlassCard
-import com.bagomri.fajrloop.ui.components.GoldButton
+import com.bagomri.fajrloop.ui.components.FajrCard
+import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
+import com.bagomri.fajrloop.ui.components.FajrSecondaryButton
+import com.bagomri.fajrloop.ui.components.FajrTextField
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 @Composable
 fun JoinHalqaDialog(
@@ -23,46 +24,42 @@ fun JoinHalqaDialog(
     var codeInput by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = onDismiss) {
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
+        FajrCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(Spacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "الانضمام لحلقة فجر 🔑",
+                    text = "الانضمام لحلقة فجر",
                     fontFamily = PpNmArabic,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    color = FajrLoopColors.Gold,
-                    modifier = Modifier.padding(bottom = 12.dp)
+                    color = FajrLoopColors.Primary,
+                    modifier = Modifier.padding(bottom = Spacing.md)
                 )
 
-                OutlinedTextField(
+                FajrTextField(
                     value = codeInput,
                     onValueChange = { codeInput = it },
-                    placeholder = { Text("أدخل كود الدعوة المكون من 6 أرقام", fontFamily = PpNmArabic) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
+                    placeholder = "أدخل كود الدعوة المكون من 6 أرقام",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 20.dp)
+                        .padding(bottom = Spacing.xl)
                 )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.md)
                 ) {
-                    OutlinedButton(
+                    FajrSecondaryButton(
+                        text = "إلغاء",
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("إلغاء", fontFamily = PpNmArabic, color = FajrLoopColors.TextSecondary)
-                    }
+                        modifier = Modifier.weight(1f)
+                    )
 
-                    GoldButton(
+                    FajrPrimaryButton(
                         text = "انضمام",
                         onClick = {
                             if (codeInput.trim().isNotEmpty()) {

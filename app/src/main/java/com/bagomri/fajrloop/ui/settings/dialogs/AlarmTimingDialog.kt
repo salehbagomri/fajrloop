@@ -13,10 +13,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.components.GlassCard
-import com.bagomri.fajrloop.ui.components.GoldButton
+import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Radius
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,22 +37,22 @@ fun AlarmTimingDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(Spacing.xl),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "توقيت رنين المنبه ⏰",
+                text = "توقيت رنين المنبه",
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                color = FajrLoopColors.Gold,
-                modifier = Modifier.padding(bottom = 16.dp)
+                color = FajrLoopColors.Primary,
+                modifier = Modifier.padding(bottom = Spacing.lg)
             )
 
             // Timing Types
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
                 TimingTypeOption(
                     title = "قبل الأذان",
@@ -77,11 +78,11 @@ fun AlarmTimingDialog(
             }
 
             if (selectedType != "with") {
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(Spacing.xl))
 
                 Text(
-                    text = if (selectedType == "before") "قبل الأذان بـ ${selectedOffset.toInt()} دقيقة ⏰"
-                    else "بعد الأذان بـ ${selectedOffset.toInt()} دقيقة ⏱️",
+                    text = if (selectedType == "before") "قبل الأذان بـ ${selectedOffset.toInt()} دقيقة"
+                    else "بعد الأذان بـ ${selectedOffset.toInt()} دقيقة",
                     fontFamily = PpNmArabic,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
@@ -94,11 +95,11 @@ fun AlarmTimingDialog(
                     valueRange = 1f..60f,
                     steps = 59,
                     colors = SliderDefaults.colors(
-                        thumbColor = FajrLoopColors.Gold,
-                        activeTrackColor = FajrLoopColors.Gold,
-                        inactiveTrackColor = FajrLoopColors.SurfaceBorder
+                        thumbColor = FajrLoopColors.Primary,
+                        activeTrackColor = FajrLoopColors.Primary,
+                        inactiveTrackColor = FajrLoopColors.Border
                     ),
-                    modifier = Modifier.padding(vertical = 12.dp)
+                    modifier = Modifier.padding(vertical = Spacing.md)
                 )
 
                 // Quick buttons
@@ -109,42 +110,42 @@ fun AlarmTimingDialog(
                     listOf(5, 10, 15, 30, 45).forEach { min ->
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(FajrLoopColors.Background.copy(alpha = 0.5f))
+                                .clip(RoundedCornerShape(Radius.sm))
+                                .background(FajrLoopColors.SurfaceVariant)
                                 .clickable { selectedOffset = min.toFloat() }
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                .padding(horizontal = Spacing.md, vertical = Spacing.xs)
                         ) {
                             Text(
                                 text = "$min د",
                                 fontFamily = PpNmArabic,
                                 fontSize = 12.sp,
-                                color = FajrLoopColors.Gold
+                                color = FajrLoopColors.Primary
                             )
                         }
                     }
                 }
             } else {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Spacing.lg))
                 Text(
-                    text = "سيقوم المنبه بالرنين مع دخول وقت أذان الفجر بالضبط 🕌",
+                    text = "سيقوم المنبه بالرنين مع دخول وقت أذان الفجر بالضبط",
                     fontFamily = PpNmArabic,
                     fontSize = 13.sp,
                     color = FajrLoopColors.TextSecondary,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = 12.dp)
+                    modifier = Modifier.padding(vertical = Spacing.md)
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.xxl))
 
-            GoldButton(
+            FajrPrimaryButton(
                 text = "حفظ التوقيت",
                 onClick = {
                     val offset = selectedOffset.toInt()
                     val desc = when (selectedType) {
-                        "before" -> "قبل الأذان بـ $offset دقيقة ⏰"
-                        "after" -> "بعد الأذان بـ $offset دقيقة ⏱️"
-                        else -> "مع أذان الفجر بالضبط 🕌"
+                        "before" -> "قبل الأذان بـ $offset دقيقة"
+                        "after" -> "بعد الأذان بـ $offset دقيقة"
+                        else -> "مع أذان الفجر بالضبط"
                     }
                     onSaveTiming(selectedType, offset, desc)
                     onDismiss()
@@ -164,18 +165,18 @@ fun TimingTypeOption(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) FajrLoopColors.Gold.copy(alpha = 0.2f) else FajrLoopColors.Background.copy(alpha = 0.4f))
+            .clip(RoundedCornerShape(Radius.md))
+            .background(if (isSelected) FajrLoopColors.PrimaryContainer else FajrLoopColors.SurfaceVariant)
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(vertical = Spacing.md),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = title,
             fontFamily = PpNmArabic,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             fontSize = 13.sp,
-            color = if (isSelected) FajrLoopColors.Gold else FajrLoopColors.TextSecondary
+            color = if (isSelected) FajrLoopColors.Primary else FajrLoopColors.TextSecondary
         )
     }
 }

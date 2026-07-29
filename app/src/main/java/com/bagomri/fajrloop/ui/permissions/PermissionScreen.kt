@@ -5,7 +5,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircleOutline
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,12 +21,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.components.AnimatedGradientBackground
-import com.bagomri.fajrloop.ui.components.GlassCard
-import com.bagomri.fajrloop.ui.components.GoldButton
+import com.bagomri.fajrloop.ui.components.FajrBackground
+import com.bagomri.fajrloop.ui.components.FajrCard
+import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Radius
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 data class PermissionItemData(
     val id: String,
@@ -39,63 +46,63 @@ fun PermissionScreen(
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground()
+        FajrBackground()
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 24.dp),
+                .padding(horizontal = Spacing.xl, vertical = Spacing.xxl),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
             Text(
-                text = "إعداد الصلاحيات 🛡️",
+                text = "إعداد الصلاحيات",
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Bold,
-                fontSize = 26.sp,
-                color = FajrLoopColors.Gold,
+                fontSize = 24.sp,
+                color = FajrLoopColors.Primary,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = Spacing.sm)
             )
 
             Text(
-                text = "يرجى منح الصلاحيات التالية لضمان عمل المنبه في الوقت المحدد وظهوره فوق قفل الشاشة.",
+                text = "يرجى منح الصلاحيات التالية لضمان عمل المنبه في الوقت المحدد",
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Normal,
                 fontSize = 14.sp,
                 color = FajrLoopColors.TextSecondary,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier.padding(bottom = Spacing.xxl)
             )
 
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
                 items(permissions, key = { it.id }) { item ->
                     PermissionRowItem(item = item)
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
             if (allGranted) {
-                GoldButton(
-                    text = "جميع الصلاحيات ممنوحة — المتابعة 🚀",
+                FajrPrimaryButton(
+                    text = "جميع الصلاحيات ممنوحة — متابعة",
                     onClick = onDoneClick,
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
                 Text(
-                    text = "⚠️ يرجى منح جميع الصلاحيات أعلاه للبدء",
+                    text = "يرجى منح جميع الصلاحيات للمتابعة",
                     fontFamily = PpNmArabic,
                     fontSize = 13.sp,
-                    color = FajrLoopColors.DangerRed,
+                    color = FajrLoopColors.Warning,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = 12.dp)
+                    modifier = Modifier.padding(vertical = Spacing.md)
                 )
             }
         }
@@ -103,11 +110,11 @@ fun PermissionScreen(
 }
 
 @Composable
-fun PermissionRowItem(
+private fun PermissionRowItem(
     item: PermissionItemData,
     modifier: Modifier = Modifier
 ) {
-    GlassCard(
+    FajrCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(enabled = !item.isGranted, onClick = item.onRequest)
@@ -115,22 +122,36 @@ fun PermissionRowItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Spacing.lg),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            // Status icon
+            Icon(
+                imageVector = if (item.isGranted) {
+                    Icons.Outlined.CheckCircleOutline
+                } else {
+                    Icons.Outlined.RadioButtonUnchecked
+                },
+                contentDescription = if (item.isGranted) "ممنوحة" else "مطلوبة",
+                tint = if (item.isGranted) FajrLoopColors.Success else FajrLoopColors.Primary,
+                modifier = Modifier
+                    .size(24.dp)
+                    .padding(end = Spacing.md)
+            )
+
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(end = 12.dp)
+                    .padding(horizontal = Spacing.md)
             ) {
                 Text(
                     text = item.title,
                     fontFamily = PpNmArabic,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
                     color = FajrLoopColors.TextPrimary,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    modifier = Modifier.padding(bottom = Spacing.xs)
                 )
                 Text(
                     text = item.description,
@@ -141,21 +162,22 @@ fun PermissionRowItem(
                 )
             }
 
+            // Status badge
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(Radius.sm))
                     .background(
-                        if (item.isGranted) FajrLoopColors.SuccessGreen.copy(alpha = 0.2f)
-                        else FajrLoopColors.Gold.copy(alpha = 0.2f)
+                        if (item.isGranted) FajrLoopColors.Success.copy(alpha = 0.12f)
+                        else FajrLoopColors.PrimaryContainer
                     )
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .padding(horizontal = Spacing.md, vertical = Spacing.xs)
             ) {
                 Text(
-                    text = if (item.isGranted) "ممنوحة ✓" else "منح الصلاحية",
+                    text = if (item.isGranted) "ممنوحة" else "منح",
                     fontFamily = PpNmArabic,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Medium,
                     fontSize = 12.sp,
-                    color = if (item.isGranted) FajrLoopColors.SuccessGreen else FajrLoopColors.Gold
+                    color = if (item.isGranted) FajrLoopColors.Success else FajrLoopColors.Primary
                 )
             }
         }
@@ -164,7 +186,7 @@ fun PermissionRowItem(
 
 @Preview
 @Composable
-fun PermissionScreenPreview() {
+private fun PermissionScreenPreview() {
     FajrLoopTheme {
         PermissionScreen(
             permissions = listOf(

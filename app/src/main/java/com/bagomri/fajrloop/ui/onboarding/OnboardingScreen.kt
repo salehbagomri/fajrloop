@@ -1,12 +1,17 @@
 package com.bagomri.fajrloop.ui.onboarding
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Alarm
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.NightsStay
+import androidx.compose.material.icons.outlined.RocketLaunch
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,28 +19,49 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.components.AnimatedGradientBackground
-import com.bagomri.fajrloop.ui.components.GlassCard
-import com.bagomri.fajrloop.ui.components.GoldButton
-import com.bagomri.fajrloop.ui.components.TransparentButton
+import com.bagomri.fajrloop.ui.components.FajrBackground
+import com.bagomri.fajrloop.ui.components.FajrCard
+import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
+import com.bagomri.fajrloop.ui.components.FajrSecondaryButton
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
-data class OnboardingItem(val icon: String, val title: String, val desc: String)
+data class OnboardingItem(
+    val icon: ImageVector,
+    val title: String,
+    val desc: String
+)
 
 val onboardingItems = listOf(
-    OnboardingItem("🌙", "مرحباً بك في حلقة الفجر 🌙", "نظام حلقات تفاعلي يساعدك وأعضاء حلقتك على الاستيقاظ لصلاة الفجر جماعة يومياً."),
-    OnboardingItem("🤝", "كوّن حلقتك الأولى 🤝", "أنشئ حلقة جديدة، ادعُ أصدقاءك، وكن مسؤولاً عن إيقاظهم ليكونوا هم أيضاً عوناً لك."),
-    OnboardingItem("⏰", "منبه ذكي لا يمكن تجاهله ⏰", "لن يتوقف منبهك عن الرنين إلا بعد حل التحدي والحصول على تأكيد الاستيقاظ من صديقك المسؤول."),
-    OnboardingItem("🚀", "ابدأ رحلتك الآن! 🚀", "سجل الدخول، انضم لحلقة الفجر، واستمتع بنشاط الصباح وأجره العظيم.")
+    OnboardingItem(
+        Icons.Outlined.NightsStay,
+        "حلقة الفجر",
+        "نظام تفاعلي يجمعك بأصدقائك للاستيقاظ لصلاة الفجر يومياً"
+    ),
+    OnboardingItem(
+        Icons.Outlined.Group,
+        "كوّن حلقتك",
+        "أنشئ حلقة، ادعُ أصدقاءك، وكن عوناً لهم على صلاة الفجر"
+    ),
+    OnboardingItem(
+        Icons.Outlined.Alarm,
+        "منبه لا يُتجاهل",
+        "لا يتوقف المنبه إلا بعد حل التحدي وتأكيد صديقك لاستيقاظك"
+    ),
+    OnboardingItem(
+        Icons.Outlined.RocketLaunch,
+        "ابدأ الآن",
+        "سجّل دخولك وانضم لحلقتك الأولى"
+    )
 )
 
 @Composable
@@ -48,15 +74,15 @@ fun OnboardingScreen(
     val isLastPage = pagerState.currentPage == onboardingItems.size - 1
 
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground()
+        FajrBackground()
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 32.dp),
+                .padding(horizontal = Spacing.xxl, vertical = Spacing.section),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
             // Pager content
             HorizontalPager(
@@ -70,32 +96,38 @@ fun OnboardingScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    GlassCard(
+                    FajrCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 16.dp)
+                            .padding(vertical = Spacing.lg)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .padding(Spacing.xxl),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Text(
-                                text = item.icon,
-                                fontSize = 64.sp,
-                                modifier = Modifier.padding(bottom = 16.dp)
+                            // أيقونة Outlined بدل إيموجي
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = null,
+                                tint = FajrLoopColors.Primary,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .padding(bottom = Spacing.lg)
                             )
+
                             Text(
                                 text = item.title,
                                 fontFamily = PpNmArabic,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 22.sp,
-                                color = FajrLoopColors.Gold,
+                                color = FajrLoopColors.Primary,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(bottom = 12.dp)
+                                modifier = Modifier.padding(bottom = Spacing.md)
                             )
+
                             Text(
                                 text = item.desc,
                                 fontFamily = PpNmArabic,
@@ -112,7 +144,7 @@ fun OnboardingScreen(
 
             // Dot indicators
             Row(
-                modifier = Modifier.padding(vertical = 20.dp),
+                modifier = Modifier.padding(vertical = Spacing.xl),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -124,12 +156,13 @@ fun OnboardingScreen(
                     )
                     Box(
                         modifier = Modifier
-                            .padding(horizontal = 4.dp)
+                            .padding(horizontal = Spacing.xs)
                             .height(8.dp)
                             .width(width)
                             .clip(CircleShape)
                             .background(
-                                if (isSelected) FajrLoopColors.Gold else Color.White.copy(alpha = 0.25f)
+                                if (isSelected) FajrLoopColors.Primary
+                                else FajrLoopColors.Border
                             )
                     )
                 }
@@ -138,18 +171,18 @@ fun OnboardingScreen(
             // Action buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (!isLastPage) {
-                    TransparentButton(
+                    FajrSecondaryButton(
                         text = "تخطي",
                         onClick = onComplete,
                         modifier = Modifier.weight(1f)
                     )
                 }
-                GoldButton(
-                    text = if (isLastPage) "ابدأ الآن 🚀" else "التالي",
+                FajrPrimaryButton(
+                    text = if (isLastPage) "ابدأ" else "التالي",
                     onClick = {
                         if (isLastPage) {
                             onComplete()
@@ -168,7 +201,7 @@ fun OnboardingScreen(
 
 @Preview
 @Composable
-fun OnboardingScreenPreview() {
+private fun OnboardingScreenPreview() {
     FajrLoopTheme {
         OnboardingScreen(onComplete = {})
     }

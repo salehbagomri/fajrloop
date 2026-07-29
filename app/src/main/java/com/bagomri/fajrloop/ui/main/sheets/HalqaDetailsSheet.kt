@@ -3,21 +3,19 @@ package com.bagomri.fajrloop.ui.main.sheets
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.components.DangerButton
-import com.bagomri.fajrloop.ui.components.GlassCard
+import com.bagomri.fajrloop.ui.components.FajrDestructiveButton
 import com.bagomri.fajrloop.ui.main.components.HalqaMemberItem
 import com.bagomri.fajrloop.ui.main.components.LoopMemberRow
+import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,29 +33,29 @@ fun HalqaDetailsSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF0F0F29),
-        contentColor = FajrLoopColors.TextPrimary,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        containerColor = FajrLoopColors.Surface,
+        contentColor = FajrLoopColors.TextPrimary
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(Spacing.xl),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "تفاصيل حلقة \"$halqaName\" 👥",
+                text = "تفاصيل حلقة «$halqaName»",
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                color = FajrLoopColors.Gold,
-                modifier = Modifier.padding(bottom = 16.dp)
+                color = FajrLoopColors.Primary,
+                modifier = Modifier.padding(bottom = Spacing.lg)
             )
 
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f, fill = false)
+                    .weight(1f, fill = false),
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs)
             ) {
                 items(members) { member ->
                     LoopMemberRow(
@@ -72,15 +70,16 @@ fun HalqaDetailsSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
-            DangerButton(
-                text = "مغادرة الحلقة 🚪",
+            FajrDestructiveButton(
+                text = "مغادرة الحلقة",
                 onClick = onLeaveClick,
+                leadingIcon = FajrIcons.Logout,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(Spacing.md))
         }
     }
 }

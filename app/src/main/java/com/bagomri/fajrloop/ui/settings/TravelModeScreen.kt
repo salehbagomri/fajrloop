@@ -1,25 +1,26 @@
 package com.bagomri.fajrloop.ui.settings
 
 import android.app.DatePickerDialog
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.components.AnimatedGradientBackground
+import com.bagomri.fajrloop.ui.components.FajrBackground
+import com.bagomri.fajrloop.ui.components.FajrCard
+import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
+import com.bagomri.fajrloop.ui.components.FajrSwitch
 import com.bagomri.fajrloop.ui.components.FajrLoopTopBar
-import com.bagomri.fajrloop.ui.components.GlassCard
-import com.bagomri.fajrloop.ui.components.GoldButton
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
+import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Spacing
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -56,26 +57,26 @@ fun TravelModeScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground()
+        FajrBackground()
 
         Column(modifier = Modifier.fillMaxSize()) {
             FajrLoopTopBar(
-                title = "وضع السفر ✈️",
+                title = "وضع السفر",
                 onBackClick = onBackClick
             )
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(Spacing.xl),
+                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
             ) {
                 // Switch card
-                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                FajrCard(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(Spacing.lg),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -88,35 +89,31 @@ fun TravelModeScreen(
                                 color = FajrLoopColors.TextPrimary
                             )
                             Text(
-                                text = if (isEnabled) "نشط حالياً ✈️" else "غير نشط حالياً",
+                                text = if (isEnabled) "نشط حالياً" else "غير نشط حالياً",
                                 fontFamily = PpNmArabic,
                                 fontSize = 13.sp,
-                                color = if (isEnabled) FajrLoopColors.Gold else FajrLoopColors.TextSecondary,
-                                modifier = Modifier.padding(top = 2.dp)
+                                color = if (isEnabled) FajrLoopColors.Primary else FajrLoopColors.TextSecondary,
+                                modifier = Modifier.padding(top = Spacing.xxs)
                             )
                         }
 
-                        Switch(
+                        FajrSwitch(
                             checked = isEnabled,
-                            onCheckedChange = { isEnabled = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = FajrLoopColors.Gold,
-                                checkedTrackColor = FajrLoopColors.Gold.copy(alpha = 0.3f)
-                            )
+                            onCheckedChange = { isEnabled = it }
                         )
                     }
                 }
 
                 if (isEnabled) {
-                    GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                    FajrCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(Spacing.lg)) {
                             Text(
                                 text = "مدة وضع السفر",
                                 fontFamily = PpNmArabic,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
-                                color = FajrLoopColors.Gold,
-                                modifier = Modifier.padding(bottom = 12.dp)
+                                color = FajrLoopColors.Primary,
+                                modifier = Modifier.padding(bottom = Spacing.md)
                             )
 
                             val options = listOf(
@@ -131,15 +128,15 @@ fun TravelModeScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable { selectedType = type }
-                                        .padding(vertical = 8.dp),
+                                        .padding(vertical = Spacing.xs),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     RadioButton(
                                         selected = selectedType == type,
                                         onClick = { selectedType = type },
-                                        colors = RadioButtonDefaults.colors(selectedColor = FajrLoopColors.Gold)
+                                        colors = RadioButtonDefaults.colors(selectedColor = FajrLoopColors.Primary)
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(Spacing.sm))
                                     Text(
                                         text = label,
                                         fontFamily = PpNmArabic,
@@ -154,18 +151,18 @@ fun TravelModeScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { showDatePicker() }
-                                    .padding(vertical = 8.dp),
+                                    .padding(vertical = Spacing.xs),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 RadioButton(
                                     selected = selectedType == "custom",
                                     onClick = { showDatePicker() },
-                                    colors = RadioButtonDefaults.colors(selectedColor = FajrLoopColors.Gold)
+                                    colors = RadioButtonDefaults.colors(selectedColor = FajrLoopColors.Primary)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(Spacing.sm))
                                 Column {
                                     Text(
-                                        text = "تاريخ مخصص 📅",
+                                        text = "تاريخ مخصص",
                                         fontFamily = PpNmArabic,
                                         fontSize = 14.sp,
                                         color = FajrLoopColors.TextPrimary
@@ -175,7 +172,7 @@ fun TravelModeScreen(
                                             text = "حتى: $customDate",
                                             fontFamily = PpNmArabic,
                                             fontSize = 12.sp,
-                                            color = FajrLoopColors.Gold
+                                            color = FajrLoopColors.Primary
                                         )
                                     }
                                 }
@@ -186,7 +183,7 @@ fun TravelModeScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                GoldButton(
+                FajrPrimaryButton(
                     text = "حفظ وضع السفر",
                     onClick = {
                         var untilText = "حتى الإلغاء اليدوي"
@@ -215,5 +212,19 @@ fun TravelModeScreen(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun TravelModeScreenPreview() {
+    FajrLoopTheme {
+        TravelModeScreen(
+            initialEnabled = true,
+            initialType = "3_days",
+            initialUntil = "2026/08/01",
+            onSaveTravelMode = { _, _, _ -> },
+            onBackClick = {}
+        )
     }
 }

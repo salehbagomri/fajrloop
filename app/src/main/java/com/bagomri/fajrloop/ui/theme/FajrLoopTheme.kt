@@ -15,21 +15,64 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.sp
 import com.bagomri.fajrloop.R
 
+// ─────────────────────────────────────────────────────────────
+// لوحة الألوان — Night → Dawn (ليل هادئ → فجر ذهبي)
+// ─────────────────────────────────────────────────────────────
 object FajrLoopColors {
-    val Background     = Color(0xFF07071B)     // الخلفية الرئيسية
-    val Surface        = Color(0xFF0D0D2B)     // سطح البطاقات
-    val SurfaceBorder  = Color(0xFF25254A)     // حدود البطاقات
-    val Gold           = Color(0xFFFFD700)     // الذهبي الرئيسي
-    val GoldDark       = Color(0xFFB8A373)     // الذهبي الداكن
-    val TextPrimary    = Color(0xFFE6EDF3)     // نص أبيض
-    val TextSecondary  = Color(0xFFB0B0C5)     // نص رمادي
-    val SuccessGreen   = Color(0xFF2ECC71)     // أخضر نجاح
-    val DangerRed      = Color(0xFFE74C3C)     // أحمر خطر
-    val NightBlue      = Color(0xFF1A1A3E)     // أزرق ليلي (خلفية متحركة)
-    val NightPurple    = Color(0xFF4A1A6B)     // بنفسجي (خلفية متحركة)
-    val Teal           = Color(0xFF1ABC9C)     // لون تمييز ثانوي
+    // ── الأسطح (Surfaces) ──
+    /** خلفية التطبيق الرئيسية */
+    val Background     = Color(0xFF080816)
+    /** خلفية البطاقات والحاويات */
+    val Surface        = Color(0xFF111128)
+    /** خلفية عناصر ثانوية (TextField, Chip) */
+    val SurfaceVariant = Color(0xFF1A1A3A)
+
+    // ── الحدود (Borders) ──
+    /** حدود البطاقات والعناصر */
+    val Border         = Color(0xFF252548)
+    /** حدود خفيفة (Dividers) */
+    val BorderSubtle   = Color(0xFF1E1E40)
+
+    // ── اللون الأساسي (Primary — الذهبي) ──
+    /** اللون الذهبي الرئيسي — أزرار، عناوين مميزة */
+    val Primary        = Color(0xFFD4A54A)
+    /** ذهبي خافت — Hover/Disabled، نصوص ثانوية ذهبية */
+    val PrimaryMuted   = Color(0xFFA88A3D)
+    /** خلفية العناصر المميزة (Chip المحدد، Badge) */
+    val PrimaryContainer = Color(0x1FD4A54A) // 12% alpha
+
+    // ── النصوص (Text) ──
+    /** النصوص الأساسية — عناوين، أسماء */
+    val TextPrimary    = Color(0xFFE8ECF0)
+    /** النصوص الوصفية والتوضيحية */
+    val TextSecondary  = Color(0xFF8B8FA8)
+    /** تلميحات، timestamps، تذييلات */
+    val TextTertiary   = Color(0xFF5A5E78)
+
+    // ── ألوان وظيفية (Semantic) ──
+    /** حالة النجاح — استيقظ، صلاحية ممنوحة */
+    val Success        = Color(0xFF34C759)
+    /** تحذير — وقت قريب، صلاحية ناقصة */
+    val Warning        = Color(0xFFFF9500)
+    /** خطر / إيقاف — SOS، حذف، خروج */
+    val Danger         = Color(0xFFFF3B30)
+    /** معلومة / رابط */
+    val Info           = Color(0xFF5AC8FA)
+
+    // ── ألوان مساعدة (للتوافقية المؤقتة) ──
+    @Deprecated("استخدم Primary بدلاً منه", replaceWith = ReplaceWith("Primary"))
+    val Gold           = Primary
+    @Deprecated("استخدم Danger بدلاً منه", replaceWith = ReplaceWith("Danger"))
+    val DangerRed      = Danger
+    @Deprecated("استخدم Success بدلاً منه", replaceWith = ReplaceWith("Success"))
+    val SuccessGreen   = Success
+    @Deprecated("استخدم Border بدلاً منه", replaceWith = ReplaceWith("Border"))
+    val SurfaceBorder  = Border
 }
 
+// ─────────────────────────────────────────────────────────────
+// عائلة الخط العربي
+// ─────────────────────────────────────────────────────────────
 val PpNmArabic = FontFamily(
     Font(R.font.pp_nm_arabic_thin, FontWeight.Thin),
     Font(R.font.pp_nm_arabic_light, FontWeight.Light),
@@ -40,23 +83,26 @@ val PpNmArabic = FontFamily(
     Font(R.font.pp_nm_arabic_bold, FontWeight.Bold)
 )
 
+// ─────────────────────────────────────────────────────────────
+// سلم الطباعة — Major Second ratio (1.125)
+// ─────────────────────────────────────────────────────────────
 val FajrLoopTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Bold,
-        fontSize = 72.sp,
+        fontSize = 48.sp,
         color = FajrLoopColors.TextPrimary
     ),
     headlineLarge = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
+        fontSize = 24.sp,
         color = FajrLoopColors.TextPrimary
     ),
     headlineMedium = TextStyle(
         fontFamily = PpNmArabic,
-        fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 20.sp,
         color = FajrLoopColors.TextPrimary
     ),
     headlineSmall = TextStyle(
@@ -80,13 +126,13 @@ val FajrLoopTypography = Typography(
     titleSmall = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Medium,
-        fontSize = 13.sp,
+        fontSize = 14.sp,
         color = FajrLoopColors.TextSecondary
     ),
     bodyLarge = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
+        fontSize = 15.sp,
         color = FajrLoopColors.TextPrimary
     ),
     bodyMedium = TextStyle(
@@ -111,31 +157,41 @@ val FajrLoopTypography = Typography(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Normal,
         fontSize = 11.sp,
-        color = FajrLoopColors.TextSecondary
+        color = FajrLoopColors.TextTertiary
     ),
     labelSmall = TextStyle(
         fontFamily = PpNmArabic,
         fontWeight = FontWeight.Normal,
         fontSize = 10.sp,
-        color = FajrLoopColors.TextSecondary
+        color = FajrLoopColors.TextTertiary
     )
 )
 
+// ─────────────────────────────────────────────────────────────
+// Material 3 Color Scheme
+// ─────────────────────────────────────────────────────────────
 private val DarkColorScheme = darkColorScheme(
-    primary = FajrLoopColors.Gold,
+    primary = FajrLoopColors.Primary,
     onPrimary = FajrLoopColors.Background,
-    primaryContainer = FajrLoopColors.GoldDark,
+    primaryContainer = FajrLoopColors.PrimaryContainer,
     onPrimaryContainer = FajrLoopColors.TextPrimary,
-    secondary = FajrLoopColors.Teal,
+    secondary = FajrLoopColors.Info,
     onSecondary = FajrLoopColors.Background,
     surface = FajrLoopColors.Surface,
     onSurface = FajrLoopColors.TextPrimary,
+    surfaceVariant = FajrLoopColors.SurfaceVariant,
+    onSurfaceVariant = FajrLoopColors.TextSecondary,
     background = FajrLoopColors.Background,
     onBackground = FajrLoopColors.TextPrimary,
-    error = FajrLoopColors.DangerRed,
+    outline = FajrLoopColors.Border,
+    outlineVariant = FajrLoopColors.BorderSubtle,
+    error = FajrLoopColors.Danger,
     onError = Color.White
 )
 
+// ─────────────────────────────────────────────────────────────
+// الثيم الرئيسي
+// ─────────────────────────────────────────────────────────────
 @Composable
 fun FajrLoopTheme(
     content: @Composable () -> Unit

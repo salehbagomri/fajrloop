@@ -5,25 +5,23 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.components.AnimatedGradientBackground
-import com.bagomri.fajrloop.ui.components.DangerButton
+import com.bagomri.fajrloop.ui.components.FajrBackground
+import com.bagomri.fajrloop.ui.components.FajrDestructiveButton
+import com.bagomri.fajrloop.ui.components.FajrDestructiveDialog
 import com.bagomri.fajrloop.ui.components.FajrLoopTopBar
-import com.bagomri.fajrloop.ui.components.GlassCard
 import com.bagomri.fajrloop.ui.settings.components.SettingsRow
 import com.bagomri.fajrloop.ui.settings.components.SettingsSection
 import com.bagomri.fajrloop.ui.settings.dialogs.AlarmSoundDialog
 import com.bagomri.fajrloop.ui.settings.dialogs.AlarmTimingDialog
 import com.bagomri.fajrloop.ui.settings.dialogs.CalcMethodDialog
 import com.bagomri.fajrloop.ui.settings.dialogs.ChallengeSettingsDialog
+import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
-import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 @Composable
 fun SettingsScreen(
@@ -63,11 +61,11 @@ fun SettingsScreen(
     var showLogoutConfirm by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground()
+        FajrBackground()
 
         Column(modifier = Modifier.fillMaxSize()) {
             FajrLoopTopBar(
-                title = "الإعدادات ⚙️",
+                title = "الإعدادات",
                 onBackClick = onBackClick
             )
 
@@ -75,148 +73,149 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
             ) {
                 // Section 1: Halqa & Travel Mode
-                SettingsSection(title = "الحلقة ووضع السفر ✈️") {
+                SettingsSection(title = "الحلقة والسفر") {
                     SettingsRow(
                         title = "وضع السفر",
                         subtitle = travelModeStatus,
-                        emoji = "✈️",
+                        icon = FajrIcons.TravelMode,
                         onClick = onTravelModeClick
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "كود الطوارئ لليوم (TOTP)",
-                        subtitle = "رمز مؤقت لإلغاء المنبه في الحالات الطارئة",
-                        emoji = "🔑",
+                        subtitle = "رمز طوارئ يومي لإلغاء المنبه",
+                        icon = FajrIcons.EmergencyCode,
                         onClick = onBackupCodeClick
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "إدارة ودائرة الحلقات",
                         subtitle = "تعدد الحلقات والتنقل بينها",
-                        emoji = "👥",
+                        icon = FajrIcons.Group,
                         onClick = onManageHalqasClick
                     )
                 }
 
                 // Section 2: Location & Calculation
-                SettingsSection(title = "الموقع الجغرافي وحساب المواقيت 🗺️") {
+                SettingsSection(title = "الموقع والمواقيت") {
                     SettingsRow(
                         title = "المدينة الحالية (GPS)",
                         subtitle = userCity,
-                        emoji = "📍",
+                        icon = FajrIcons.Location,
                         onClick = onLocationClick
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "طريقة حساب مواقيت الصلاة",
                         valueText = calcMethod,
-                        emoji = "🕌",
+                        icon = FajrIcons.PrayerCalc,
                         onClick = { showCalcDialog = true }
                     )
                 }
 
                 // Section 3: Alarm Customization
-                SettingsSection(title = "تخصيص المنبه والتحدي ⏰") {
+                SettingsSection(title = "المنبه والتحدي") {
                     SettingsRow(
                         title = "توقيت رنين المنبه",
                         valueText = alarmTimingDesc,
-                        emoji = "⏱️",
+                        icon = FajrIcons.AlarmTiming,
                         onClick = { showTimingDialog = true }
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "تحدي الاستيقاظ المفضّل",
                         valueText = challengeText,
-                        emoji = "🧩",
+                        icon = FajrIcons.Challenge,
                         onClick = { showChallengeDialog = true }
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "صوت ونغمة المنبه",
                         valueText = alarmSoundText,
-                        emoji = "🔔",
+                        icon = FajrIcons.AlarmSound,
                         onClick = { showSoundDialog = true }
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "اهتزاز الهاتف أثناء الرنين",
                         isChecked = isVibrateEnabled,
                         onCheckedChange = onVibrateChange,
-                        emoji = "📳"
+                        icon = FajrIcons.Vibration
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "عرض أذكار الصباح بعد الإغلاق",
                         isChecked = isAdhkarEnabled,
                         onCheckedChange = onAdhkarChange,
-                        emoji = "🌅"
+                        icon = FajrIcons.MorningAdhkar
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "إشعار دعاء الفجر اليومي",
                         isChecked = isDuaEnabled,
                         onCheckedChange = onDuaChange,
-                        emoji = "🤲"
+                        icon = FajrIcons.DuaNotification
                     )
                 }
 
                 // Section 4: Permissions & Test
-                SettingsSection(title = "الصلاحيات وتجربة المنبه 🛡️") {
+                SettingsSection(title = "الصلاحيات والاختبار") {
                     SettingsRow(
                         title = "التشغيل التلقائي (Auto-Start)",
-                        subtitle = "ضمان رنين المنبه في أجهزة Xiaomi / Honor / Huawei",
-                        emoji = "🚀",
+                        subtitle = "مطلوب لبعض الأجهزة (Xiaomi, Huawei)",
+                        icon = FajrIcons.AutoStart,
                         onClick = onAutoStartClick
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "تجاهل تحسين البطارية",
                         subtitle = "حماية الخدمة من الإغلاق في الخلفية",
-                        emoji = "🔋",
+                        icon = FajrIcons.Battery,
                         onClick = onBatteryClick
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "تجربة منبه تجريبي بعد 10 ثوانٍ",
-                        subtitle = "لاختبار شاشة القفل ومستوى الصوت",
-                        emoji = "🧪",
+                        subtitle = "اختبر المنبه وشاشة القفل",
+                        icon = FajrIcons.TestAlarm,
                         onClick = onTestAlarmClick
                     )
                 }
 
                 // Section 5: Guide & About
-                SettingsSection(title = "عن التطبيق والدعم ℹ️") {
+                SettingsSection(title = "عن التطبيق") {
                     SettingsRow(
                         title = "دليل الاستخدام",
-                        emoji = "📖",
+                        icon = FajrIcons.Guide,
                         onClick = onGuideClick
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "سياسة الخصوصية",
-                        emoji = "🔒",
+                        icon = FajrIcons.Privacy,
                         onClick = onPrivacyClick
                     )
-                    HorizontalDivider(color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "إصدار التطبيق",
                         valueText = "v1.0.0 (Compose)",
-                        emoji = "📱"
+                        icon = FajrIcons.AppVersion
                     )
                 }
 
                 // Section 6: Logout
-                DangerButton(
-                    text = "تسجيل الخروج 🚪",
+                FajrDestructiveButton(
+                    text = "تسجيل الخروج",
                     onClick = { showLogoutConfirm = true },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = FajrIcons.Logout
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(Spacing.xxl))
             }
         }
 
@@ -256,37 +255,16 @@ fun SettingsScreen(
         }
 
         if (showLogoutConfirm) {
-            AlertDialog(
-                onDismissRequest = { showLogoutConfirm = false },
-                title = {
-                    Text(
-                        text = "تأكيد تسجيل الخروج 🚪",
-                        fontFamily = PpNmArabic,
-                        fontWeight = FontWeight.Bold,
-                        color = FajrLoopColors.Gold
-                    )
+            FajrDestructiveDialog(
+                title = "تسجيل الخروج",
+                message = "هل تريد تسجيل الخروج؟ سيتوقف المنبه حتى تسجّل الدخول مجدداً.",
+                confirmText = "تسجيل الخروج",
+                dismissText = "إلغاء",
+                onConfirm = {
+                    showLogoutConfirm = false
+                    onLogoutClick()
                 },
-                text = {
-                    Text(
-                        text = "هل أنت تأكد من تسجيل الخروج؟ سيتوقف المنبه التضامني حتى تعاود تسجيل الدخول.",
-                        fontFamily = PpNmArabic,
-                        color = FajrLoopColors.TextPrimary
-                    )
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showLogoutConfirm = false
-                        onLogoutClick()
-                    }) {
-                        Text("تسجيل الخروج", fontFamily = PpNmArabic, color = FajrLoopColors.DangerRed, fontWeight = FontWeight.Bold)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showLogoutConfirm = false }) {
-                        Text("إلغاء", fontFamily = PpNmArabic, color = FajrLoopColors.TextSecondary)
-                    }
-                },
-                containerColor = FajrLoopColors.Surface
+                onDismiss = { showLogoutConfirm = false }
             )
         }
     }
@@ -294,12 +272,12 @@ fun SettingsScreen(
 
 @Preview
 @Composable
-fun SettingsScreenPreview() {
+private fun SettingsScreenPreview() {
     FajrLoopTheme {
         SettingsScreen(
             userCity = "مكة المكرمة",
             calcMethod = "جامعة أم القرى",
-            alarmTimingDesc = "مع أذان الفجر بالضبط 🕌",
+            alarmTimingDesc = "مع أذان الفجر بالضبط",
             challengeText = "حل المعادلة - متوسط",
             alarmSoundText = "افتراضي",
             travelModeStatus = "غير نشط",

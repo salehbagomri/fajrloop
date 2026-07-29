@@ -7,33 +7,50 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Radius
+import com.bagomri.fajrloop.ui.theme.Spacing
 
+/**
+ * زر رئيسي ذهبي — CTA الأساسي
+ */
 @Composable
-fun GoldButton(
+fun FajrPrimaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    leadingIcon: ImageVector? = null
 ) {
     Button(
         onClick = onClick,
         modifier = modifier.height(48.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(Radius.md),
         colors = ButtonDefaults.buttonColors(
-            containerColor = FajrLoopColors.Gold,
+            containerColor = FajrLoopColors.Primary,
             contentColor = FajrLoopColors.Background,
-            disabledContainerColor = FajrLoopColors.Gold.copy(alpha = 0.4f),
+            disabledContainerColor = FajrLoopColors.Primary.copy(alpha = 0.4f),
             disabledContentColor = FajrLoopColors.Background.copy(alpha = 0.5f)
         )
     ) {
+        if (leadingIcon != null) {
+            Icon(
+                imageVector = leadingIcon,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(20.dp)
+                    .padding(end = Spacing.xs)
+            )
+        }
         Text(
             text = text,
             fontFamily = PpNmArabic,
@@ -43,23 +60,36 @@ fun GoldButton(
     }
 }
 
+/**
+ * زر ثانوي شفاف — إجراء ثانوي
+ */
 @Composable
-fun TransparentButton(
+fun FajrSecondaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    leadingIcon: ImageVector? = null
 ) {
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.height(48.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, FajrLoopColors.Gold.copy(alpha = 0.3f)),
+        shape = RoundedCornerShape(Radius.md),
+        border = BorderStroke(1.dp, FajrLoopColors.Primary.copy(alpha = 0.3f)),
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = FajrLoopColors.Gold
+            contentColor = FajrLoopColors.Primary
         )
     ) {
+        if (leadingIcon != null) {
+            Icon(
+                imageVector = leadingIcon,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(20.dp)
+                    .padding(end = Spacing.xs)
+            )
+        }
         Text(
             text = text,
             fontFamily = PpNmArabic,
@@ -69,24 +99,37 @@ fun TransparentButton(
     }
 }
 
+/**
+ * زر خطر — حذف / خروج / SOS
+ */
 @Composable
-fun DangerButton(
+fun FajrDestructiveButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    leadingIcon: ImageVector? = null
 ) {
     Button(
         onClick = onClick,
         modifier = modifier.height(48.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, FajrLoopColors.DangerRed.copy(alpha = 0.3f)),
+        shape = RoundedCornerShape(Radius.md),
+        border = BorderStroke(1.dp, FajrLoopColors.Danger.copy(alpha = 0.3f)),
         colors = ButtonDefaults.buttonColors(
-            containerColor = FajrLoopColors.DangerRed.copy(alpha = 0.1f),
-            contentColor = FajrLoopColors.DangerRed
+            containerColor = FajrLoopColors.Danger.copy(alpha = 0.1f),
+            contentColor = FajrLoopColors.Danger
         )
     ) {
+        if (leadingIcon != null) {
+            Icon(
+                imageVector = leadingIcon,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(20.dp)
+                    .padding(end = Spacing.xs)
+            )
+        }
         Text(
             text = text,
             fontFamily = PpNmArabic,
@@ -96,17 +139,60 @@ fun DangerButton(
     }
 }
 
+// ── Deprecated aliases ─────────────────────────────────────
+
+@Deprecated("استخدم FajrPrimaryButton بدلاً منه", replaceWith = ReplaceWith("FajrPrimaryButton(text, onClick, modifier, enabled)"))
+@Composable
+fun GoldButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) = FajrPrimaryButton(text, onClick, modifier, enabled)
+
+@Deprecated("استخدم FajrSecondaryButton بدلاً منه", replaceWith = ReplaceWith("FajrSecondaryButton(text, onClick, modifier, enabled)"))
+@Composable
+fun TransparentButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) = FajrSecondaryButton(text, onClick, modifier, enabled)
+
+@Deprecated("استخدم FajrDestructiveButton بدلاً منه", replaceWith = ReplaceWith("FajrDestructiveButton(text, onClick, modifier, enabled)"))
+@Composable
+fun DangerButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) = FajrDestructiveButton(text, onClick, modifier, enabled)
+
 @Preview
 @Composable
-fun ButtonsPreview() {
+private fun FajrButtonsPreview() {
     FajrLoopTheme {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
-            GoldButton(text = "زر ذهبي رئيسي", onClick = {}, modifier = Modifier.fillMaxWidth())
-            TransparentButton(text = "زر شفاف ثانوي", onClick = {}, modifier = Modifier.fillMaxWidth())
-            DangerButton(text = "زر خطر / خروج", onClick = {}, modifier = Modifier.fillMaxWidth())
+            FajrPrimaryButton(
+                text = "زر رئيسي",
+                onClick = {},
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = FajrIcons.Settings
+            )
+            FajrSecondaryButton(
+                text = "زر ثانوي",
+                onClick = {},
+                modifier = Modifier.fillMaxWidth()
+            )
+            FajrDestructiveButton(
+                text = "تسجيل الخروج",
+                onClick = {},
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = FajrIcons.Logout
+            )
         }
     }
 }

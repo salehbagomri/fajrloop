@@ -8,26 +8,26 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.components.AnimatedGradientBackground
-import com.bagomri.fajrloop.ui.components.GlassCard
-import com.bagomri.fajrloop.ui.components.GoldButton
+import com.bagomri.fajrloop.ui.components.FajrBackground
+import com.bagomri.fajrloop.ui.components.FajrCard
+import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
+import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Radius
+import com.bagomri.fajrloop.ui.theme.Spacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -90,32 +90,32 @@ fun AdhkarScreen(
     var isAllCompleted by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground()
+        FajrBackground()
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+                .padding(horizontal = Spacing.xl, vertical = Spacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Header bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 8.dp),
+                    .padding(top = Spacing.md, bottom = Spacing.sm),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onFinish) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = FajrIcons.Close,
                         contentDescription = "إغلاق",
                         tint = FajrLoopColors.TextPrimary
                     )
                 }
 
                 Text(
-                    text = "أذكار الصباح 🌅",
+                    text = "أذكار الصباح",
                     fontFamily = PpNmArabic,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
@@ -127,7 +127,7 @@ fun AdhkarScreen(
                     fontFamily = PpNmArabic,
                     fontWeight = FontWeight.Medium,
                     fontSize = 14.sp,
-                    color = FajrLoopColors.Gold
+                    color = FajrLoopColors.Primary
                 )
             }
 
@@ -146,13 +146,13 @@ fun AdhkarScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    GlassCard(
+                    FajrCard(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .padding(Spacing.xxl),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
@@ -164,7 +164,7 @@ fun AdhkarScreen(
                                 color = FajrLoopColors.TextPrimary,
                                 textAlign = TextAlign.Center,
                                 lineHeight = 28.sp,
-                                modifier = Modifier.padding(bottom = 20.dp)
+                                modifier = Modifier.padding(bottom = Spacing.xl)
                             )
 
                             Text(
@@ -173,7 +173,7 @@ fun AdhkarScreen(
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 13.sp,
                                 color = FajrLoopColors.TextSecondary,
-                                modifier = Modifier.padding(bottom = 20.dp)
+                                modifier = Modifier.padding(bottom = Spacing.xl)
                             )
 
                             // Tap counter button
@@ -182,12 +182,12 @@ fun AdhkarScreen(
                                     .size(72.dp)
                                     .clip(CircleShape)
                                     .background(
-                                        if (isCompleted) FajrLoopColors.SuccessGreen.copy(alpha = 0.2f)
-                                        else FajrLoopColors.Gold.copy(alpha = 0.15f)
+                                        if (isCompleted) FajrLoopColors.Success.copy(alpha = 0.15f)
+                                        else FajrLoopColors.PrimaryContainer
                                     )
                                     .border(
                                         2.dp,
-                                        if (isCompleted) FajrLoopColors.SuccessGreen else FajrLoopColors.Gold,
+                                        if (isCompleted) FajrLoopColors.Success else FajrLoopColors.Primary,
                                         CircleShape
                                     )
                                     .clickable(enabled = !isCompleted) {
@@ -204,7 +204,7 @@ fun AdhkarScreen(
                                                     Toast
                                                         .makeText(
                                                             context,
-                                                            "تقبل الله طاعاتكم وغفر ذنوبكم 🌅",
+                                                            "تقبل الله طاعاتكم وغفر ذنوبكم",
                                                             Toast.LENGTH_LONG
                                                         )
                                                         .show()
@@ -219,7 +219,7 @@ fun AdhkarScreen(
                                     fontFamily = PpNmArabic,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 24.sp,
-                                    color = if (isCompleted) FajrLoopColors.SuccessGreen else FajrLoopColors.Gold
+                                    color = if (isCompleted) FajrLoopColors.Success else FajrLoopColors.Primary
                                 )
                             }
                         }
@@ -228,9 +228,9 @@ fun AdhkarScreen(
             }
 
             // Bottom action
-            Spacer(modifier = Modifier.height(16.dp))
-            GoldButton(
-                text = if (isAllCompleted) "تقبل الله 🌅 (اضغط للإغلاق)" else "إغلاق الشاشة",
+            Spacer(modifier = Modifier.height(Spacing.lg))
+            FajrPrimaryButton(
+                text = if (isAllCompleted) "تم الأذكار — إغلاق" else "إغلاق الشاشة",
                 onClick = onFinish,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -240,7 +240,7 @@ fun AdhkarScreen(
 
 @Preview
 @Composable
-fun AdhkarScreenPreview() {
+private fun AdhkarScreenPreview() {
     FajrLoopTheme {
         AdhkarScreen(onFinish = {})
     }

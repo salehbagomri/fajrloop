@@ -1,6 +1,5 @@
 package com.bagomri.fajrloop.ui.chat
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,8 +11,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,30 +24,33 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bagomri.fajrloop.data.ChatMessage
-import com.bagomri.fajrloop.ui.components.AnimatedGradientBackground
+import com.bagomri.fajrloop.ui.components.FajrBackground
+import com.bagomri.fajrloop.ui.components.FajrCard
 import com.bagomri.fajrloop.ui.components.FajrLoopTopBar
-import com.bagomri.fajrloop.ui.components.GlassCard
 import com.bagomri.fajrloop.ui.components.UserAvatar
+import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Radius
+import com.bagomri.fajrloop.ui.theme.Spacing
 import java.text.SimpleDateFormat
 import java.util.*
 
 val quickChips = listOf(
-    "الصلاة خير من النوم ⏰",
-    "همّتكم يا أبطال الفجر!",
-    "فجر مبارك للجميع",
-    "لا تنسوا أذكار الصباح"
+    "الصلاة خير من النوم",
+    "همّتكم يا أبطال الفجر",
+    "فجر مبارك",
+    "لا تنسوا الأذكار"
 )
 
 val motivationalPresets = listOf(
-    Triple("✨", "الصلاة خير من النوم ⏰", "#FFD700"),
-    Triple("💪", "همّتكم يا أبطال الفجر!", "#FF8C00"),
-    Triple("🌅", "فجر مبارك للجميع", "#2ECC71"),
-    Triple("📖", "لا تنسوا أذكار الصباح", "#B57CFF"),
-    Triple("🕋", "ألا إن سلعة الله غالية، ألا إن سلعة الله الجنة", "#FFD700"),
-    Triple("🟢", "من صلى الفجر في جماعة فهو في ذمة الله", "#2ECC71")
+    Pair("الصلاة خير من النوم", "نقل عن الحديث الشريف"),
+    Pair("همّتكم يا أبطال الفجر", "دعوة للتنافس الرفيع"),
+    Pair("فجر مبارك للجميع", "تحية الصباح المبارك"),
+    Pair("لا تنسوا أذكار الصباح", "تذكير بالتحصين اليومي"),
+    Pair("ألا إن سلعة الله غالية، ألا إن سلعة الله الجنة", "تذكير بعظيم الأجر"),
+    Pair("من صلى الفجر في جماعة فهو في ذمة الله", "صحيح مسلم")
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,7 +74,7 @@ fun ChatScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground()
+        FajrBackground()
 
         Column(modifier = Modifier.fillMaxSize()) {
             // Top bar
@@ -87,7 +88,7 @@ fun ChatScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = Spacing.lg)
             ) {
                 if (messages.isEmpty()) {
                     Column(
@@ -96,12 +97,7 @@ fun ChatScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "💬",
-                            fontSize = 48.sp,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
-                        Text(
-                            text = "لا يوجد رسائل حتى الآن، كن أول من يرسل 💬",
+                            text = "لا يوجد رسائل حتى الآن، كن أول من يرسل",
                             fontFamily = PpNmArabic,
                             fontWeight = FontWeight.Medium,
                             fontSize = 15.sp,
@@ -113,8 +109,8 @@ fun ChatScreen(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(vertical = 12.dp)
+                        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+                        contentPadding = PaddingValues(vertical = Spacing.md)
                     ) {
                         items(messages, key = { it.id }) { message ->
                             ChatBubbleItem(
@@ -130,27 +126,27 @@ fun ChatScreen(
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = Spacing.md, vertical = Spacing.xs),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
                 items(quickChips) { chipText ->
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(FajrLoopColors.Surface.copy(alpha = 0.6f))
+                            .clip(RoundedCornerShape(Radius.full))
+                            .background(FajrLoopColors.SurfaceVariant)
                             .border(
                                 1.dp,
-                                FajrLoopColors.Gold.copy(alpha = 0.3f),
-                                RoundedCornerShape(20.dp)
+                                FajrLoopColors.Primary.copy(alpha = 0.3f),
+                                RoundedCornerShape(Radius.full)
                             )
                             .clickable { onSendMessage(chipText, "normal") }
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                            .padding(horizontal = Spacing.md, vertical = Spacing.xs)
                     ) {
                         Text(
                             text = chipText,
                             fontFamily = PpNmArabic,
                             fontSize = 12.sp,
-                            color = FajrLoopColors.Gold
+                            color = FajrLoopColors.Primary
                         )
                     }
                 }
@@ -158,28 +154,28 @@ fun ChatScreen(
 
             // Input Bar
             Surface(
-                color = FajrLoopColors.Surface.copy(alpha = 0.95f),
+                color = FajrLoopColors.Surface,
                 tonalElevation = 8.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(horizontal = Spacing.md, vertical = Spacing.sm),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
                 ) {
                     // Star button for motivational dialog
                     IconButton(
                         onClick = { showMotivationalSheet = true },
                         modifier = Modifier
                             .size(40.dp)
-                            .background(FajrLoopColors.Gold.copy(alpha = 0.15f), CircleShape)
+                            .background(FajrLoopColors.PrimaryContainer, CircleShape)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = "تحفيزي",
-                            tint = FajrLoopColors.Gold
+                            imageVector = Icons.Outlined.Star,
+                            contentDescription = "رسائل تحفيزية",
+                            tint = FajrLoopColors.Primary
                         )
                     }
 
@@ -192,18 +188,18 @@ fun ChatScreen(
                                 text = "اكتب رسالتك...",
                                 fontFamily = PpNmArabic,
                                 fontSize = 14.sp,
-                                color = FajrLoopColors.TextSecondary
+                                color = FajrLoopColors.TextTertiary
                             )
                         },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(24.dp),
+                        shape = RoundedCornerShape(Radius.full),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = FajrLoopColors.Gold,
-                            unfocusedBorderColor = FajrLoopColors.SurfaceBorder,
+                            focusedBorderColor = FajrLoopColors.Primary,
+                            unfocusedBorderColor = FajrLoopColors.Border,
                             focusedTextColor = FajrLoopColors.TextPrimary,
                             unfocusedTextColor = FajrLoopColors.TextPrimary,
-                            focusedContainerColor = FajrLoopColors.Background.copy(alpha = 0.5f),
-                            unfocusedContainerColor = FajrLoopColors.Background.copy(alpha = 0.5f)
+                            focusedContainerColor = FajrLoopColors.SurfaceVariant,
+                            unfocusedContainerColor = FajrLoopColors.SurfaceVariant
                         ),
                         singleLine = true
                     )
@@ -218,10 +214,10 @@ fun ChatScreen(
                         },
                         modifier = Modifier
                             .size(44.dp)
-                            .background(FajrLoopColors.Gold, CircleShape)
+                            .background(FajrLoopColors.Primary, CircleShape)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            imageVector = FajrIcons.Send,
                             contentDescription = "إرسال",
                             tint = FajrLoopColors.Background
                         )
@@ -240,46 +236,53 @@ fun ChatScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp)
+                        .padding(Spacing.xl)
                 ) {
                     Text(
-                        text = "اختر رسالة تحفيزية سوبر 🌟",
+                        text = "اختر رسالة تحفيزية",
                         fontFamily = PpNmArabic,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
-                        color = FajrLoopColors.Gold,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        color = FajrLoopColors.Primary,
+                        modifier = Modifier.padding(bottom = Spacing.lg)
                     )
 
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        motivationalPresets.forEach { (emoji, text, _) ->
-                            GlassCard(
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        motivationalPresets.forEach { (text, category) ->
+                            FajrCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        onSendMessage("$emoji $text", "motivational")
+                                        onSendMessage(text, "motivational")
                                         showMotivationalSheet = false
                                     }
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(14.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(Spacing.lg),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(text = emoji, fontSize = 24.sp)
                                     Text(
                                         text = text,
                                         fontFamily = PpNmArabic,
                                         fontWeight = FontWeight.Medium,
-                                        fontSize = 15.sp,
+                                        fontSize = 14.sp,
                                         color = FajrLoopColors.TextPrimary
+                                    )
+                                    Text(
+                                        text = category,
+                                        fontFamily = PpNmArabic,
+                                        fontSize = 11.sp,
+                                        color = FajrLoopColors.TextSecondary
                                     )
                                 }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.lg))
                 }
             }
         }
@@ -307,8 +310,9 @@ fun ChatBubbleItem(
             if (!isCurrentUser) {
                 UserAvatar(
                     photoUrl = message.senderPhotoUrl,
+                    userName = message.senderName,
                     size = 32.dp,
-                    modifier = Modifier.padding(end = 8.dp, bottom = 4.dp)
+                    modifier = Modifier.padding(end = Spacing.sm, bottom = Spacing.xxs)
                 )
             }
 
@@ -317,38 +321,38 @@ fun ChatBubbleItem(
                     .widthIn(max = 280.dp)
                     .clip(
                         RoundedCornerShape(
-                            topStart = 16.dp,
-                            topEnd = 16.dp,
-                            bottomStart = if (isCurrentUser) 16.dp else 4.dp,
-                            bottomEnd = if (isCurrentUser) 4.dp else 16.dp
+                            topStart = Radius.lg,
+                            topEnd = Radius.lg,
+                            bottomStart = if (isCurrentUser) Radius.lg else Radius.xs,
+                            bottomEnd = if (isCurrentUser) Radius.xs else Radius.lg
                         )
                     )
                     .background(
-                        if (isCurrentUser) FajrLoopColors.Gold.copy(alpha = 0.2f)
-                        else FajrLoopColors.Surface.copy(alpha = 0.8f)
+                        if (isCurrentUser) FajrLoopColors.PrimaryContainer
+                        else FajrLoopColors.Surface
                     )
                     .border(
                         1.dp,
-                        if (isCurrentUser) FajrLoopColors.Gold.copy(alpha = 0.4f)
-                        else FajrLoopColors.SurfaceBorder.copy(alpha = 0.5f),
+                        if (isCurrentUser) FajrLoopColors.Primary.copy(alpha = 0.3f)
+                        else FajrLoopColors.Border,
                         RoundedCornerShape(
-                            topStart = 16.dp,
-                            topEnd = 16.dp,
-                            bottomStart = if (isCurrentUser) 16.dp else 4.dp,
-                            bottomEnd = if (isCurrentUser) 4.dp else 16.dp
+                            topStart = Radius.lg,
+                            topEnd = Radius.lg,
+                            bottomStart = if (isCurrentUser) Radius.lg else Radius.xs,
+                            bottomEnd = if (isCurrentUser) Radius.xs else Radius.lg
                         )
                     )
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    .padding(horizontal = Spacing.md, vertical = Spacing.sm)
             ) {
                 Column {
                     if (!isCurrentUser) {
                         Text(
                             text = message.senderName,
                             fontFamily = PpNmArabic,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             fontSize = 12.sp,
-                            color = FajrLoopColors.Gold,
-                            modifier = Modifier.padding(bottom = 2.dp)
+                            color = FajrLoopColors.Primary,
+                            modifier = Modifier.padding(bottom = Spacing.xxs)
                         )
                     }
 
@@ -364,10 +368,10 @@ fun ChatBubbleItem(
                         text = formattedTime,
                         fontFamily = PpNmArabic,
                         fontSize = 10.sp,
-                        color = FajrLoopColors.TextSecondary,
+                        color = FajrLoopColors.TextTertiary,
                         modifier = Modifier
                             .align(Alignment.End)
-                            .padding(top = 4.dp)
+                            .padding(top = Spacing.xs)
                     )
                 }
             }
@@ -377,13 +381,13 @@ fun ChatBubbleItem(
 
 @Preview
 @Composable
-fun ChatScreenPreview() {
+private fun ChatScreenPreview() {
     FajrLoopTheme {
         ChatScreen(
             title = "حلقة الأبرار",
             messages = listOf(
                 ChatMessage("1", "u1", "صالح", "", "السلام عليكم ورحمة الله", "normal", System.currentTimeMillis()),
-                ChatMessage("2", "u2", "أحمد", "", "وعليكم السلام، جاهز لصلاة الفجر إن شاء الله 🌅", "normal", System.currentTimeMillis())
+                ChatMessage("2", "u2", "أحمد", "", "وعليكم السلام، جاهز لصلاة الفجر إن شاء الله", "normal", System.currentTimeMillis())
             ),
             currentUid = "u1",
             onSendMessage = { _, _ -> },

@@ -2,17 +2,20 @@ package com.bagomri.fajrloop.ui.main.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.components.GlassCard
+import com.bagomri.fajrloop.ui.components.FajrCard
+import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 @Composable
 fun QuickActionsGrid(
@@ -26,48 +29,39 @@ fun QuickActionsGrid(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = "الإجراءات السريعة ⚡",
-            fontFamily = PpNmArabic,
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
-            color = FajrLoopColors.TextPrimary,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
         if (isInHalqa) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
                 ActionCard(
-                    icon = "👥",
+                    icon = FajrIcons.Group,
                     title = "تفاصيل الحلقة",
                     onClick = onHalqaDetailsClick,
                     modifier = Modifier.weight(1f)
                 )
                 ActionCard(
-                    icon = "💬",
+                    icon = FajrIcons.Chat,
                     title = "محادثة الحلقة",
                     onClick = onChatClick,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Spacing.md))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
                 ActionCard(
-                    icon = "📊",
+                    icon = FajrIcons.Stats,
                     title = "سجل التزامي",
                     onClick = onStatsClick,
                     modifier = Modifier.weight(1f)
                 )
                 ActionCard(
-                    icon = "🔗",
+                    icon = FajrIcons.InviteFriend,
                     title = "دعوة أصدقاء",
                     onClick = onInviteClick,
                     modifier = Modifier.weight(1f)
@@ -76,27 +70,27 @@ fun QuickActionsGrid(
         } else {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
                 ActionCard(
-                    icon = "➕",
-                    title = "إنشاء حلقة جديدة",
+                    icon = FajrIcons.CreateHalqa,
+                    title = "إنشاء حلقة",
                     onClick = onCreateHalqaClick,
                     modifier = Modifier.weight(1f)
                 )
                 ActionCard(
-                    icon = "🔑",
+                    icon = FajrIcons.JoinWithCode,
                     title = "الانضمام بكود",
                     onClick = onJoinHalqaClick,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Spacing.md))
 
             ActionCard(
-                icon = "📊",
-                title = "سجل التزامي الفردي",
+                icon = FajrIcons.Stats,
+                title = "سجل التزامي",
                 onClick = onStatsClick,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -106,24 +100,27 @@ fun QuickActionsGrid(
 
 @Composable
 private fun ActionCard(
-    icon: String,
+    icon: ImageVector,
     title: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    GlassCard(
+    FajrCard(
         modifier = modifier.clickable { onClick() }
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(Spacing.lg),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = icon,
-                fontSize = 22.sp,
-                modifier = Modifier.padding(end = 10.dp)
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = FajrLoopColors.Primary,
+                modifier = Modifier
+                    .size(22.dp)
+                    .padding(end = Spacing.sm)
             )
             Text(
                 text = title,

@@ -1,8 +1,9 @@
 package com.bagomri.fajrloop.ui.main.components
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -12,10 +13,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bagomri.fajrloop.ui.main.FriendWakeAlert
-import com.bagomri.fajrloop.ui.components.GlassCard
-import com.bagomri.fajrloop.ui.components.GoldButton
+import com.bagomri.fajrloop.ui.components.FajrCard
+import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 @Composable
 fun FriendWakeAlertCard(
@@ -23,24 +25,32 @@ fun FriendWakeAlertCard(
     onConfirmClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    GlassCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .border(1.dp, FajrLoopColors.Gold, RoundedCornerShape(20.dp))
+    FajrCard(
+        modifier = modifier.fillMaxWidth(),
+        borderColor = FajrLoopColors.Warning
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Spacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Icon(
+                imageVector = Icons.Outlined.NotificationsActive,
+                contentDescription = "تنبيه استيقاظ",
+                tint = FajrLoopColors.Warning,
+                modifier = Modifier
+                    .size(24.dp)
+                    .padding(bottom = Spacing.xs)
+            )
+
             Text(
-                text = "🔔 تنبيه استيقاظ صديق!",
+                text = "تنبيه استيقاظ صديق",
                 fontFamily = PpNmArabic,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = FajrLoopColors.Gold,
-                modifier = Modifier.padding(bottom = 6.dp)
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp,
+                color = FajrLoopColors.Warning,
+                modifier = Modifier.padding(bottom = Spacing.xs)
             )
 
             Text(
@@ -49,11 +59,11 @@ fun FriendWakeAlertCard(
                 fontSize = 13.sp,
                 color = FajrLoopColors.TextPrimary,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = Spacing.md)
             )
 
-            GoldButton(
-                text = "تأكيد استيقاظ ${alert.displayName} وإيقاف منبهه ✓",
+            FajrPrimaryButton(
+                text = "تأكيد استيقاظ ${alert.displayName}",
                 onClick = { onConfirmClick(alert.uid) },
                 modifier = Modifier.fillMaxWidth()
             )

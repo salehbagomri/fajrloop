@@ -1,10 +1,15 @@
 package com.bagomri.fajrloop.ui.alarm
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.Mosque
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,13 +20,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.components.AnimatedGradientBackground
-import com.bagomri.fajrloop.ui.components.DangerButton
-import com.bagomri.fajrloop.ui.components.GlassCard
-import com.bagomri.fajrloop.ui.components.GoldButton
+import com.bagomri.fajrloop.ui.components.FajrBackground
+import com.bagomri.fajrloop.ui.components.FajrCard
+import com.bagomri.fajrloop.ui.components.FajrDestructiveButton
+import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
+import com.bagomri.fajrloop.ui.components.FajrSecondaryButton
+import com.bagomri.fajrloop.ui.components.FajrTextField
+import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Radius
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 @Composable
 fun AlarmRingingScreen(
@@ -52,22 +62,25 @@ fun AlarmRingingScreen(
     var totpInput by remember { mutableStateOf("") }
 
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground()
+        FajrBackground()
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(Spacing.xl),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.xxl))
 
             // Mosque icon header
-            Text(
-                text = "🕌",
-                fontSize = 64.sp,
-                modifier = Modifier.padding(bottom = 8.dp)
+            Icon(
+                imageVector = Icons.Outlined.Mosque,
+                contentDescription = null,
+                tint = FajrLoopColors.Primary,
+                modifier = Modifier
+                    .size(56.dp)
+                    .padding(bottom = Spacing.sm)
             )
 
             Text(
@@ -75,7 +88,7 @@ fun AlarmRingingScreen(
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
-                color = FajrLoopColors.Gold,
+                color = FajrLoopColors.Primary,
                 textAlign = TextAlign.Center
             )
 
@@ -85,28 +98,28 @@ fun AlarmRingingScreen(
                 fontWeight = FontWeight.Bold,
                 fontSize = 42.sp,
                 color = FajrLoopColors.TextPrimary,
-                modifier = Modifier.padding(vertical = 4.dp)
+                modifier = Modifier.padding(vertical = Spacing.xs)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
             // Main Challenge / Confirmation Card
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
+            FajrCard(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
+                        .padding(Spacing.xl),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (isChallengeSolved || isPanicActive) {
                         // Waiting Supervisor Confirmation Mode
                         Text(
-                            text = if (isPanicActive) "🚨 نداء الاستغاثة نشط!" else "🎉 تم تجاوز التحدي بنجاح!",
+                            text = if (isPanicActive) "نداء الاستغاثة نشط!" else "تم تجاوز التحدي بنجاح!",
                             fontFamily = PpNmArabic,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
-                            color = if (isPanicActive) FajrLoopColors.DangerRed else FajrLoopColors.SuccessGreen,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            color = if (isPanicActive) FajrLoopColors.Danger else FajrLoopColors.Success,
+                            modifier = Modifier.padding(bottom = Spacing.sm)
                         )
 
                         Text(
@@ -118,48 +131,51 @@ fun AlarmRingingScreen(
                             fontSize = 14.sp,
                             color = FajrLoopColors.TextPrimary,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 20.dp)
+                            modifier = Modifier.padding(bottom = Spacing.xl)
                         )
 
-                        GoldButton(
-                            text = "تأكيد الاستيقاظ الفوري 🌅",
+                        FajrPrimaryButton(
+                            text = "تأكيد الاستيقاظ الفوري",
                             onClick = onConfirmWake,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 10.dp)
+                                .padding(bottom = Spacing.md)
                         )
 
                         if (supervisorPhone.isNotEmpty()) {
-                            OutlinedButton(
+                            FajrSecondaryButton(
+                                text = "الاتصال بزميلك: $supervisorName",
                                 onClick = { onCallPartnerClick(supervisorPhone) },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = FajrLoopColors.Gold)
-                            ) {
-                                Text(
-                                    text = "الاتصال بزميلك: $supervisorName 📞",
-                                    fontFamily = PpNmArabic,
-                                    fontSize = 14.sp
-                                )
-                            }
+                                leadingIcon = Icons.Outlined.Phone,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     } else {
                         // Active Challenge Mode
                         when (challengeType) {
                             "shake" -> {
+                                Icon(
+                                    imageVector = Icons.Outlined.Vibration,
+                                    contentDescription = null,
+                                    tint = FajrLoopColors.Primary,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .padding(bottom = Spacing.xs)
+                                )
                                 Text(
-                                    text = "تحدي هز الهاتف 📱",
+                                    text = "تحدي هز الهاتف",
                                     fontFamily = PpNmArabic,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
-                                    color = FajrLoopColors.Gold,
-                                    modifier = Modifier.padding(bottom = 4.dp)
+                                    color = FajrLoopColors.Primary,
+                                    modifier = Modifier.padding(bottom = Spacing.xs)
                                 )
                                 Text(
                                     text = "هز الهاتف $shakeRequired مرة متتالية بقوة لتنبيه جسمك",
                                     fontFamily = PpNmArabic,
                                     fontSize = 13.sp,
                                     color = FajrLoopColors.TextSecondary,
-                                    modifier = Modifier.padding(bottom = 16.dp)
+                                    modifier = Modifier.padding(bottom = Spacing.lg)
                                 )
 
                                 Text(
@@ -167,35 +183,43 @@ fun AlarmRingingScreen(
                                     fontFamily = PpNmArabic,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 28.sp,
-                                    color = FajrLoopColors.Gold,
-                                    modifier = Modifier.padding(bottom = 12.dp)
+                                    color = FajrLoopColors.Primary,
+                                    modifier = Modifier.padding(bottom = Spacing.md)
                                 )
 
                                 LinearProgressIndicator(
                                     progress = { (shakeCount.toFloat() / shakeRequired.toFloat()).coerceIn(0f, 1f) },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(10.dp),
-                                    color = FajrLoopColors.Gold,
-                                    trackColor = FajrLoopColors.SurfaceBorder
+                                        .height(8.dp),
+                                    color = FajrLoopColors.Primary,
+                                    trackColor = FajrLoopColors.Border
                                 )
                             }
 
                             "word" -> {
+                                Icon(
+                                    imageVector = Icons.Outlined.Extension,
+                                    contentDescription = null,
+                                    tint = FajrLoopColors.Primary,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .padding(bottom = Spacing.xs)
+                                )
                                 Text(
-                                    text = "ترتيب الحروف 🧩",
+                                    text = "ترتيب الحروف",
                                     fontFamily = PpNmArabic,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
-                                    color = FajrLoopColors.Gold,
-                                    modifier = Modifier.padding(bottom = 4.dp)
+                                    color = FajrLoopColors.Primary,
+                                    modifier = Modifier.padding(bottom = Spacing.xs)
                                 )
                                 Text(
                                     text = "أعد كتابة الكلمة بشكل صحيح لتجاوز المنبه",
                                     fontFamily = PpNmArabic,
                                     fontSize = 13.sp,
                                     color = FajrLoopColors.TextSecondary,
-                                    modifier = Modifier.padding(bottom = 12.dp)
+                                    modifier = Modifier.padding(bottom = Spacing.md)
                                 )
 
                                 Text(
@@ -203,22 +227,20 @@ fun AlarmRingingScreen(
                                     fontFamily = PpNmArabic,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 24.sp,
-                                    color = FajrLoopColors.Gold,
-                                    modifier = Modifier.padding(bottom = 16.dp)
+                                    color = FajrLoopColors.Primary,
+                                    modifier = Modifier.padding(bottom = Spacing.lg)
                                 )
 
-                                OutlinedTextField(
+                                FajrTextField(
                                     value = wordInput,
                                     onValueChange = { wordInput = it },
-                                    placeholder = { Text("أدخل الكلمة هنا...", fontFamily = PpNmArabic) },
-                                    shape = RoundedCornerShape(12.dp),
-                                    singleLine = true,
+                                    placeholder = "أدخل الكلمة هنا...",
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(bottom = 12.dp)
+                                        .padding(bottom = Spacing.md)
                                 )
 
-                                GoldButton(
+                                FajrPrimaryButton(
                                     text = "تحقق من الكلمة",
                                     onClick = {
                                         onWordSubmit(wordInput.trim())
@@ -229,20 +251,28 @@ fun AlarmRingingScreen(
                             }
 
                             else -> { // Math
+                                Icon(
+                                    imageVector = Icons.Outlined.Extension,
+                                    contentDescription = null,
+                                    tint = FajrLoopColors.Primary,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .padding(bottom = Spacing.xs)
+                                )
                                 Text(
-                                    text = "تحدي الرياضيات 🧮",
+                                    text = "تحدي الرياضيات",
                                     fontFamily = PpNmArabic,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
-                                    color = FajrLoopColors.Gold,
-                                    modifier = Modifier.padding(bottom = 4.dp)
+                                    color = FajrLoopColors.Primary,
+                                    modifier = Modifier.padding(bottom = Spacing.xs)
                                 )
                                 Text(
                                     text = "حل المسألة الحسابية لإيقاظ عقلك",
                                     fontFamily = PpNmArabic,
                                     fontSize = 13.sp,
                                     color = FajrLoopColors.TextSecondary,
-                                    modifier = Modifier.padding(bottom = 12.dp)
+                                    modifier = Modifier.padding(bottom = Spacing.md)
                                 )
 
                                 Text(
@@ -250,22 +280,20 @@ fun AlarmRingingScreen(
                                     fontFamily = PpNmArabic,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 28.sp,
-                                    color = FajrLoopColors.Gold,
-                                    modifier = Modifier.padding(bottom = 16.dp)
+                                    color = FajrLoopColors.Primary,
+                                    modifier = Modifier.padding(bottom = Spacing.lg)
                                 )
 
-                                OutlinedTextField(
+                                FajrTextField(
                                     value = mathInput,
                                     onValueChange = { mathInput = it },
-                                    placeholder = { Text("أدخل الناتج...", fontFamily = PpNmArabic) },
-                                    shape = RoundedCornerShape(12.dp),
-                                    singleLine = true,
+                                    placeholder = "أدخل الناتج...",
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(bottom = 12.dp)
+                                        .padding(bottom = Spacing.md)
                                 )
 
-                                GoldButton(
+                                FajrPrimaryButton(
                                     text = "تحقق من الناتج",
                                     onClick = {
                                         val valInt = mathInput.toIntOrNull()
@@ -282,67 +310,56 @@ fun AlarmRingingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
             // Secondary Action Buttons (SOS, Snooze, Emergency TOTP)
             if (!isChallengeSolved && !isPanicActive) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.md)
                 ) {
                     if (snoozeCountLeft > 0) {
-                        OutlinedButton(
+                        FajrSecondaryButton(
+                            text = "غفوة ($snoozeCountLeft)",
                             onClick = onSnoozeClick,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = FajrLoopColors.Gold)
-                        ) {
-                            Text(
-                                text = "غفوة ($snoozeCountLeft) ⏰",
-                                fontFamily = PpNmArabic,
-                                fontSize = 13.sp
-                            )
-                        }
+                            leadingIcon = Icons.Outlined.Notifications,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
 
-                    DangerButton(
-                        text = "استغاثة 🚨",
+                    FajrDestructiveButton(
+                        text = "استغاثة",
                         onClick = onSosClick,
                         modifier = Modifier.weight(1f)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Spacing.lg))
 
                 // TOTP Backup Code Card
-                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                FajrCard(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
+                            .padding(Spacing.md),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedTextField(
+                        FajrTextField(
                             value = totpInput,
                             onValueChange = { totpInput = it },
-                            placeholder = { Text("كود الطوارئ 🔑", fontFamily = PpNmArabic, fontSize = 12.sp) },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp)
+                            placeholder = "كود الطوارئ",
+                            modifier = Modifier.weight(1f)
                         )
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(Spacing.sm))
 
-                        Button(
+                        FajrPrimaryButton(
+                            text = "إلغاء",
                             onClick = {
                                 onTotpSubmit(totpInput.trim())
                                 totpInput = ""
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = FajrLoopColors.Gold),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("إلغاء 🔑", fontFamily = PpNmArabic, color = Color.Black, fontSize = 12.sp)
-                        }
+                            }
+                        )
                     }
                 }
             }
@@ -352,7 +369,7 @@ fun AlarmRingingScreen(
 
 @Preview
 @Composable
-fun AlarmRingingScreenPreview() {
+private fun AlarmRingingScreenPreview() {
     FajrLoopTheme {
         AlarmRingingScreen(
             alarmLabel = "صلاة الفجر",

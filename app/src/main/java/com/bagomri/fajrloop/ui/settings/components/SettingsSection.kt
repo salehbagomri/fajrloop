@@ -1,16 +1,15 @@
 package com.bagomri.fajrloop.ui.settings.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bagomri.fajrloop.ui.components.GlassCard
+import com.bagomri.fajrloop.ui.components.FajrCard
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 @Composable
 fun SettingsSection(
@@ -22,13 +21,13 @@ fun SettingsSection(
         Text(
             text = title,
             fontFamily = PpNmArabic,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,
-            color = FajrLoopColors.Gold,
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+            color = FajrLoopColors.Primary,
+            modifier = Modifier.padding(horizontal = Spacing.xs, vertical = Spacing.sm)
         )
 
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
+        FajrCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 content()
             }

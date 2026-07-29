@@ -4,6 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowDownward
+import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,9 +18,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bagomri.fajrloop.ui.components.StatusDot
+import com.bagomri.fajrloop.ui.components.MemberStatus
 import com.bagomri.fajrloop.ui.components.UserAvatar
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
+import com.bagomri.fajrloop.ui.theme.Radius
+import com.bagomri.fajrloop.ui.theme.Spacing
 
 data class HalqaMemberItem(
     val uid: String,
@@ -40,27 +49,35 @@ fun LoopMemberRow(
     onRemoveMember: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val statusEmoji = when (member.status) {
-        "travel" -> "✈️ مسافر"
-        "challenge_done" -> "⏳ حل التحدي — بانتظار صديقه"
-        "awake" -> "✅ مستيقظ ومؤكد"
-        "panic" -> "🚨 نداء استغاثة"
-        "ringing" -> "🔔 يرن المنبه"
-        "missed" -> "❌ فاته الفجر"
-        else -> "💤 نائم"
+    val memberStatus = when (member.status) {
+        "travel" -> MemberStatus.Travel
+        "challenge_done" -> MemberStatus.ChallengeDone
+        "awake" -> MemberStatus.Awake
+        "panic" -> MemberStatus.Panic
+        else -> MemberStatus.Pending
+    }
+
+    val statusText = when (member.status) {
+        "travel" -> "مسافر"
+        "challenge_done" -> "حل التحدي — بانتظار التأكيد"
+        "awake" -> "مستيقظ"
+        "panic" -> "نداء استغاثة"
+        "ringing" -> "يرن المنبه"
+        "missed" -> "فاته الفجر"
+        else -> "نائم"
     }
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = FajrLoopColors.SurfaceBorder.copy(alpha = 0.3f)
+            .padding(vertical = Spacing.xxs),
+        shape = RoundedCornerShape(Radius.md),
+        color = FajrLoopColors.Surface
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Position badge
@@ -68,7 +85,7 @@ fun LoopMemberRow(
                 modifier = Modifier
                     .size(28.dp)
                     .clip(CircleShape)
-                    .background(FajrLoopColors.Gold.copy(alpha = 0.2f)),
+                    .background(FajrLoopColors.PrimaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -76,89 +93,128 @@ fun LoopMemberRow(
                     fontFamily = PpNmArabic,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
-                    color = FajrLoopColors.Gold
+                    color = FajrLoopColors.Primary
                 )
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(Spacing.sm))
 
             // User avatar
             UserAvatar(
                 photoUrl = member.photoUrl,
+                userName = member.displayName,
                 size = 40.dp
             )
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(Spacing.sm))
 
-            // Details (Name, Admin badge, Status & target)
+            // Details
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = member.displayName,
                         fontFamily = PpNmArabic,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp,
-                        color = if (member.isCurrentUser) FajrLoopColors.Gold else FajrLoopColors.TextPrimary
+                        color = if (member.isCurrentUser) FajrLoopColors.Primary else FajrLoopColors.TextPrimary
                     )
 
                     if (member.role == "admin") {
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(Spacing.xs))
                         Box(
                             modifier = Modifier
-                                .background(FajrLoopColors.Gold.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                                .background(FajrLoopColors.PrimaryContainer, RoundedCornerShape(Spacing.xs))
+                                .padding(horizontal = Spacing.xs, vertical = Spacing.xxs)
                         ) {
                             Text(
                                 text = "مسؤول",
                                 fontFamily = PpNmArabic,
                                 fontSize = 9.sp,
-                                color = FajrLoopColors.Gold
+                                color = FajrLoopColors.Primary
                             )
                         }
                     }
                 }
 
-                Text(
-                    text = "يوقظ: ${member.targetName}\n$statusEmoji",
-                    fontFamily = PpNmArabic,
-                    fontSize = 11.sp,
-                    color = FajrLoopColors.TextSecondary
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                ) {
+                    StatusDot(status = memberStatus, size = 6.dp)
+                    Text(
+                        text = "يوقظ: ${member.targetName} · $statusText",
+                        fontFamily = PpNmArabic,
+                        fontSize = 11.sp,
+                        color = FajrLoopColors.TextSecondary,
+                        maxLines = 1
+                    )
+                }
             }
 
-            // Quick action buttons (Confirm wake, Call SOS)
+            // Quick action buttons
             if (member.status == "challenge_done") {
                 Button(
                     onClick = { onConfirmWake(member.uid) },
-                    colors = ButtonDefaults.buttonColors(containerColor = FajrLoopColors.Gold),
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = FajrLoopColors.Primary),
+                    shape = RoundedCornerShape(Radius.sm),
+                    contentPadding = PaddingValues(horizontal = Spacing.sm, vertical = Spacing.xs)
                 ) {
-                    Text("تأكيد ✓", fontFamily = PpNmArabic, color = Color.Black, fontSize = 11.sp)
+                    Text("تأكيد", fontFamily = PpNmArabic, color = FajrLoopColors.Background, fontSize = 11.sp)
                 }
             } else if (member.status == "panic") {
                 Button(
                     onClick = { onCallClick() },
-                    colors = ButtonDefaults.buttonColors(containerColor = FajrLoopColors.DangerRed),
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = FajrLoopColors.Danger),
+                    shape = RoundedCornerShape(Radius.sm),
+                    contentPadding = PaddingValues(horizontal = Spacing.sm, vertical = Spacing.xs)
                 ) {
-                    Text("اتصل 📞", fontFamily = PpNmArabic, color = Color.White, fontSize = 11.sp)
+                    Icon(
+                        Icons.Outlined.Phone,
+                        contentDescription = "اتصل",
+                        modifier = Modifier.size(14.dp),
+                        tint = Color.White
+                    )
+                    Spacer(Modifier.width(Spacing.xs))
+                    Text("اتصل", fontFamily = PpNmArabic, color = Color.White, fontSize = 11.sp)
                 }
             }
 
             // Admin reorder & remove controls
             if (isAdminView) {
                 Row {
-                    IconButton(onClick = { onMoveUp(member.uid) }) {
-                        Text("▲", color = FajrLoopColors.Gold, fontSize = 12.sp)
+                    IconButton(
+                        onClick = { onMoveUp(member.uid) },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Outlined.ArrowUpward,
+                            contentDescription = "نقل لأعلى",
+                            tint = FajrLoopColors.Primary,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
-                    IconButton(onClick = { onMoveDown(member.uid) }) {
-                        Text("▼", color = FajrLoopColors.Gold, fontSize = 12.sp)
+                    IconButton(
+                        onClick = { onMoveDown(member.uid) },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Outlined.ArrowDownward,
+                            contentDescription = "نقل لأسفل",
+                            tint = FajrLoopColors.Primary,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                     if (!member.isCurrentUser) {
-                        IconButton(onClick = { onRemoveMember(member.uid, member.displayName) }) {
-                            Text("🗑️", fontSize = 12.sp)
+                        IconButton(
+                            onClick = { onRemoveMember(member.uid, member.displayName) },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                Icons.Outlined.Delete,
+                                contentDescription = "حذف العضو",
+                                tint = FajrLoopColors.Danger,
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
                 }
