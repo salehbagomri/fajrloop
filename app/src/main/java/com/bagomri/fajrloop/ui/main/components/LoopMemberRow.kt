@@ -1,6 +1,7 @@
 package com.bagomri.fajrloop.ui.main.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bagomri.fajrloop.ui.components.MemberStatus
@@ -38,6 +40,15 @@ data class HalqaMemberItem(
     val isCurrentUser: Boolean,
     val position: Int
 )
+
+private fun formatShortName(fullName: String): String {
+    val parts = fullName.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
+    return if (parts.size > 2) {
+        "${parts[0]} ${parts[1]}..."
+    } else {
+        fullName
+    }
+}
 
 @Composable
 fun LoopMemberRow(
@@ -68,6 +79,9 @@ fun LoopMemberRow(
         else -> "نائم"
     }
 
+    val shortName = formatShortName(member.displayName)
+    val shortTargetName = if (member.targetName.isNotEmpty()) formatShortName(member.targetName) else "العضو التالي"
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -81,21 +95,38 @@ fun LoopMemberRow(
                 .padding(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Position badge in chain
+            // Position badge in chain with admin crown indicator
             Box(
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(32.dp)
                     .clip(CircleShape)
-                    .background(FajrLoopColors.PrimaryContainer),
+                    .background(FajrLoopColors.PrimaryContainer)
+                    .border(
+                        width = if (member.role == "admin") 1.5.dp else 0.dp,
+                        color = if (member.role == "admin") FajrLoopColors.Primary else Color.Transparent,
+                        shape = CircleShape
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "#${member.position}",
-                    fontFamily = PpNmArabic,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = FajrLoopColors.Primary
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "#${member.position}",
+                        fontFamily = PpNmArabic,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
+                        color = FajrLoopColors.Primary
+                    )
+                    if (member.role == "admin") {
+                        Text(
+                            text = "👑",
+                            fontSize = 8.sp,
+                            modifier = Modifier.padding(start = 1.dp)
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.width(Spacing.sm))
@@ -109,58 +140,43 @@ fun LoopMemberRow(
 
             Spacer(modifier = Modifier.width(Spacing.sm))
 
-            // Details Column
+            // Details Column — Clean layout without text clutter
             Column(modifier = Modifier.weight(1f)) {
-                // Row 1: Name + Role Tag
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = member.displayName,
-                        fontFamily = PpNmArabic,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = if (member.isCurrentUser) FajrLoopColors.Primary else FajrLoopColors.TextPrimary
-                    )
+                // Member Name (Shortened to first 2 words if longer)
+                Text(
+                    text = shortName,
+                    fontFamily = PpNmArabic,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = if (member.isCurrentUser) FajrLoopColors.Primary else FajrLoopColors.TextPrimary
+                )
 
-                    if (member.role == "admin") {
-                        Spacer(modifier = Modifier.width(Spacing.xs))
-                        Box(
-                            modifier = Modifier
-                                .background(FajrLoopColors.PrimaryContainer, RoundedCornerShape(Spacing.xs))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "مسؤول الحلقة",
-                                fontFamily = PpNmArabic,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 9.sp,
-                                color = FajrLoopColors.Primary
-                            )
-                        }
-                    }
-                }
-
-                // Row 2: Wake Responsibility
+                // Wake Responsibility Row
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 2.dp)
+                    modifier = Modifier.padding(vertical = 1.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.NotificationsActive,
                         contentDescription = null,
                         tint = FajrLoopColors.Primary.copy(alpha = 0.8f),
-                        modifier = Modifier.size(13.dp)
+                        modifier = Modifier.size(12.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(3.dp))
                     Text(
-                        text = "مكلف بإيقاظ: ${member.targetName.ifEmpty { "العضو التالي" }}",
+                        text = "مكلف بإيقاظ: $shortTargetName",
                         fontFamily = PpNmArabic,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 11.sp,
-                        color = FajrLoopColors.Primary
+                        color = FajrLoopColors.Primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                // Row 3: Status Dot + Status Text
+                // Status Dot + Status Text
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
@@ -171,7 +187,8 @@ fun LoopMemberRow(
                         fontFamily = PpNmArabic,
                         fontSize = 11.sp,
                         color = FajrLoopColors.TextSecondary,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -231,7 +248,7 @@ fun LoopMemberRow(
                     }
                     if (!member.isCurrentUser) {
                         IconButton(
-                            onClick = { onRemoveMember(member.uid, member.displayName) },
+                            onClick = { onRemoveMember(member.uid, shortName) },
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(

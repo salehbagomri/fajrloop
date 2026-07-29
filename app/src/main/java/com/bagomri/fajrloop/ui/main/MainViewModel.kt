@@ -439,6 +439,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         HalqaManager.removeMemberFromHalqa(halqaId, targetUid, onResult)
     }
 
+    fun leaveHalqa(onResult: (Boolean, String?) -> Unit) {
+        halqaRepository.leaveHalqa { success, error ->
+            if (success) {
+                _halqaIdFlow.value = null
+                _halqaNameFlow.value = ""
+                _inviteCodeFlow.value = ""
+                _loopMembersFlow.value = emptyList()
+                _isCurrentUserAdminFlow.value = false
+                _friendWakeAlertFlow.value = null
+                _awakeCountTextFlow.value = ""
+                _todaySummaryTextFlow.value = ""
+
+                val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+                prefs.edit()
+                    .remove("current_halqa_id")
+                    .remove("current_halqa_name")
+                    .remove("cached_awake_count_text")
+                    .remove("cached_today_summary_text")
+                    .apply()
+            }
+            onResult(success, error)
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         countdownRunnable?.let { handler.removeCallbacks(it) }

@@ -306,7 +306,13 @@ fun FajrLoopNavGraph(
                     onDismiss = { showLeaveHalqaDialog = false },
                     onConfirm = {
                         showLeaveHalqaDialog = false
-                        Toast.makeText(context, "تمت مغادرة الحلقة", Toast.LENGTH_SHORT).show()
+                        mainViewModel.leaveHalqa { success, error ->
+                            if (success) {
+                                Toast.makeText(context, "تمت مغادرة الحلقة بنجاح 🚪", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "فشلت مغادرة الحلقة: $error", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     }
                 )
             }
