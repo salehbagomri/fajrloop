@@ -197,7 +197,7 @@ fun PermissionScreen(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "جميع الصلاحيات ممنوحة — متابعة",
+                            text = "متابعة",
                             fontFamily = PpNmArabic,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,

@@ -84,7 +84,10 @@ fun FajrLoopNavGraph(
 
             LaunchedEffect(loginSuccess) {
                 if (loginSuccess) {
-                    navController.navigate(Screen.PermissionSetup.route) {
+                    mainViewModel.refreshUserData()
+                    loginViewModel.resetLoginState()
+                    val targetRoute = if (allPermissionsGranted) Screen.Home.route else Screen.PermissionSetup.route
+                    navController.navigate(targetRoute) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
@@ -236,6 +239,8 @@ fun FajrLoopNavGraph(
                 },
                 onLogoutClick = {
                     AuthManager.signOut()
+                    loginViewModel.resetLoginState()
+                    mainViewModel.clearUserDataOnLogout()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }

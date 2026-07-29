@@ -42,6 +42,12 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     private val _errorMessageFlow = MutableStateFlow<String?>(null)
     val errorMessageFlow: StateFlow<String?> = _errorMessageFlow.asStateFlow()
 
+    fun resetLoginState() {
+        _loginSuccessFlow.value = false
+        _errorMessageFlow.value = null
+        _isLoadingFlow.value = false
+    }
+
     fun startGoogleSignInFlow(context: Context, onFallbackLegacy: (Intent) -> Unit) {
         _isLoadingFlow.value = true
         _errorMessageFlow.value = null

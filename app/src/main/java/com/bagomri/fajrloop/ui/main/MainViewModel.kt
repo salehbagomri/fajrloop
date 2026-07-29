@@ -101,6 +101,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var countdownRunnable: Runnable? = null
 
     init {
+        refreshUserData()
+        startFajrCountdown()
+    }
+
+    fun refreshUserData() {
+        stopAllObservers()
         val uid = userRepository.getUserId()
         if (uid != null) {
             userProfileListener = userRepository.observeUserProfile(uid) { profile ->
@@ -163,7 +169,36 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
-        startFajrCountdown()
+    }
+
+    fun clearUserDataOnLogout() {
+        stopAllObservers()
+        _userProfileFlow.value = null
+        _halqaIdFlow.value = null
+        _halqaNameFlow.value = ""
+        _isCurrentUserAdminFlow.value = false
+        _loopMembersFlow.value = emptyList()
+        _todaySummaryTextFlow.value = ""
+        _awakeCountTextFlow.value = ""
+        _friendWakeAlertFlow.value = null
+
+        val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().clear().apply()
+    }
+
+    private fun stopAllObservers() {
+        userProfileListener?.let {
+            val uid = userRepository.getUserId()
+            if (uid != null) {
+                userRepository.removeUserProfileObserver(uid, it)
+            }
+        }
+        userProfileListener = null
+        halqaListener?.let {
+            halqaRepository.removeObserver(it)
+        }
+        halqaListener = null
+        stopObservingDailyRecords()
     }
 
     private fun startObservingDailyRecords(halqaId: String, chain: List<String>, membersSnap: DataSnapshot) {
