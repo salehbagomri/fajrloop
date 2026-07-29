@@ -1,6 +1,10 @@
 package com.bagomri.fajrloop.ui.permissions
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,14 +12,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CheckCircleOutline
-import androidx.compose.material.icons.outlined.RadioButtonUnchecked
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bagomri.fajrloop.ui.components.FajrBackground
 import com.bagomri.fajrloop.ui.components.FajrCard
-import com.bagomri.fajrloop.ui.components.FajrPrimaryButton
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.PpNmArabic
@@ -38,6 +41,20 @@ data class PermissionItemData(
     val onRequest: () -> Unit
 )
 
+/**
+ * تحديد الأيقونة المناسبة لكل نوع صلاحية
+ */
+private fun getPermissionIcon(id: String): ImageVector {
+    return when (id) {
+        "notifications" -> Icons.Outlined.Notifications
+        "exact_alarm" -> Icons.Outlined.Alarm
+        "battery" -> Icons.Outlined.BatterySaver
+        "fullscreen" -> Icons.Outlined.PhonelinkRing
+        "overlays" -> Icons.Outlined.Layers
+        else -> Icons.Outlined.Security
+    }
+}
+
 @Composable
 fun PermissionScreen(
     permissions: List<PermissionItemData>,
@@ -45,64 +62,166 @@ fun PermissionScreen(
     onDoneClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    val grantedCount = permissions.count { it.isGranted }
+    val totalCount = permissions.size
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    ) {
         FajrBackground()
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Spacing.xl, vertical = Spacing.xxl),
+                .padding(horizontal = Spacing.xl, vertical = Spacing.md),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(Spacing.lg))
+            // Header Badge Container
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(FajrLoopColors.PrimaryContainer)
+                    .border(1.dp, FajrLoopColors.Primary.copy(alpha = 0.35f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (allGranted) Icons.Outlined.VerifiedUser else Icons.Outlined.Security,
+                    contentDescription = null,
+                    tint = if (allGranted) FajrLoopColors.Success else FajrLoopColors.Primary,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.md))
 
             Text(
-                text = "إعداد الصلاحيات",
+                text = "إعداد الصلاحيات المطلوبة",
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
                 color = FajrLoopColors.Primary,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = Spacing.sm)
+                modifier = Modifier.padding(bottom = Spacing.xs)
             )
 
             Text(
-                text = "يرجى منح الصلاحيات التالية لضمان عمل المنبه في الوقت المحدد",
+                text = "يرجى تفعيل الصلاحيات التالية لضمان رنين المنبه بدقة ودون انقطاع عند موعد صلاة الفجر",
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Normal,
                 fontSize = 14.sp,
                 color = FajrLoopColors.TextSecondary,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = Spacing.xxl)
+                lineHeight = 22.sp,
+                modifier = Modifier.padding(bottom = Spacing.md)
             )
 
-            LazyColumn(
+            // Progress Summary Pill Badge
+            Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(Spacing.md)
+                    .clip(RoundedCornerShape(Radius.full))
+                    .background(
+                        if (allGranted) FajrLoopColors.Success.copy(alpha = 0.12f)
+                        else FajrLoopColors.Surface
+                    )
+                    .border(
+                        1.dp,
+                        if (allGranted) FajrLoopColors.Success.copy(alpha = 0.4f)
+                        else FajrLoopColors.Border,
+                        RoundedCornerShape(Radius.full)
+                    )
+                    .padding(horizontal = Spacing.lg, vertical = Spacing.xs)
             ) {
-                items(permissions, key = { it.id }) { item ->
-                    PermissionRowItem(item = item)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = if (allGranted) Icons.Outlined.CheckCircle else Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = if (allGranted) FajrLoopColors.Success else FajrLoopColors.TextSecondary,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .padding(end = 0.dp)
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.xs))
+                    Text(
+                        text = if (allGranted) "جميع الصلاحيات مكتملة ($totalCount / $totalCount)"
+                        else "مكتمل $grantedCount من أصل $totalCount صلاحية",
+                        fontFamily = PpNmArabic,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 13.sp,
+                        color = if (allGranted) FajrLoopColors.Success else FajrLoopColors.TextPrimary
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(Spacing.lg))
 
-            if (allGranted) {
-                FajrPrimaryButton(
-                    text = "جميع الصلاحيات ممنوحة — متابعة",
+            // Permissions List
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                items(permissions, key = { it.id }) { item ->
+                    PermissionCardRow(item = item)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.md))
+
+            // Bottom Action Area
+            AnimatedVisibility(
+                visible = allGranted,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Button(
                     onClick = onDoneClick,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            } else {
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(Radius.md),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = FajrLoopColors.Primary,
+                        contentColor = FajrLoopColors.Background
+                    )
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "جميع الصلاحيات ممنوحة — متابعة",
+                            fontFamily = PpNmArabic,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = FajrLoopColors.Background
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.md))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                            contentDescription = null,
+                            tint = FajrLoopColors.Background,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            if (!allGranted) {
                 Text(
-                    text = "يرجى منح جميع الصلاحيات للمتابعة",
+                    text = "انقر على أي صلاحية أعلاه لتفعيلها مباشرة من إعدادات النظام",
                     fontFamily = PpNmArabic,
                     fontSize = 13.sp,
-                    color = FajrLoopColors.Warning,
+                    color = FajrLoopColors.TextTertiary,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = Spacing.md)
+                    modifier = Modifier.padding(vertical = Spacing.sm)
                 )
             }
         }
@@ -110,10 +229,12 @@ fun PermissionScreen(
 }
 
 @Composable
-private fun PermissionRowItem(
+private fun PermissionCardRow(
     item: PermissionItemData,
     modifier: Modifier = Modifier
 ) {
+    val icon = getPermissionIcon(item.id)
+
     FajrCard(
         modifier = modifier
             .fillMaxWidth()
@@ -122,36 +243,41 @@ private fun PermissionRowItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.lg),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(Spacing.md),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Status icon
-            Icon(
-                imageVector = if (item.isGranted) {
-                    Icons.Outlined.CheckCircleOutline
-                } else {
-                    Icons.Outlined.RadioButtonUnchecked
-                },
-                contentDescription = if (item.isGranted) "ممنوحة" else "مطلوبة",
-                tint = if (item.isGranted) FajrLoopColors.Success else FajrLoopColors.Primary,
+            // Feature Icon Badge
+            Box(
                 modifier = Modifier
-                    .size(24.dp)
-                    .padding(end = Spacing.md)
-            )
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(Radius.md))
+                    .background(
+                        if (item.isGranted) FajrLoopColors.Success.copy(alpha = 0.12f)
+                        else FajrLoopColors.PrimaryContainer
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (item.isGranted) FajrLoopColors.Success else FajrLoopColors.Primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
 
+            Spacer(modifier = Modifier.width(Spacing.md))
+
+            // Title & Description
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = Spacing.md)
+                modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = item.title,
                     fontFamily = PpNmArabic,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     color = FajrLoopColors.TextPrimary,
-                    modifier = Modifier.padding(bottom = Spacing.xs)
+                    modifier = Modifier.padding(bottom = 2.dp)
                 )
                 Text(
                     text = item.description,
@@ -162,23 +288,41 @@ private fun PermissionRowItem(
                 )
             }
 
-            // Status badge
+            Spacer(modifier = Modifier.width(Spacing.sm))
+
+            // Status Action Button / Badge
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(Radius.sm))
                     .background(
-                        if (item.isGranted) FajrLoopColors.Success.copy(alpha = 0.12f)
-                        else FajrLoopColors.PrimaryContainer
+                        if (item.isGranted) FajrLoopColors.Success.copy(alpha = 0.15f)
+                        else FajrLoopColors.Primary
                     )
                     .padding(horizontal = Spacing.md, vertical = Spacing.xs)
             ) {
-                Text(
-                    text = if (item.isGranted) "ممنوحة" else "منح",
-                    fontFamily = PpNmArabic,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 12.sp,
-                    color = if (item.isGranted) FajrLoopColors.Success else FajrLoopColors.Primary
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    if (item.isGranted) {
+                        Icon(
+                            imageVector = Icons.Outlined.Check,
+                            contentDescription = null,
+                            tint = FajrLoopColors.Success,
+                            modifier = Modifier
+                                .size(14.dp)
+                                .padding(end = 0.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+                    Text(
+                        text = if (item.isGranted) "ممنوحة" else "تفعيل",
+                        fontFamily = PpNmArabic,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = if (item.isGranted) FajrLoopColors.Success else FajrLoopColors.Background
+                    )
+                }
             }
         }
     }
@@ -190,8 +334,9 @@ private fun PermissionScreenPreview() {
     FajrLoopTheme {
         PermissionScreen(
             permissions = listOf(
-                PermissionItemData("1", "إشعارات التطبيق", "لعرض إشعار المنبه على شاشة القفل", true, {}),
-                PermissionItemData("2", "المنبه الدقيق", "لضمان رنين المنبه في الوقت المحدد", false, {})
+                PermissionItemData("notifications", "إشعارات التطبيق", "لعرض إشعار المنبه على شاشة القفل", true, {}),
+                PermissionItemData("exact_alarm", "المنبه الدقيق", "لضمان رنين المنبه في الوقت المحدد بدقة الثانية", false, {}),
+                PermissionItemData("battery", "تجاهل تحسين البطارية", "لحماية خدمة الرنين من القتل في الخلفية", false, {})
             ),
             allGranted = false,
             onDoneClick = {}
