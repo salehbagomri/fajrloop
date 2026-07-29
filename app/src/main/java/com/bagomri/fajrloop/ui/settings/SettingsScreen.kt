@@ -28,8 +28,13 @@ fun SettingsScreen(
     userCity: String,
     calcMethod: String,
     alarmTimingDesc: String,
+    alarmTimingType: String = "with",
+    alarmTimingOffset: Int = 0,
     challengeText: String,
+    challengeType: String = "math",
+    challengeDifficulty: String = "medium",
     alarmSoundText: String,
+    alarmSoundCode: String = "default",
     travelModeStatus: String,
     isVibrateEnabled: Boolean,
     isAdhkarEnabled: Boolean,
@@ -113,21 +118,21 @@ fun SettingsScreen(
                 SettingsSection(title = "المنبه والتحدي") {
                     SettingsRow(
                         title = "توقيت رنين المنبه",
-                        valueText = alarmTimingDesc,
+                        subtitle = alarmTimingDesc,
                         icon = FajrIcons.AlarmTiming,
                         onClick = { showTimingDialog = true }
                     )
                     HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "تحدي الاستيقاظ المفضّل",
-                        valueText = challengeText,
+                        subtitle = challengeText,
                         icon = FajrIcons.Challenge,
                         onClick = { showChallengeDialog = true }
                     )
                     HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "صوت ونغمة المنبه",
-                        valueText = alarmSoundText,
+                        subtitle = alarmSoundText,
                         icon = FajrIcons.AlarmSound,
                         onClick = { showSoundDialog = true }
                     )
@@ -222,8 +227,8 @@ fun SettingsScreen(
 
         if (showTimingDialog) {
             AlarmTimingDialog(
-                initialType = "with",
-                initialOffset = 10,
+                initialType = alarmTimingType,
+                initialOffset = alarmTimingOffset,
                 onSaveTiming = onSaveAlarmTiming,
                 onDismiss = { showTimingDialog = false }
             )
@@ -231,8 +236,8 @@ fun SettingsScreen(
 
         if (showChallengeDialog) {
             ChallengeSettingsDialog(
-                initialType = "math",
-                initialDifficulty = "medium",
+                initialType = challengeType,
+                initialDifficulty = challengeDifficulty,
                 onSaveChallenge = onSaveChallenge,
                 onDismiss = { showChallengeDialog = false }
             )
@@ -240,7 +245,7 @@ fun SettingsScreen(
 
         if (showSoundDialog) {
             AlarmSoundDialog(
-                currentSound = "default",
+                currentSound = alarmSoundCode,
                 onSoundSelect = onSaveAlarmSound,
                 onDismiss = { showSoundDialog = false }
             )
@@ -270,7 +275,7 @@ private fun SettingsScreenPreview() {
             userCity = "مكة المكرمة",
             calcMethod = "جامعة أم القرى (مكة المكرمة)",
             alarmTimingDesc = "مع أذان الفجر بالضبط",
-            challengeText = "حل المعادلة - متوسط",
+            challengeText = "معادلة حسابية - متوسط",
             alarmSoundText = "افتراضي",
             travelModeStatus = "غير نشط",
             isVibrateEnabled = true,

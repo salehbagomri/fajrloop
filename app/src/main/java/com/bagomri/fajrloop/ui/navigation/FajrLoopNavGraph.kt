@@ -346,9 +346,42 @@ fun FajrLoopNavGraph(
 
             var userCity by remember { mutableStateOf(prefs.getString("user_city", "مكة المكرمة") ?: "مكة المكرمة") }
             var calcMethod by remember { mutableStateOf(prefs.getString("prayer_calc_method", "جامعة أم القرى (مكة المكرمة)") ?: "جامعة أم القرى (مكة المكرمة)") }
-            var alarmTimingDesc by remember { mutableStateOf(prefs.getString("alarm_timing_desc", "مع أذان الفجر بالضبط 🕌") ?: "مع أذان الفجر بالضبط 🕌") }
-            var challengeText by remember { mutableStateOf("حل المعادلة - متوسط") }
-            var alarmSoundText by remember { mutableStateOf("نغمة النظام الافتراضية") }
+
+            var alarmTimingType by remember { mutableStateOf(prefs.getString("alarm_timing_type", "with") ?: "with") }
+            var alarmTimingOffset by remember { mutableIntStateOf(prefs.getInt("alarm_timing_offset_minutes", 0)) }
+            var alarmTimingDesc by remember { mutableStateOf(prefs.getString("alarm_timing_desc", "مع أذان الفجر بالضبط") ?: "مع أذان الفجر بالضبط") }
+
+            val savedChallengeType = prefs.getString("challenge_type", "math") ?: "math"
+            val savedChallengeDiff = prefs.getString("challenge_difficulty", "medium") ?: "medium"
+            fun formatChallenge(t: String, d: String): String {
+                val tName = when(t) {
+                    "word" -> "ترتيب كلمة"
+                    "shake" -> "رج الهاتف"
+                    else -> "معادلة حسابية"
+                }
+                val dName = when(d) {
+                    "easy" -> "سهل"
+                    "hard" -> "صعب"
+                    else -> "متوسط"
+                }
+                return "$tName - $dName"
+            }
+            var challengeType by remember { mutableStateOf(savedChallengeType) }
+            var challengeDifficulty by remember { mutableStateOf(savedChallengeDiff) }
+            var challengeText by remember { mutableStateOf(formatChallenge(savedChallengeType, savedChallengeDiff)) }
+
+            val savedSoundCode = prefs.getString("alarm_sound_choice", "default") ?: "default"
+            fun formatSoundName(code: String): String {
+                return when(code) {
+                    "afasy" -> "الأذان بصوت الشيخ مشاري العفاسي"
+                    "abdulbasit" -> "الأذان بصوت الشيخ عبدالباسط عبدالصمد"
+                    "islamic" -> "نغمة إسلامية هادئة"
+                    else -> "نغمة النظام الافتراضية"
+                }
+            }
+            var alarmSoundCode by remember { mutableStateOf(savedSoundCode) }
+            var alarmSoundText by remember { mutableStateOf(formatSoundName(savedSoundCode)) }
+
             var travelModeStatus by remember { mutableStateOf("غير نشط حالياً") }
 
             var isVibrateEnabled by remember { mutableStateOf(prefs.getBoolean("vibrate_on_alarm", true)) }
@@ -423,8 +456,13 @@ fun FajrLoopNavGraph(
                 userCity = userCity,
                 calcMethod = calcMethod,
                 alarmTimingDesc = alarmTimingDesc,
+                alarmTimingType = alarmTimingType,
+                alarmTimingOffset = alarmTimingOffset,
                 challengeText = challengeText,
+                challengeType = challengeType,
+                challengeDifficulty = challengeDifficulty,
                 alarmSoundText = alarmSoundText,
+                alarmSoundCode = alarmSoundCode,
                 travelModeStatus = travelModeStatus,
                 isVibrateEnabled = isVibrateEnabled,
                 isAdhkarEnabled = isAdhkarEnabled,
@@ -462,18 +500,34 @@ fun FajrLoopNavGraph(
                 onSaveCalcMethod = { method ->
                     calcMethod = method
                     prefs.edit().putString("prayer_calc_method", method).apply()
+                    Toast.makeText(context, "تم حفظ طريقة الحساب بنجاح", Toast.LENGTH_SHORT).show()
                 },
                 onSaveAlarmTiming = { type, offset, desc ->
+                    alarmTimingType = type
+                    alarmTimingOffset = offset
                     alarmTimingDesc = desc
-                    prefs.edit().putString("alarm_timing_type", type).putInt("alarm_timing_offset_minutes", offset).putString("alarm_timing_desc", desc).apply()
+                    prefs.edit()
+                        .putString("alarm_timing_type", type)
+                        .putInt("alarm_timing_offset_minutes", offset)
+                        .putString("alarm_timing_desc", desc)
+                        .apply()
+                    Toast.makeText(context, "تم حفظ توقيت المنبه بنجاح", Toast.LENGTH_SHORT).show()
                 },
                 onSaveChallenge = { type, diff ->
-                    challengeText = "$type - $diff"
-                    prefs.edit().putString("challenge_type", type).putString("challenge_difficulty", diff).apply()
+                    challengeType = type
+                    challengeDifficulty = diff
+                    challengeText = formatChallenge(type, diff)
+                    prefs.edit()
+                        .putString("challenge_type", type)
+                        .putString("challenge_difficulty", diff)
+                        .apply()
+                    Toast.makeText(context, "تم حفظ تحدي الاستيقاظ بنجاح", Toast.LENGTH_SHORT).show()
                 },
                 onSaveAlarmSound = { code, title ->
+                    alarmSoundCode = code
                     alarmSoundText = title
                     prefs.edit().putString("alarm_sound_choice", code).apply()
+                    Toast.makeText(context, "تم حفظ نغمة المنبه: $title", Toast.LENGTH_SHORT).show()
                 },
                 onAutoStartClick = {},
                 onBatteryClick = {},
