@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.bagomri.fajrloop.alarm.AlarmPreferences
 import com.bagomri.fajrloop.auth.AuthManager
+import com.bagomri.fajrloop.data.*
 import com.bagomri.fajrloop.ui.adhkar.AdhkarScreen
 import com.bagomri.fajrloop.ui.auth.LoginScreen
 import com.bagomri.fajrloop.ui.auth.LoginViewModel
@@ -335,7 +336,7 @@ fun FajrLoopNavGraph(
         composable(Screen.Settings.route) {
             val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
 
-            var userCity by remember { mutableStateOf("المدينة: مكة المكرمة 📍") }
+            var userCity by remember { mutableStateOf(prefs.getString("user_city", "مكة المكرمة") ?: "مكة المكرمة") }
             var calcMethod by remember { mutableStateOf(prefs.getString("prayer_calc_method", "جامعة أم القرى (مكة المكرمة)") ?: "جامعة أم القرى (مكة المكرمة)") }
             var alarmTimingDesc by remember { mutableStateOf(prefs.getString("alarm_timing_desc", "مع أذان الفجر بالضبط 🕌") ?: "مع أذان الفجر بالضبط 🕌") }
             var challengeText by remember { mutableStateOf("حل المعادلة - متوسط") }
@@ -368,7 +369,22 @@ fun FajrLoopNavGraph(
                     isDuaEnabled = checked
                     prefs.edit().putBoolean("daily_dua_notification", checked).apply()
                 },
-                onLocationClick = { Toast.makeText(context, "تحديث التوقيت والموقع من الشاشة الرئيسية تلقائياً", Toast.LENGTH_SHORT).show() },
+                onSaveLocation = { cityName, lat, lng ->
+                    userCity = cityName
+                    prefs.edit().apply {
+                        putString("user_city", cityName)
+                        putFloat("user_latitude", lat.toFloat())
+                        putFloat("user_longitude", lng.toFloat())
+                        apply()
+                    }
+                    val uid = AuthManager.getUserId()
+                    if (uid != null) {
+                        UserRepository().updateUserLocation(
+                            uid,
+                            UserLocation(latitude = lat, longitude = lng, cityName = cityName)
+                        ) {}
+                    }
+                },
                 onTravelModeClick = { navController.navigate(Screen.TravelMode.route) },
                 onBackupCodeClick = { navController.navigate(Screen.BackupCode.route) },
 

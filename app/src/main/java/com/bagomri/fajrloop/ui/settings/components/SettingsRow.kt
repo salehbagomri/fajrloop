@@ -48,11 +48,10 @@ fun SettingsRow(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = FajrLoopColors.TextSecondary,
-                    modifier = Modifier
-                        .size(20.dp)
-                        .padding(end = Spacing.md)
+                    tint = FajrLoopColors.Primary.copy(alpha = 0.7f),
+                    modifier = Modifier.size(24.dp)
                 )
+                Spacer(modifier = Modifier.width(Spacing.md))
             } else if (emoji != null) {
                 Text(
                     text = emoji,

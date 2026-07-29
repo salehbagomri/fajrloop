@@ -18,6 +18,7 @@ import com.bagomri.fajrloop.ui.settings.dialogs.AlarmSoundDialog
 import com.bagomri.fajrloop.ui.settings.dialogs.AlarmTimingDialog
 import com.bagomri.fajrloop.ui.settings.dialogs.CalcMethodDialog
 import com.bagomri.fajrloop.ui.settings.dialogs.ChallengeSettingsDialog
+import com.bagomri.fajrloop.ui.settings.dialogs.CitySelectionDialog
 import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
@@ -37,10 +38,9 @@ fun SettingsScreen(
     onVibrateChange: (Boolean) -> Unit,
     onAdhkarChange: (Boolean) -> Unit,
     onDuaChange: (Boolean) -> Unit,
-    onLocationClick: () -> Unit,
+    onSaveLocation: (cityName: String, lat: Double, lng: Double) -> Unit,
     onTravelModeClick: () -> Unit,
     onBackupCodeClick: () -> Unit,
-
     onSaveCalcMethod: (String) -> Unit,
     onSaveAlarmTiming: (String, Int, String) -> Unit,
     onSaveChallenge: (String, String) -> Unit,
@@ -54,6 +54,7 @@ fun SettingsScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showCityDialog by remember { mutableStateOf(false) }
     var showCalcDialog by remember { mutableStateOf(false) }
     var showTimingDialog by remember { mutableStateOf(false) }
     var showChallengeDialog by remember { mutableStateOf(false) }
@@ -99,12 +100,12 @@ fun SettingsScreen(
                         title = "المدينة الحالية (GPS)",
                         subtitle = userCity,
                         icon = FajrIcons.Location,
-                        onClick = onLocationClick
+                        onClick = { showCityDialog = true }
                     )
                     HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
                         title = "طريقة حساب مواقيت الصلاة",
-                        valueText = calcMethod,
+                        subtitle = calcMethod,
                         icon = FajrIcons.PrayerCalc,
                         onClick = { showCalcDialog = true }
                     )
@@ -213,6 +214,14 @@ fun SettingsScreen(
         }
 
         // Dialogs
+        if (showCityDialog) {
+            CitySelectionDialog(
+                currentCity = userCity,
+                onCitySelect = onSaveLocation,
+                onDismiss = { showCityDialog = false }
+            )
+        }
+
         if (showCalcDialog) {
             CalcMethodDialog(
                 currentMethod = calcMethod,
@@ -269,7 +278,7 @@ private fun SettingsScreenPreview() {
     FajrLoopTheme {
         SettingsScreen(
             userCity = "مكة المكرمة",
-            calcMethod = "جامعة أم القرى",
+            calcMethod = "جامعة أم القرى (مكة المكرمة)",
             alarmTimingDesc = "مع أذان الفجر بالضبط",
             challengeText = "حل المعادلة - متوسط",
             alarmSoundText = "افتراضي",
@@ -280,10 +289,9 @@ private fun SettingsScreenPreview() {
             onVibrateChange = {},
             onAdhkarChange = {},
             onDuaChange = {},
-            onLocationClick = {},
+            onSaveLocation = { _, _, _ -> },
             onTravelModeClick = {},
             onBackupCodeClick = {},
-
             onSaveCalcMethod = {},
             onSaveAlarmTiming = { _, _, _ -> },
             onSaveChallenge = { _, _ -> },

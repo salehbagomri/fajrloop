@@ -37,9 +37,9 @@ fun FajrPrimaryButton(
         shape = RoundedCornerShape(Radius.md),
         colors = ButtonDefaults.buttonColors(
             containerColor = FajrLoopColors.Primary,
-            contentColor = FajrLoopColors.Background,
+            contentColor = Color(0xFF0D0B1A),
             disabledContainerColor = FajrLoopColors.Primary.copy(alpha = 0.4f),
-            disabledContentColor = FajrLoopColors.Background.copy(alpha = 0.5f)
+            disabledContentColor = Color(0xFF0D0B1A).copy(alpha = 0.5f)
         )
     ) {
         if (leadingIcon != null) {

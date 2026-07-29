@@ -23,6 +23,18 @@ val calcMethodsList = listOf(
     "الجمعية الإسلامية لأمريكا الشمالية (ISNA)"
 )
 
+fun isMethodSelected(current: String, method: String): Boolean {
+    val c = current.trim()
+    val m = method.trim()
+    if (c == m) return true
+    if (c.contains("أم القرى") && m.contains("أم القرى")) return true
+    if (c.contains("رابطة") && m.contains("رابطة")) return true
+    if (c.contains("المصرية") && m.contains("المصرية")) return true
+    if (c.contains("كراتشي") && m.contains("كراتشي")) return true
+    if ((c.contains("ISNA") || c.contains("الشمالية")) && (m.contains("ISNA") || m.contains("الشمالية"))) return true
+    return false
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalcMethodDialog(
@@ -50,7 +62,7 @@ fun CalcMethodDialog(
 
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 calcMethodsList.forEach { method ->
-                    val isSelected = currentMethod.contains(method.take(6)) || method == currentMethod
+                    val isSelected = isMethodSelected(currentMethod, method)
 
                     FajrCard(
                         borderColor = if (isSelected) FajrLoopColors.Primary.copy(alpha = 0.5f) else FajrLoopColors.Border,
