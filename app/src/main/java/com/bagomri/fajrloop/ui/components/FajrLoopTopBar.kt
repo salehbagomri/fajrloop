@@ -1,6 +1,7 @@
 package com.bagomri.fajrloop.ui.components
 
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,7 +16,7 @@ import com.bagomri.fajrloop.ui.theme.PpNmArabic
 
 /**
  * شريط علوي موحد — خلفية شفافة، أيقونة رجوع Outlined
- * لا إيموجي في العناوين
+ * يتناسب مع حواشي شريط النظام (Status Bar Safe Padding)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +36,7 @@ fun FajrLoopTopBar(
                 color = FajrLoopColors.TextPrimary
             )
         },
-        modifier = modifier,
+        modifier = modifier.statusBarsPadding(),
         navigationIcon = {
             if (onBackClick != null) {
                 IconButton(onClick = onBackClick) {

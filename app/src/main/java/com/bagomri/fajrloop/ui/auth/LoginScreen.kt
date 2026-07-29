@@ -28,7 +28,12 @@ fun LoginScreen(
     isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    ) {
         FajrBackground()
 
         Column(
@@ -38,12 +43,12 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // App Logo — الشعار الشفاف الكبير
+            // App Logo
             Image(
                 painter = painterResource(id = R.drawable.ic_app_logo),
                 contentDescription = "شعار حلقة الفجر",
                 modifier = Modifier
-                    .size(140.dp)
+                    .size(130.dp)
                     .padding(bottom = Spacing.md)
             )
 
@@ -51,7 +56,7 @@ fun LoginScreen(
                 text = "حلقة الفجر",
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
+                fontSize = 28.sp,
                 color = FajrLoopColors.Primary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = Spacing.xs)
@@ -61,7 +66,7 @@ fun LoginScreen(
                 text = "استيقظ لصلاة الفجر جماعة مع أصدقائك",
                 fontFamily = PpNmArabic,
                 fontWeight = FontWeight.Normal,
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 color = FajrLoopColors.TextSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = Spacing.section)
