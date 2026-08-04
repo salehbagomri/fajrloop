@@ -280,7 +280,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         var awakeCount = 0
         var alertFriend: FriendWakeAlert? = null
 
-        for ((idx, mId) in chain.withIndex()) {
+        val effectiveChain = chain.toMutableList()
+        for (mChild in membersSnap.children) {
+            val mId = mChild.key ?: continue
+            if (!effectiveChain.contains(mId)) {
+                effectiveChain.add(mId)
+            }
+        }
+
+        for ((idx, mId) in effectiveChain.withIndex()) {
             val mSnap = membersSnap.child(mId)
             if (!mSnap.exists()) continue
 
@@ -331,7 +339,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _loopMembersFlow.value = membersList
         _friendWakeAlertFlow.value = alertFriend
 
-        val total = chain.size
+        val total = effectiveChain.size
         val countText = "$awakeCount / $total"
         _awakeCountTextFlow.value = countText
         val summaryText = if (awakeCount == total && total > 0) {
