@@ -28,7 +28,14 @@ object FajrAlarmAutoScheduler {
      */
     fun syncMemberFajrTime(context: Context, halqaId: String, fajrTimeMillis: Long) {
         val uid = AuthManager.getUserId() ?: return
+        val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+        val lastSynced = prefs.getLong("last_synced_fajr_time_$uid", -1L)
+        if (lastSynced == fajrTimeMillis) {
+            return
+        }
+
         try {
+            prefs.edit().putLong("last_synced_fajr_time_$uid", fajrTimeMillis).apply()
             FirebaseDatabase.getInstance()
                 .getReference("halqas")
                 .child(halqaId)

@@ -427,6 +427,8 @@ object HalqaManager {
         })
     }
 
+    private val activeHalqaListenersMap = java.util.concurrent.ConcurrentHashMap<ValueEventListener, Pair<String, ValueEventListener>>()
+
     /**
      * المراقبة المستمرة للحلقة النشطة الخاصة بالمستخدم الحالي
      */
@@ -435,25 +437,21 @@ object HalqaManager {
         val userHalqaRef = database.getReference("users").child(uid).child("currentHalqaId")
 
         val listener = object : ValueEventListener {
-            private var activeHalqaListener: ValueEventListener? = null
-            private var currentActiveHalqaId: String? = null
-
             override fun onDataChange(snapshot: DataSnapshot) {
                 val halqaId = snapshot.value as? String
                 if (halqaId.isNullOrEmpty()) {
-                    removeActiveListener()
+                    detachHalqaChildListener(this)
                     onUpdate(null)
                     return
                 }
 
-                if (halqaId == currentActiveHalqaId) return // لم تتغير الحلقة الحالية
+                val currentPair = activeHalqaListenersMap[this]
+                if (currentPair?.first == halqaId) return // لم تتغير الحلقة الحالية
 
-                // إلغاء المستمع القديم والبدء بمستمع جديد للحلقة الفعالة
-                removeActiveListener()
-                currentActiveHalqaId = halqaId
+                detachHalqaChildListener(this)
 
                 val halqaRef = database.getReference("halqas").child(halqaId)
-                activeHalqaListener = halqaRef.addValueEventListener(object : ValueEventListener {
+                val childListener = object : ValueEventListener {
                     override fun onDataChange(halqaSnap: DataSnapshot) {
                         onUpdate(halqaSnap)
                     }
@@ -461,21 +459,13 @@ object HalqaManager {
                     override fun onCancelled(error: DatabaseError) {
                         Log.w(TAG, "Halqa observation cancelled", error.toException())
                     }
-                })
+                }
+                activeHalqaListenersMap[this] = Pair(halqaId, childListener)
+                halqaRef.addValueEventListener(childListener)
             }
 
             override fun onCancelled(error: DatabaseError) {
                 Log.w(TAG, "User profile observation cancelled", error.toException())
-            }
-
-            private fun removeActiveListener() {
-                activeHalqaListener?.let {
-                    currentActiveHalqaId?.let { hId ->
-                        database.getReference("halqas").child(hId).removeEventListener(it)
-                    }
-                }
-                activeHalqaListener = null
-                currentActiveHalqaId = null
             }
         }
 
@@ -483,12 +473,25 @@ object HalqaManager {
         return listener
     }
 
+    private fun detachHalqaChildListener(userListener: ValueEventListener) {
+        activeHalqaListenersMap.remove(userListener)?.let { (hId, childListener) ->
+            try {
+                database.getReference("halqas").child(hId).removeEventListener(childListener)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to detach child listener", e)
+            }
+        }
+    }
+
     /**
      * إزالة مستمع
      */
     fun removeObserver(listener: ValueEventListener) {
         val uid = auth.currentUser?.uid ?: return
-        database.getReference("users").child(uid).child("currentHalqaId").removeEventListener(listener)
+        try {
+            database.getReference("users").child(uid).child("currentHalqaId").removeEventListener(listener)
+        } catch (e: Exception) {}
+        detachHalqaChildListener(listener)
     }
 
     // =================================================================

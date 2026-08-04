@@ -182,13 +182,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
 
-                    if (earliestFajr != null) {
-                        prefs.edit().putLong("halqa_earliest_fajr_millis", earliestFajr).apply()
-                    } else {
-                        prefs.edit().remove("halqa_earliest_fajr_millis").apply()
-                    }
+                    val prevEarliest = prefs.getLong("halqa_earliest_fajr_millis", -1L)
+                    val newEarliest = earliestFajr ?: -1L
 
-                    com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.scheduleNextFajrAlarm(getApplication())
+                    if (prevEarliest != newEarliest) {
+                        if (earliestFajr != null) {
+                            prefs.edit().putLong("halqa_earliest_fajr_millis", earliestFajr).apply()
+                        } else {
+                            prefs.edit().remove("halqa_earliest_fajr_millis").apply()
+                        }
+                        com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.scheduleNextFajrAlarm(getApplication())
+                    }
 
                     val testAlarmTime = snapshot.child("testAlarmTime").value as? Long
                     if (testAlarmTime != null && testAlarmTime > System.currentTimeMillis() && testAlarmTime != lastScheduledTestAlarmTime) {
