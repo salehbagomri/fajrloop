@@ -41,6 +41,13 @@ class HalqaRepository {
     }
 
     /**
+     * إرسال إشارة اختبار منبه الحلقة لجميع الأعضاء (رنين بعد دقيقة واحدة)
+     */
+    fun triggerTestLoopAlarm(halqaId: String, onComplete: (Boolean, String?) -> Unit) {
+        HalqaManager.triggerTestLoopAlarm(halqaId, onComplete)
+    }
+
+    /**
      * إزالة مستمع الحلقة
      */
     fun removeObserver(listener: ValueEventListener) {

@@ -17,6 +17,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bagomri.fajrloop.ui.components.FajrDestructiveButton
+import androidx.compose.material.icons.outlined.Timer
+import com.bagomri.fajrloop.ui.components.FajrSecondaryButton
 import com.bagomri.fajrloop.ui.main.components.HalqaMemberItem
 import com.bagomri.fajrloop.ui.main.components.LoopMemberRow
 import com.bagomri.fajrloop.ui.theme.FajrIcons
@@ -33,6 +35,7 @@ fun HalqaDetailsSheet(
     isAdmin: Boolean,
     onDismiss: () -> Unit,
     onLeaveClick: () -> Unit,
+    onTestAlarmClick: () -> Unit,
     onConfirmWake: (String) -> Unit,
     onCallClick: () -> Unit,
     onMoveUp: (Int) -> Unit,
@@ -110,6 +113,15 @@ fun HalqaDetailsSheet(
             }
 
             Spacer(modifier = Modifier.height(Spacing.lg))
+
+            FajrSecondaryButton(
+                text = "اختبار منبه الحلقة (رنين بعد دقيقة) 🧪",
+                onClick = onTestAlarmClick,
+                leadingIcon = Icons.Outlined.Timer,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(Spacing.sm))
 
             FajrDestructiveButton(
                 text = "مغادرة الحلقة",

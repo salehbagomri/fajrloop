@@ -533,6 +533,20 @@ object HalqaManager {
         return sdf.format(date)
     }
 
+    /**
+     * إرسال إشارة اختبار منبه الحلقة لجميع الأعضاء (رنين بعد دقيقة واحدة)
+     */
+    fun triggerTestLoopAlarm(halqaId: String, onComplete: (Boolean, String?) -> Unit) {
+        val triggerTime = System.currentTimeMillis() + 60_000L
+        val updates = hashMapOf<String, Any>(
+            "testAlarmTime" to triggerTime,
+            "testAlarmTriggeredAt" to System.currentTimeMillis()
+        )
+        database.getReference("halqas").child(halqaId).updateChildren(updates)
+            .addOnSuccessListener { onComplete(true, null) }
+            .addOnFailureListener { e -> onComplete(false, e.localizedMessage) }
+    }
+
     private fun createEmptyListener() = object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {}
         override fun onCancelled(error: DatabaseError) {}

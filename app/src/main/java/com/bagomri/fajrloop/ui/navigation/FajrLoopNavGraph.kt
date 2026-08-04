@@ -226,6 +226,16 @@ fun FajrLoopNavGraph(
                         showHalqaDetailsSheet = false
                         showLeaveHalqaDialog = true
                     },
+                    onTestAlarmClick = {
+                        showHalqaDetailsSheet = false
+                        mainViewModel.triggerTestLoopAlarm { success, err ->
+                            if (success) {
+                                Toast.makeText(context, "🧪 تم إرسال إشارة الاختبار! سيرن منبه جميع أعضاء الحلقة بعد 60 ثانية ⏰", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(context, "فشل بدء الاختبار: $err", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
                     onConfirmWake = { friendUid ->
                         mainViewModel.confirmFriendWake(friendUid) { success, error ->
                             if (success) {

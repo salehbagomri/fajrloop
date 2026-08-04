@@ -99,6 +99,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var userProfileListener: ValueEventListener? = null
     private var halqaListener: ValueEventListener? = null
     private var dailyRecordsListener: ValueEventListener? = null
+    private var lastScheduledTestAlarmTime: Long = 0L
 
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     private var countdownRunnable: Runnable? = null
@@ -169,6 +170,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         .putString("current_halqa_id", halqaId)
                         .putString("current_halqa_name", name)
                         .apply()
+
+                    val testAlarmTime = snapshot.child("testAlarmTime").value as? Long
+                    if (testAlarmTime != null && testAlarmTime > System.currentTimeMillis() && testAlarmTime != lastScheduledTestAlarmTime) {
+                        lastScheduledTestAlarmTime = testAlarmTime
+                        com.bagomri.fajrloop.alarm.AlarmScheduler.scheduleAlarm(getApplication(), testAlarmTime, "اختبار منبه الحلقة 🧪")
+                        android.widget.Toast.makeText(getApplication(), "🧪 تمت جدولة اختبار منبه الحلقة ليرن بعد دقيقة!", android.widget.Toast.LENGTH_LONG).show()
+                    }
 
                     startObservingDailyRecords(halqaId, chain, membersSnap)
                 }
@@ -450,6 +458,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             onResult(success, result)
         }
+    }
+
+    fun triggerTestLoopAlarm(onResult: (Boolean, String?) -> Unit) {
+        val halqaId = _halqaIdFlow.value
+        if (halqaId.isNullOrEmpty()) {
+            onResult(false, "يجب الانضمام لحلقة أولاً لإجراء الاختبار")
+            return
+        }
+        halqaRepository.triggerTestLoopAlarm(halqaId, onResult)
     }
 
     override fun onCleared() {
