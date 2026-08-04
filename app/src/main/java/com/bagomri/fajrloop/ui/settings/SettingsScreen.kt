@@ -158,20 +158,13 @@ fun SettingsScreen(
                     )
                 }
 
-                // Section 4: Permissions & Test
-                SettingsSection(title = "الصلاحيات والاختبار") {
+                // Section 4: Permissions & System
+                SettingsSection(title = "الصلاحيات والنظام") {
                     SettingsRow(
                         title = "فحص وإدارة جميع الصلاحيات",
                         subtitle = "مراجعة وتفعيل كافة صلاحيات المنبه والبطارية",
                         icon = FajrIcons.Battery,
                         onClick = onPermissionsManageClick
-                    )
-                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
-                    SettingsRow(
-                        title = "تجربة منبه تجريبي بعد 10 ثوانٍ",
-                        subtitle = "اختبر المنبه وشاشة القفل",
-                        icon = FajrIcons.TestAlarm,
-                        onClick = onTestAlarmClick
                     )
                 }
 

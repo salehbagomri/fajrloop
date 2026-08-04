@@ -73,37 +73,94 @@ fun CitySelectionDialog(
             val hasCoarsePermission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
             if (!hasFinePermission && !hasCoarsePermission) {
-                Toast.makeText(context, "الرجاء تفعيل صلاحية الموقع من إعدادات الهاتف", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "الرجاء تفعيل صلاحية الموقع من إعدادات الهاتف أولاً", Toast.LENGTH_LONG).show()
                 isDetectingGps = false
                 return
             }
 
             val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+            val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
 
-            if (location != null) {
-                var detectedName = "موقعي الحالي"
-                try {
-                    val geocoder = Geocoder(context, Locale("ar"))
-                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                    if (!addresses.isNullOrEmpty()) {
-                        val addr = addresses[0]
-                        detectedName = addr.locality ?: addr.subAdminArea ?: addr.adminArea ?: "موقعي الحالي"
+            if (!isGpsEnabled && !isNetworkEnabled) {
+                Toast.makeText(context, "الرجاء تشغيل خدمة تحديد الموقع (GPS) في هاتفك", Toast.LENGTH_LONG).show()
+                isDetectingGps = false
+                return
+            }
+
+            val provider = if (isGpsEnabled) LocationManager.GPS_PROVIDER else LocationManager.NETWORK_PROVIDER
+
+            val listener = object : android.location.LocationListener {
+                override fun onLocationChanged(location: android.location.Location) {
+                    try {
+                        locationManager.removeUpdates(this)
+                    } catch (e: Exception) {}
+
+                    var detectedName = "موقعي الحالي (GPS)"
+                    try {
+                        val geocoder = Geocoder(context, Locale("ar"))
+                        @Suppress("DEPRECATION")
+                        val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                        if (!addresses.isNullOrEmpty()) {
+                            val addr = addresses[0]
+                            val localityName = addr.locality ?: addr.subAdminArea ?: addr.adminArea ?: addr.subLocality
+                            if (!localityName.isNullOrEmpty()) {
+                                detectedName = localityName
+                            }
+                        }
+                    } catch (e: Exception) {
+                        detectedName = "موقعي الحالي (GPS)"
                     }
-                } catch (e: Exception) {
-                    detectedName = "موقعي الحالي"
+
+                    onCitySelect(detectedName, location.latitude, location.longitude)
+                    Toast.makeText(context, "📍 تم تحديد الموقع الفعلي بنجاح: $detectedName", Toast.LENGTH_LONG).show()
+                    isDetectingGps = false
+                    onDismiss()
                 }
 
-                onCitySelect(detectedName, location.latitude, location.longitude)
-                Toast.makeText(context, "تم تحديد الموقع بنجاح: $detectedName", Toast.LENGTH_SHORT).show()
-                onDismiss()
-            } else {
-                Toast.makeText(context, "تعذر الحصول على موقع GPS حالياً، اختر مدينتك من القائمة", Toast.LENGTH_LONG).show()
+                override fun onProviderDisabled(p: String) {}
+                override fun onProviderEnabled(p: String) {}
+                @Suppress("DEPRECATION")
+                override fun onStatusChanged(p: String?, s: Int, e: android.os.Bundle?) {}
             }
+
+            locationManager.requestLocationUpdates(provider, 0L, 0f, listener, android.os.Looper.getMainLooper())
+
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                if (isDetectingGps) {
+                    val lastKnown = locationManager.getLastKnownLocation(provider)
+                    if (lastKnown != null) {
+                        try {
+                            locationManager.removeUpdates(listener)
+                        } catch (e: Exception) {}
+
+                        var detectedName = "موقعي الحالي (GPS)"
+                        try {
+                            val geocoder = Geocoder(context, Locale("ar"))
+                            @Suppress("DEPRECATION")
+                            val addresses = geocoder.getFromLocation(lastKnown.latitude, lastKnown.longitude, 1)
+                            if (!addresses.isNullOrEmpty()) {
+                                val addr = addresses[0]
+                                val localityName = addr.locality ?: addr.subAdminArea ?: addr.adminArea
+                                if (!localityName.isNullOrEmpty()) {
+                                    detectedName = localityName
+                                }
+                            }
+                        } catch (e: Exception) {}
+
+                        onCitySelect(detectedName, lastKnown.latitude, lastKnown.longitude)
+                        Toast.makeText(context, "📍 تم تحديد الموقع بنجاح: $detectedName", Toast.LENGTH_SHORT).show()
+                        isDetectingGps = false
+                        onDismiss()
+                    } else {
+                        isDetectingGps = false
+                        Toast.makeText(context, "تعذر التقاط إشارة GPS الآن، اختر مدينتك من القائمة", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }, 3500L)
+
         } catch (e: Exception) {
             Toast.makeText(context, "حدث خطأ أثناء تحديد الموقع: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-        } finally {
             isDetectingGps = false
         }
     }
