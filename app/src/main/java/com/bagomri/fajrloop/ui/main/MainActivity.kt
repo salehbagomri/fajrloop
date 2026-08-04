@@ -69,6 +69,8 @@ class MainActivity : ComponentActivity() {
 
         if (AuthManager.isUserSignedIn()) {
             FcmTokenManager.registerToken()
+            com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.scheduleNextFajrAlarm(this)
+            com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.startPeriodicRescheduler(this)
         }
 
         val startDestination = determineStartDestination()
@@ -103,6 +105,8 @@ class MainActivity : ComponentActivity() {
         updatePermissionStatus()
         if (AuthManager.isUserSignedIn()) {
             mainViewModel.startFajrCountdown()
+            com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.scheduleNextFajrAlarm(this)
+            com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.startPeriodicRescheduler(this)
         }
     }
 

@@ -165,6 +165,9 @@ class AlarmSoundService : Service() {
         stopVibration()
         releaseServiceWakeLock()
 
+        // إعادة جدولة منبه فجر اليوم/الغد القادم تلقائياً وبدون فتح التطبيق
+        FajrAlarmAutoScheduler.scheduleNextFajrAlarm(this)
+
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }

@@ -354,37 +354,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _fajrTimeStrFlow.value = fajrStr
         _sunriseTimeStrFlow.value = sunriseStr
 
-        val config = alarmRepository.getAlarmConfig()
-        if (config.enabled) {
-            val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-            val todayTimes = prayerTimesRepository.getPrayerTimesForDate(Date())
-            val tomorrowTimes = prayerTimesRepository.getPrayerTimesForDate(Date(System.currentTimeMillis() + 86_400_000L))
-            
-            val type = prefs.getString("alarm_timing_type", "with") ?: "with"
-            val offset = prefs.getInt("alarm_timing_offset_minutes", 0)
-            val offsetMillis = offset * 60 * 1000L
-            val adjustedToday = when (type) {
-                "before" -> todayTimes.fajr - offsetMillis
-                "after" -> todayTimes.fajr + offsetMillis
-                else -> todayTimes.fajr
-            }
-            
-            val targetAlarmTime = if (adjustedToday > System.currentTimeMillis()) {
-                adjustedToday
-            } else {
-                when (type) {
-                    "before" -> tomorrowTimes.fajr - offsetMillis
-                    "after" -> tomorrowTimes.fajr + offsetMillis
-                    else -> tomorrowTimes.fajr
-                }
-            }
-
-            if (config.triggerTimeMillis != targetAlarmTime) {
-                alarmRepository.saveAlarmConfig(config.copy(triggerTimeMillis = targetAlarmTime))
-            }
-        } else {
-            alarmRepository.cancelAlarm()
-        }
+        com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.scheduleNextFajrAlarm(getApplication())
+        com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.startPeriodicRescheduler(getApplication())
 
         countdownRunnable = object : Runnable {
             override fun run() {
