@@ -291,14 +291,18 @@ fun AdhkarScreen(
                     )
 
                     fun decrementCount() {
-                        if (currentCount > 0) {
+                        val currentVal = counts[page]
+                        if (currentVal > 0 && !pagerState.isScrollInProgress) {
                             triggerVibration()
-                            counts[page] = currentCount - 1
-                            if (counts[page] == 0) {
+                            val nextVal = currentVal - 1
+                            counts[page] = nextVal
+                            if (nextVal == 0) {
                                 if (page + 1 < items.size) {
                                     coroutineScope.launch {
-                                        delay(250)
-                                        pagerState.animateScrollToPage(page + 1)
+                                        delay(120)
+                                        if (pagerState.currentPage == page) {
+                                            pagerState.animateScrollToPage(page + 1)
+                                        }
                                     }
                                 } else {
                                     isAllCompleted = true
@@ -314,11 +318,11 @@ fun AdhkarScreen(
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
-                                enabled = !isCompleted
+                                enabled = !isCompleted && !pagerState.isScrollInProgress
                             ) {
                                 coroutineScope.launch {
                                     isPressed = true
-                                    delay(80)
+                                    delay(60)
                                     isPressed = false
                                 }
                                 decrementCount()
