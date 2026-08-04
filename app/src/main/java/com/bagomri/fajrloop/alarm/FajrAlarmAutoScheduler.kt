@@ -7,15 +7,16 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.bagomri.fajrloop.auth.AuthManager
 import com.bagomri.fajrloop.data.AlarmConfig
 import com.bagomri.fajrloop.data.AlarmRepository
 import com.bagomri.fajrloop.data.PrayerTimesRepository
+import com.google.firebase.database.FirebaseDatabase
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
 /**
- * FajrAlarmAutoScheduler — المسئول المركزي الذاتي لضمان جدولة منبه الفجر القادم 
- * يعمل تلقائياً سواء فتح المستخدم التطبيق أم لم يفتحه، وإعادة الجدولة المستمرة خلفيةً ومحلياً.
+ * FajrAlarmAutoScheduler — المسئول المركزي الذاتي لضمان جدولة منبه الفجر القادم (محلياً وسحابياً بحساب الفجر الأبكر الموحد للحلقة)
  */
 object FajrAlarmAutoScheduler {
 
@@ -23,11 +24,31 @@ object FajrAlarmAutoScheduler {
     private const val PERIODIC_WORK_NAME = "fajr_alarm_auto_reschedule_work"
 
     /**
-     * إعادة حساب الفجر القادم وجدولته فوراً وبشكل حتمي
+     * حساب وإرسال وقت الفجر المحلي للمستخدم في عقدة اعضاء الحلقة بـ Firebase
+     */
+    fun syncMemberFajrTime(context: Context, halqaId: String, fajrTimeMillis: Long) {
+        val uid = AuthManager.getUserId() ?: return
+        try {
+            FirebaseDatabase.getInstance()
+                .getReference("halqas")
+                .child(halqaId)
+                .child("members")
+                .child(uid)
+                .child("fajrTimeMillis")
+                .setValue(fajrTimeMillis)
+            Log.d(TAG, "Synced member fajrTimeMillis: $fajrTimeMillis to Halqa: $halqaId")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to sync member fajr time", e)
+        }
+    }
+
+    /**
+     * إعادة حساب الفجر القادم وجدولته فوراً وبشكل حتمي (مع مراعاة توقيت الفجر الأبكر الموحد للحلقة)
      */
     fun scheduleNextFajrAlarm(context: Context): Long {
         val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val hasHalqa = !prefs.getString("current_halqa_id", null).isNullOrEmpty()
+        val halqaId = prefs.getString("current_halqa_id", null)
+        val hasHalqa = !halqaId.isNullOrEmpty()
         val alarmEnabled = hasHalqa && prefs.getBoolean(AlarmPreferences.KEY_ALARM_ENABLED, true)
 
         if (!alarmEnabled) {
@@ -57,7 +78,7 @@ object FajrAlarmAutoScheduler {
             else -> prayerTimes.fajr
         }
 
-        val targetAlarmTime = if (adjustedToday > now) {
+        val localNextFajr = if (adjustedToday > now) {
             adjustedToday
         } else {
             val tomorrowTimes = prayerTimesRepository.getPrayerTimesForDate(Date(now + 86_400_000L))
@@ -66,6 +87,21 @@ object FajrAlarmAutoScheduler {
                 "after" -> tomorrowTimes.fajr + offsetMillis
                 else -> tomorrowTimes.fajr
             }
+        }
+
+        // مزامنة توقيت الفجر المحلي الخاص بالمستخدم سحابياً
+        if (!halqaId.isNullOrEmpty()) {
+            syncMemberFajrTime(context, halqaId, localNextFajr)
+        }
+
+        // قراءة توقيت الفجر الأبكر الموحد للحلقة المخزن
+        val halqaEarliestFajr = prefs.getLong("halqa_earliest_fajr_millis", -1L)
+
+        val targetAlarmTime = if (halqaEarliestFajr > now && halqaEarliestFajr < localNextFajr) {
+            Log.d(TAG, "🌟 Unified Halqa Timing ACTIVE: Using earliest Fajr (${Date(halqaEarliestFajr)}) instead of local (${Date(localNextFajr)})")
+            halqaEarliestFajr
+        } else {
+            localNextFajr
         }
 
         val currentConfig = alarmRepository.getAlarmConfig()

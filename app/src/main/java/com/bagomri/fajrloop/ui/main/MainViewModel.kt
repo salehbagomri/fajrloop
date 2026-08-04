@@ -177,6 +177,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         .putString("current_halqa_name", name)
                         .apply()
 
+                    val now = System.currentTimeMillis()
+                    var earliestFajr: Long? = null
+                    for (mChild in membersSnap.children) {
+                        val mFajr = mChild.child("fajrTimeMillis").value as? Long
+                        if (mFajr != null && mFajr > now) {
+                            if (earliestFajr == null || mFajr < earliestFajr) {
+                                earliestFajr = mFajr
+                            }
+                        }
+                    }
+
+                    if (earliestFajr != null) {
+                        prefs.edit().putLong("halqa_earliest_fajr_millis", earliestFajr).apply()
+                    } else {
+                        prefs.edit().remove("halqa_earliest_fajr_millis").apply()
+                    }
+
+                    com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.scheduleNextFajrAlarm(getApplication())
+
                     val testAlarmTime = snapshot.child("testAlarmTime").value as? Long
                     if (testAlarmTime != null && testAlarmTime > System.currentTimeMillis() && testAlarmTime != lastScheduledTestAlarmTime) {
                         lastScheduledTestAlarmTime = testAlarmTime
