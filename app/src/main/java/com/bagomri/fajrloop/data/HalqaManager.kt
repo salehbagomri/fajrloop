@@ -357,12 +357,10 @@ object HalqaManager {
                 // إعادة حساب الترتيب الدائري والمسؤوليات للأعضاء المتبقين
                 recalculateLoopResponsibility(currentChain, updatedMembers)
 
-                // إجراء التحديث الذري
+                // إجراء التحديث الذري على عقدة الحلقة فقط لتفادي قيود الحماية (Permission Denied)
                 val updates = hashMapOf<String, Any?>()
                 updates["/halqas/$halqaId/chain"] = currentChain
                 updates["/halqas/$halqaId/members"] = updatedMembers
-                updates["/users/$targetUid/currentHalqaId"] = ""
-                updates["/users/$targetUid/joinedHalqas/$halqaId"] = null
 
                 database.reference.updateChildren(updates)
                     .addOnSuccessListener { onComplete(true, null) }

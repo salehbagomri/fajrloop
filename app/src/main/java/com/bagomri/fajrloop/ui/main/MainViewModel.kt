@@ -162,6 +162,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                     val membersSnap = snapshot.child("members")
                     val currentUid = userRepository.getUserId()
+                    if (currentUid != null && !membersSnap.hasChild(currentUid)) {
+                        leaveHalqa { _, _ -> }
+                        android.widget.Toast.makeText(getApplication(), "ℹ️ تم إزالتك من الحلقة بواسطة مسؤول الحلقة", android.widget.Toast.LENGTH_LONG).show()
+                        return@observeUserHalqa
+                    }
+
                     val isAdmin = membersSnap.child(currentUid ?: "").child("role").value as? String == "admin"
                     _isCurrentUserAdminFlow.value = isAdmin
 
