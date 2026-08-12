@@ -345,6 +345,7 @@ object HalqaManager {
     /**
      * مغادرة الحلقة الحالية (للتوافق العكسي)
      */
+    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
     fun leaveHalqa(onComplete: (Boolean, String?) -> Unit) {
         kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
             leaveHalqaSuspend().fold(
