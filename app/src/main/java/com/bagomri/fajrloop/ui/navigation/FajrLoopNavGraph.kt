@@ -189,6 +189,9 @@ fun FajrLoopNavGraph(
             LaunchedEffect(halqaId) {
                 if (halqaId.isNullOrEmpty()) {
                     showHalqaDetailsSheet = false
+                    chatViewModel.stopListening()
+                } else {
+                    chatViewModel.startListening(halqaId)
                 }
             }
 

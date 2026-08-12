@@ -50,7 +50,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             ?: prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
 
         if (targetHalqaId.isNullOrEmpty()) {
-            Log.w("ChatViewModel", "⚠️ targetHalqaId is null or empty, cannot start listening")
+            Log.w("ChatViewModel", "⚠️ targetHalqaId is null or empty, stopping listening")
+            stopListening()
             return
         }
 
@@ -107,6 +108,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             override fun onCancelled(error: DatabaseError) {
                 _errorFlow.value = "فشل تحميل المحادثة: ${error.message}"
                 Log.e("ChatViewModel", "❌ Failed to load chat messages", error.toException())
+                if (error.code == DatabaseError.PERMISSION_DENIED) {
+                    stopListening()
+                }
             }
         }
         ref.addValueEventListener(messagesListener!!)
@@ -144,10 +148,24 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             }
     }
 
+    fun stopListening() {
+        messagesListener?.let { listener ->
+            try {
+                databaseRef?.removeEventListener(listener)
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Error removing chat listener", e)
+            }
+        }
+        messagesListener = null
+        databaseRef = null
+        halqaId = null
+        _messagesFlow.value = emptyList()
+        _halqaNameFlow.value = ""
+        Log.d("ChatViewModel", "🛑 Stopped chat listening and cleared state")
+    }
+
     override fun onCleared() {
         super.onCleared()
-        messagesListener?.let { listener ->
-            databaseRef?.removeEventListener(listener)
-        }
+        stopListening()
     }
 }
