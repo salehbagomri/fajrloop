@@ -28,16 +28,13 @@ export const onEmergencyPanic = functions.database.ref('/dailyRecords/{halqaId}/
         const halqaSnap = await admin.database().ref(`/halqas/${halqaId}`).once('value');
         const members = halqaSnap.child('members').val() || {};
 
-        const tokens: string[] = [];
-        for (const memberId of Object.keys(members)) {
-            if (memberId === userId) continue; // تخطي المستغيث نفسه
-
-            const tokenSnap = await admin.database().ref(`/users/${memberId}/fcmToken`).once('value');
-            const token = tokenSnap.val();
-            if (token) {
-                tokens.push(token);
-            }
-        }
+        const memberIds = Object.keys(members).filter(id => id !== userId);
+        const tokenSnaps = await Promise.all(
+            memberIds.map(id => admin.database().ref(`/users/${id}/fcmToken`).once('value'))
+        );
+        const tokens: string[] = tokenSnaps
+            .map(snap => snap.val())
+            .filter((token): token is string => !!token);
 
         if (tokens.length === 0) {
             console.log('No FCM tokens found for loop members');
@@ -174,16 +171,13 @@ export const onNewChatMessage = functions.database.ref('/chatMessages/{halqaId}/
         const halqaSnap = await admin.database().ref(`/halqas/${halqaId}`).once('value');
         const members = halqaSnap.child('members').val() || {};
 
-        const tokens: string[] = [];
-        for (const memberId of Object.keys(members)) {
-            if (memberId === senderId) continue; // تخطي المرسل
-
-            const tokenSnap = await admin.database().ref(`/users/${memberId}/fcmToken`).once('value');
-            const token = tokenSnap.val();
-            if (token) {
-                tokens.push(token);
-            }
-        }
+        const memberIds = Object.keys(members).filter(id => id !== senderId);
+        const tokenSnaps = await Promise.all(
+            memberIds.map(id => admin.database().ref(`/users/${id}/fcmToken`).once('value'))
+        );
+        const tokens: string[] = tokenSnaps
+            .map(snap => snap.val())
+            .filter((token): token is string => !!token);
 
         if (tokens.length === 0) return null;
 
