@@ -12,6 +12,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 /**
  * HalqaManager — المسؤول عن إدارة الحلقات الدائرية (إنشاء، انضمام، مغادرة، وتعديل السلسلة)
@@ -655,8 +658,8 @@ suspend fun com.google.firebase.database.Query.awaitSingleValue(): DataSnapshot 
 
 suspend fun com.google.firebase.database.DatabaseReference.awaitVoid(): Unit =
     kotlinx.coroutines.suspendCancellableCoroutine { cont ->
-        addOnSuccessListener { cont.resumeWith(Result.success(Unit)) }
-        addOnFailureListener { cont.resumeWith(Result.failure(it)) }
+        setValue(null).addOnSuccessListener { cont.resumeWith(Result.success(Unit)) }
+            .addOnFailureListener { cont.resumeWith(Result.failure(it)) }
     }
 
 suspend fun <T> com.google.android.gms.tasks.Task<T>.awaitTask(): T =
