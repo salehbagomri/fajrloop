@@ -162,7 +162,7 @@ fun CreateHalqaDialog(
                         )
                     ) {
                         Text(
-                            text = "إنشاء الحلقة",
+                            text = "إنشاء",
                             fontFamily = PpNmArabic,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,

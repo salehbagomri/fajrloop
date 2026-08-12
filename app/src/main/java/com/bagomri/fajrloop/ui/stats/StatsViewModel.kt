@@ -59,72 +59,94 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
     private var currentUid = ""
 
     init {
+        refreshStats()
+    }
+
+    fun refreshStats() {
+        val application = getApplication<Application>()
         val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
         halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
         currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-        if (!halqaId.isNullOrEmpty()) {
-            fetchStatsAndRecords()
-        } else {
+        if (currentUid.isEmpty()) {
             setupPlaceholderStats()
+            return
         }
-    }
 
-    private fun fetchStatsAndRecords() {
+        _uiState.value = _uiState.value.copy(isLoading = true)
         val rootRef = FirebaseDatabase.getInstance().reference
 
-        rootRef.child("dailyRecords").child(halqaId!!)
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(recordsSnap: DataSnapshot) {
+        rootRef.child("dailyRecords").addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(allRecordsSnap: DataSnapshot) {
+                if (!halqaId.isNullOrEmpty()) {
                     rootRef.child("halqas").child(halqaId!!).child("members")
                         .addListenerForSingleValueEvent(object : ValueEventListener {
                             override fun onDataChange(membersSnap: DataSnapshot) {
-                                processStats(recordsSnap, membersSnap)
+                                processStats(allRecordsSnap, membersSnap)
                             }
                             override fun onCancelled(error: DatabaseError) {
-                                _uiState.value = _uiState.value.copy(isLoading = false)
+                                processStats(allRecordsSnap, null)
                             }
                         })
-                }
-                override fun onCancelled(error: DatabaseError) {
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                }
-            })
-    }
-
-    private fun processStats(recordsSnap: DataSnapshot, membersSnap: DataSnapshot) {
-        val userCheckinDates = mutableSetOf<String>()
-        val allDatesList = mutableListOf<String>()
-        var rescuesCount = 0
-
-        for (dateSnap in recordsSnap.children) {
-            val dateStr = dateSnap.key ?: continue
-            allDatesList.add(dateStr)
-
-            val userRecord = dateSnap.child(currentUid)
-            if (userRecord.exists()) {
-                val status = userRecord.child("status").value as? String
-                if (status == "awake" || status == "challenge_done" || status == "travel") {
-                    userCheckinDates.add(dateStr)
+                } else {
+                    processStats(allRecordsSnap, null)
                 }
             }
 
-            for (memberRecord in dateSnap.children) {
-                val confirmedBy = memberRecord.child("confirmedBy").value as? String
-                if (confirmedBy == currentUid) {
-                    rescuesCount++
-                }
+            override fun onCancelled(error: DatabaseError) {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        })
+    }
+
+    private fun processStats(allRecordsSnap: DataSnapshot, membersSnap: DataSnapshot?) {
+        val userCheckinDates = mutableSetOf<String>()
+        var rescuesCount = 0
+
+        val halqaNodes = mutableListOf<DataSnapshot>()
+        if (halqaId != null && allRecordsSnap.hasChild(halqaId!!)) {
+            halqaNodes.add(allRecordsSnap.child(halqaId!!))
+        }
+
+        for (hChild in allRecordsSnap.children) {
+            if (!halqaNodes.contains(hChild)) {
+                halqaNodes.add(hChild)
             }
         }
 
-        allDatesList.sort()
+        val currentHalqaRecordsSnap = if (halqaId != null && allRecordsSnap.hasChild(halqaId!!)) {
+            allRecordsSnap.child(halqaId!!)
+        } else {
+            allRecordsSnap
+        }
+
+        for (hSnap in halqaNodes) {
+            for (dateSnap in hSnap.children) {
+                val dateStr = dateSnap.key ?: continue
+
+                val userRecord = dateSnap.child(currentUid)
+                if (userRecord.exists()) {
+                    val status = userRecord.child("status").value as? String
+                    if (status == "awake" || status == "challenge_done" || status == "travel") {
+                        userCheckinDates.add(dateStr)
+                    }
+                }
+
+                for (memberRecord in dateSnap.children) {
+                    val confirmedBy = memberRecord.child("confirmedBy").value as? String
+                    if (confirmedBy == currentUid) {
+                        rescuesCount++
+                    }
+                }
+            }
+        }
 
         val currentStreak = calculateCurrentStreak(userCheckinDates)
         val longestStreak = calculateLongestStreak(userCheckinDates)
 
-        val weeklyChart = buildWeeklyChart(recordsSnap)
-        val dayStatusMap = buildMonthlyCalendar(recordsSnap)
-        val (leaderboardList, fastestMember, topRescuer) = buildLeaderboard(recordsSnap, membersSnap)
+        val weeklyChart = buildWeeklyChart(currentHalqaRecordsSnap)
+        val dayStatusMap = buildMonthlyCalendar(currentHalqaRecordsSnap)
+        val (leaderboardList, fastestMember, topRescuer) = buildLeaderboard(currentHalqaRecordsSnap, membersSnap)
         val achievementsList = buildAchievements(currentStreak, longestStreak, rescuesCount, userCheckinDates.size)
 
         _uiState.value = StatsUiState(

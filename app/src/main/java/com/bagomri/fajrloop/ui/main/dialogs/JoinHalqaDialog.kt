@@ -162,7 +162,7 @@ fun JoinHalqaDialog(
                         )
                     ) {
                         Text(
-                            text = "الانضمام للحلقة",
+                            text = "انضمام",
                             fontFamily = PpNmArabic,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,

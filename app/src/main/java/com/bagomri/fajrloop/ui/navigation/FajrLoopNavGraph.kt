@@ -649,6 +649,10 @@ fun FajrLoopNavGraph(
             val statsUiState by statsViewModel.uiState.collectAsState()
             val currentUid = AuthManager.getUserId() ?: ""
 
+            LaunchedEffect(Unit) {
+                statsViewModel.refreshStats()
+            }
+
             StatsScreen(
                 state = statsUiState,
                 currentUid = currentUid,
