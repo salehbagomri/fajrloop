@@ -224,6 +224,17 @@ class AlarmRingingActivity : ComponentActivity() {
                 val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
                 val timeStr = timeFormat.format(Date(triggerTime))
 
+                val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
+
+                LaunchedEffect(Unit) {
+                    viewModel.errorFlow.collect { errorMessage ->
+                        snackbarHostState.showSnackbar(
+                            message = errorMessage,
+                            duration = androidx.compose.material3.SnackbarDuration.Short
+                        )
+                    }
+                }
+
                 AlarmRingingScreen(
                     alarmLabel = alarmLabel,
                     alarmTimeFormatted = timeStr,
@@ -238,6 +249,7 @@ class AlarmRingingActivity : ComponentActivity() {
                     snoozeCountLeft = snoozeCount,
                     supervisorName = supervisorName,
                     supervisorPhone = supervisorPhone,
+                    snackbarHostState = snackbarHostState,
                     onMathSubmit = { inputVal ->
                         if (inputVal == mathAnswer) {
                             mathSolvedCount++

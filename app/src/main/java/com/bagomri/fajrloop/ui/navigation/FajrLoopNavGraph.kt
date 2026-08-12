@@ -155,6 +155,26 @@ fun FajrLoopNavGraph(
             val countdownBorderMode by prayerTimesViewModel.countdownCardBorderModeFlow.collectAsState()
             val isHalqaEffective by halqaViewModel.isHalqaEffectiveFlow.collectAsState()
 
+            val snackbarHostState = remember { SnackbarHostState() }
+
+            LaunchedEffect(Unit) {
+                halqaViewModel.errorFlow.collect { errorMessage ->
+                    snackbarHostState.showSnackbar(
+                        message = errorMessage,
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+
+            LaunchedEffect(Unit) {
+                mainViewModel.errorFlow.collect { errorMessage ->
+                    snackbarHostState.showSnackbar(
+                        message = errorMessage,
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+
             var showHalqaDetailsSheet by remember { mutableStateOf(false) }
             var showCreateHalqaDialog by remember { mutableStateOf(false) }
             var showJoinHalqaDialog by remember { mutableStateOf(false) }
@@ -206,7 +226,8 @@ fun FajrLoopNavGraph(
                         }
                     }
                 },
-                onFixPermissionsClick = { navController.navigate(Screen.PermissionSetup.route) }
+                onFixPermissionsClick = { navController.navigate(Screen.PermissionSetup.route) },
+                snackbarHostState = snackbarHostState
             )
 
             // Bottom Sheets & Dialogs

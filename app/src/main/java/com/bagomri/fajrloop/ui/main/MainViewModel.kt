@@ -7,13 +7,27 @@ import com.bagomri.fajrloop.alarm.AlarmPreferences
 import com.bagomri.fajrloop.data.UserProfile
 import com.bagomri.fajrloop.data.UserRepository
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val userRepository = UserRepository()
+
+    private val _errorFlow = MutableSharedFlow<String>(replay = 0)
+    val errorFlow: SharedFlow<String> = _errorFlow.asSharedFlow()
+
+    fun emitError(message: String) {
+        viewModelScope.launch {
+            _errorFlow.emit(message)
+        }
+    }
 
     private val initialProfile: UserProfile? = run {
         val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)

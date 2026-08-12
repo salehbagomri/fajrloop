@@ -55,6 +55,7 @@ fun AlarmRingingScreen(
     onSnoozeClick: () -> Unit,
     onCallPartnerClick: (String) -> Unit,
     onConfirmWake: () -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     modifier: Modifier = Modifier
 ) {
     var mathInput by remember { mutableStateOf("") }
@@ -62,8 +63,13 @@ fun AlarmRingingScreen(
     var totpInput by remember { mutableStateOf("") }
     var showEmergencyInput by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        FajrBackground()
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Color.Transparent,
+        modifier = modifier.fillMaxSize()
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            FajrBackground()
 
         Column(
             modifier = Modifier
@@ -375,6 +381,7 @@ fun AlarmRingingScreen(
             }
         }
     }
+}
 }
 
 @Preview

@@ -51,19 +51,26 @@ fun HomeScreen(
     onJoinHalqaClick: () -> Unit,
     onConfirmFriendWake: (String) -> Unit,
     onFixPermissionsClick: () -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val isTravelActive = remember(context) { com.bagomri.fajrloop.alarm.TravelModeManager.isTravelModeActive(context) }
     val travelStatusText = remember(context) { com.bagomri.fajrloop.alarm.TravelModeManager.getTravelModeStatusText(context) }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
-    ) {
-        FajrBackground()
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Color.Transparent,
+        modifier = modifier.fillMaxSize()
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+        ) {
+            FajrBackground()
 
         Column(
             modifier = Modifier
@@ -235,6 +242,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(Spacing.xxl))
         }
     }
+}
 }
 
 @Preview

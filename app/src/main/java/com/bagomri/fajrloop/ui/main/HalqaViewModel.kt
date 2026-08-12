@@ -14,9 +14,14 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -53,6 +58,15 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _friendWakeAlertFlow = MutableStateFlow<FriendWakeAlert?>(null)
     val friendWakeAlertFlow: StateFlow<FriendWakeAlert?> = _friendWakeAlertFlow.asStateFlow()
+
+    private val _errorFlow = MutableSharedFlow<String>(replay = 0)
+    val errorFlow: SharedFlow<String> = _errorFlow.asSharedFlow()
+
+    fun emitError(message: String) {
+        viewModelScope.launch {
+            _errorFlow.emit(message)
+        }
+    }
 
     private var halqaListener: ValueEventListener? = null
     private var dailyRecordsListener: ValueEventListener? = null
@@ -217,7 +231,11 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         FirebaseDatabase.getInstance().getReference("dailyRecords").child(halqaId).child(currentDate).child(friendUid)
             .updateChildren(mapOf("status" to "awake", "confirmedBy" to currentUid))
             .addOnSuccessListener { onResult(true, null) }
-            .addOnFailureListener { e -> onResult(false, e.localizedMessage) }
+            .addOnFailureListener { e ->
+                val msg = e.localizedMessage ?: "حدث خطأ غير متوقع"
+                emitError(msg)
+                onResult(false, msg)
+            }
     }
 
     fun reorderMember(fromIndex: Int, toIndex: Int, onResult: (Boolean, String?) -> Unit) {
@@ -229,17 +247,24 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         val movedId = newChain.removeAt(fromIndex)
         newChain.add(toIndex, movedId)
 
-        halqaRepository.reorderChain(halqaId, newChain, onResult)
+        halqaRepository.reorderChain(halqaId, newChain) { success, err ->
+            if (!success && err != null) emitError(err)
+            onResult(success, err)
+        }
     }
 
     fun removeMemberFromHalqa(targetUid: String, onResult: (Boolean, String?) -> Unit) {
         val halqaId = _halqaIdFlow.value ?: return
-        HalqaManager.removeMemberFromHalqa(halqaId, targetUid, onResult)
+        HalqaManager.removeMemberFromHalqa(halqaId, targetUid) { success, err ->
+            if (!success && err != null) emitError(err)
+            onResult(success, err)
+        }
     }
 
     fun leaveHalqa(onResult: (Boolean, String?) -> Unit) {
         halqaRepository.leaveHalqa { success, error ->
             if (success) clearHalqaState()
+            else if (error != null) emitError(error)
             onResult(success, error)
         }
     }
@@ -247,6 +272,7 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
     fun createHalqa(name: String, onResult: (Boolean, String?) -> Unit) {
         halqaRepository.createHalqa(name) { success, result ->
             if (success) startObservingHalqa()
+            else if (result != null) emitError(result)
             onResult(success, result)
         }
     }
@@ -254,6 +280,7 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
     fun joinHalqa(inviteCode: String, onResult: (Boolean, String?) -> Unit) {
         halqaRepository.joinHalqa(inviteCode) { success, result ->
             if (success) startObservingHalqa()
+            else if (result != null) emitError(result)
             onResult(success, result)
         }
     }
@@ -261,10 +288,15 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
     fun triggerTestLoopAlarm(onResult: (Boolean, String?) -> Unit) {
         val halqaId = _halqaIdFlow.value
         if (halqaId.isNullOrEmpty()) {
-            onResult(false, "يجب الانضمام لحلقة أولاً لإجراء الاختبار")
+            val msg = "يجب الانضمام لحلقة أولاً لإجراء الاختبار"
+            emitError(msg)
+            onResult(false, msg)
             return
         }
-        halqaRepository.triggerTestLoopAlarm(halqaId, onResult)
+        halqaRepository.triggerTestLoopAlarm(halqaId) { success, err ->
+            if (!success && err != null) emitError(err)
+            onResult(success, err)
+        }
     }
 
     fun clearHalqaData() {

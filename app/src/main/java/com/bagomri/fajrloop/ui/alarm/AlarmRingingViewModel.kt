@@ -8,9 +8,13 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.absoluteValue
@@ -18,6 +22,15 @@ import kotlin.math.absoluteValue
 class AlarmRingingViewModel(application: Application) : AndroidViewModel(application) {
 
     private val userRepository = UserRepository()
+
+    private val _errorFlow = MutableSharedFlow<String>(replay = 0)
+    val errorFlow: SharedFlow<String> = _errorFlow.asSharedFlow()
+
+    fun emitError(message: String) {
+        viewModelScope.launch {
+            _errorFlow.emit(message)
+        }
+    }
 
     private val _isChallengeSolvedFlow = MutableStateFlow(false)
     val isChallengeSolvedFlow: StateFlow<Boolean> = _isChallengeSolvedFlow.asStateFlow()
@@ -231,7 +244,9 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
                 }
             }
 
-            override fun onCancelled(error: DatabaseError) {}
+            override fun onCancelled(error: DatabaseError) {
+                emitError(error.message)
+            }
         })
     }
 
@@ -320,13 +335,17 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
                                             ?: ""
                                         _supervisorPhoneFlow.value = phone
                                     }
-                                    override fun onCancelled(error: DatabaseError) {}
+                                    override fun onCancelled(error: DatabaseError) {
+                                        emitError(error.message)
+                                    }
                                 })
                         }
                     }
                 }
 
-                override fun onCancelled(error: DatabaseError) {}
+                override fun onCancelled(error: DatabaseError) {
+                    emitError(error.message)
+                }
             })
     }
 
