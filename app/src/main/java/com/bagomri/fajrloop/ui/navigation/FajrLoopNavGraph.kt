@@ -64,6 +64,8 @@ fun FajrLoopNavGraph(
     allPermissionsGranted: Boolean,
     onRefreshPermissions: () -> Unit,
     mainViewModel: MainViewModel,
+    prayerTimesViewModel: PrayerTimesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    halqaViewModel: HalqaViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     settingsViewModel: SettingsViewModel,
     statsViewModel: StatsViewModel,
     loginViewModel: LoginViewModel,
@@ -97,6 +99,7 @@ fun FajrLoopNavGraph(
             LaunchedEffect(loginSuccess) {
                 if (loginSuccess) {
                     mainViewModel.refreshUserData()
+                    halqaViewModel.startObservingHalqa()
                     loginViewModel.resetLoginState()
                     val targetRoute = if (allPermissionsGranted) Screen.Home.route else Screen.PermissionSetup.route
                     navController.navigate(targetRoute) {
@@ -137,17 +140,17 @@ fun FajrLoopNavGraph(
 
         composable(Screen.Home.route) {
             val userProfile by mainViewModel.userProfileFlow.collectAsState()
-            val halqaId by mainViewModel.halqaIdFlow.collectAsState()
-            val halqaName by mainViewModel.halqaNameFlow.collectAsState()
-            val loopMembers by mainViewModel.loopMembersFlow.collectAsState()
-            val isAdmin by mainViewModel.isCurrentUserAdminFlow.collectAsState()
-            val friendWakeAlert by mainViewModel.friendWakeAlertFlow.collectAsState()
-            val fajrTimeStr by mainViewModel.fajrTimeStrFlow.collectAsState()
-            val sunriseTimeStr by mainViewModel.sunriseTimeStrFlow.collectAsState()
-            val countdownText by mainViewModel.countdownTextFlow.collectAsState()
-            val countdownColor by mainViewModel.countdownColorFlow.collectAsState()
-            val countdownBorderMode by mainViewModel.countdownCardBorderModeFlow.collectAsState()
-            val isHalqaEffective by mainViewModel.isHalqaEffectiveFlow.collectAsState()
+            val halqaId by halqaViewModel.halqaIdFlow.collectAsState()
+            val halqaName by halqaViewModel.halqaNameFlow.collectAsState()
+            val loopMembers by halqaViewModel.loopMembersFlow.collectAsState()
+            val isAdmin by halqaViewModel.isCurrentUserAdminFlow.collectAsState()
+            val friendWakeAlert by halqaViewModel.friendWakeAlertFlow.collectAsState()
+            val fajrTimeStr by prayerTimesViewModel.fajrTimeStrFlow.collectAsState()
+            val sunriseTimeStr by prayerTimesViewModel.sunriseTimeStrFlow.collectAsState()
+            val countdownText by prayerTimesViewModel.countdownTextFlow.collectAsState()
+            val countdownColor by prayerTimesViewModel.countdownColorFlow.collectAsState()
+            val countdownBorderMode by prayerTimesViewModel.countdownCardBorderModeFlow.collectAsState()
+            val isHalqaEffective by halqaViewModel.isHalqaEffectiveFlow.collectAsState()
 
             var showHalqaDetailsSheet by remember { mutableStateOf(false) }
             var showCreateHalqaDialog by remember { mutableStateOf(false) }
@@ -192,7 +195,7 @@ fun FajrLoopNavGraph(
                 onCreateHalqaClick = { showCreateHalqaDialog = true },
                 onJoinHalqaClick = { showJoinHalqaDialog = true },
                 onConfirmFriendWake = { friendUid ->
-                    mainViewModel.confirmFriendWake(friendUid) { success, error ->
+                    halqaViewModel.confirmFriendWake(friendUid) { success, error ->
                         if (success) {
                             Toast.makeText(context, "تم إيقاف منبه صديقك بنجاح. كتب الله أجرك! 🟢", Toast.LENGTH_SHORT).show()
                         } else {
@@ -230,7 +233,7 @@ fun FajrLoopNavGraph(
                     },
                     onTestAlarmClick = {
                         showHalqaDetailsSheet = false
-                        mainViewModel.triggerTestLoopAlarm { success, err ->
+                        halqaViewModel.triggerTestLoopAlarm { success, err ->
                             if (success) {
                                 Toast.makeText(context, "🧪 تم إرسال إشارة الاختبار! سيرن منبه جميع أعضاء الحلقة بعد 60 ثانية ⏰", Toast.LENGTH_LONG).show()
                             } else {
@@ -239,7 +242,7 @@ fun FajrLoopNavGraph(
                         }
                     },
                     onConfirmWake = { friendUid ->
-                        mainViewModel.confirmFriendWake(friendUid) { success, error ->
+                        halqaViewModel.confirmFriendWake(friendUid) { success, error ->
                             if (success) {
                                 Toast.makeText(context, "تم تأكيد الاستيقاظ!", Toast.LENGTH_SHORT).show()
                             } else {
@@ -250,7 +253,7 @@ fun FajrLoopNavGraph(
                     onCallClick = {},
                     onMoveUp = { fromIndex ->
                         if (fromIndex > 0) {
-                            mainViewModel.reorderMember(fromIndex, fromIndex - 1) { success, err ->
+                            halqaViewModel.reorderMember(fromIndex, fromIndex - 1) { success, err ->
                                 if (!success && err != null) {
                                     Toast.makeText(context, "خطأ: $err", Toast.LENGTH_SHORT).show()
                                 }
@@ -259,7 +262,7 @@ fun FajrLoopNavGraph(
                     },
                     onMoveDown = { fromIndex ->
                         if (fromIndex < sheetMembers.size - 1) {
-                            mainViewModel.reorderMember(fromIndex, fromIndex + 1) { success, err ->
+                            halqaViewModel.reorderMember(fromIndex, fromIndex + 1) { success, err ->
                                 if (!success && err != null) {
                                     Toast.makeText(context, "خطأ: $err", Toast.LENGTH_SHORT).show()
                                 }
@@ -267,7 +270,7 @@ fun FajrLoopNavGraph(
                         }
                     },
                     onRemoveMember = { targetUid, name ->
-                        mainViewModel.removeMemberFromHalqa(targetUid) { success, err ->
+                        halqaViewModel.removeMemberFromHalqa(targetUid) { success, err ->
                             if (success) {
                                 Toast.makeText(context, "تم حذف $name من الحلقة", Toast.LENGTH_SHORT).show()
                             } else {
@@ -284,7 +287,7 @@ fun FajrLoopNavGraph(
                     onConfirm = { name ->
                         showCreateHalqaDialog = false
                         Toast.makeText(context, "جاري إنشاء حلقة «$name»...", Toast.LENGTH_SHORT).show()
-                        mainViewModel.createHalqa(name) { success, result ->
+                        halqaViewModel.createHalqa(name) { success, result ->
                             if (success) {
                                 Toast.makeText(context, "تم إنشاء حلقة «$name» بنجاح! 🥳", Toast.LENGTH_SHORT).show()
                             } else {
@@ -301,7 +304,7 @@ fun FajrLoopNavGraph(
                     onConfirm = { code ->
                         showJoinHalqaDialog = false
                         Toast.makeText(context, "جاري الانضمام إلى الحلقة...", Toast.LENGTH_SHORT).show()
-                        mainViewModel.joinHalqa(code) { success, result ->
+                        halqaViewModel.joinHalqa(code) { success, result ->
                             if (success) {
                                 Toast.makeText(context, "تم الانضمام للحلقة بنجاح! 🥳", Toast.LENGTH_SHORT).show()
                             } else {
@@ -312,7 +315,7 @@ fun FajrLoopNavGraph(
                 )
             }
 
-            val inviteCode by mainViewModel.inviteCodeFlow.collectAsState()
+            val inviteCode by halqaViewModel.inviteCodeFlow.collectAsState()
 
             if (showInviteCodeDialog) {
                 InviteCodeDialog(
@@ -341,7 +344,7 @@ fun FajrLoopNavGraph(
                     onDismiss = { showLeaveHalqaDialog = false },
                     onConfirm = {
                         showLeaveHalqaDialog = false
-                        mainViewModel.leaveHalqa { success, error ->
+                        halqaViewModel.leaveHalqa { success, error ->
                             if (success) {
                                 Toast.makeText(context, "تمت مغادرة الحلقة بنجاح 🚪", Toast.LENGTH_SHORT).show()
                             } else {
@@ -557,6 +560,7 @@ fun FajrLoopNavGraph(
                     AuthManager.signOut()
                     loginViewModel.resetLoginState()
                     mainViewModel.clearUserDataOnLogout()
+                    halqaViewModel.clearHalqaData()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }

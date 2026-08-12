@@ -38,6 +38,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class MainActivity : ComponentActivity() {
 
     private val mainViewModel: MainViewModel by viewModels()
+    private val prayerTimesViewModel: PrayerTimesViewModel by viewModels()
+    private val halqaViewModel: HalqaViewModel by viewModels()
     private val settingsViewModel: SettingsViewModel by viewModels()
     private val statsViewModel: StatsViewModel by viewModels()
     private val loginViewModel: LoginViewModel by viewModels()
@@ -91,6 +93,8 @@ class MainActivity : ComponentActivity() {
                     allPermissionsGranted = allPermissionsGranted,
                     onRefreshPermissions = { updatePermissionStatus() },
                     mainViewModel = mainViewModel,
+                    prayerTimesViewModel = prayerTimesViewModel,
+                    halqaViewModel = halqaViewModel,
                     settingsViewModel = settingsViewModel,
                     statsViewModel = statsViewModel,
                     loginViewModel = loginViewModel,
@@ -104,7 +108,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         updatePermissionStatus()
         if (AuthManager.isUserSignedIn()) {
-            mainViewModel.startFajrCountdown()
+            prayerTimesViewModel.startFajrCountdown()
             com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.scheduleNextFajrAlarm(this)
             com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.startPeriodicRescheduler(this)
         }
