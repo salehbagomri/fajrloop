@@ -70,6 +70,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _loopMembersFlow = MutableStateFlow<List<LoopMemberItem>>(emptyList())
     val loopMembersFlow: StateFlow<List<LoopMemberItem>> = _loopMembersFlow.asStateFlow()
 
+    private val _isHalqaEffectiveFlow = MutableStateFlow<Boolean>(false)
+    val isHalqaEffectiveFlow: StateFlow<Boolean> = _isHalqaEffectiveFlow.asStateFlow()
+
     private val _todaySummaryTextFlow = MutableStateFlow<String>(initialTodaySummary)
     val todaySummaryTextFlow: StateFlow<String> = _todaySummaryTextFlow.asStateFlow()
 
@@ -140,6 +143,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _halqaNameFlow.value = ""
                     _isCurrentUserAdminFlow.value = false
                     _loopMembersFlow.value = emptyList()
+                    _isHalqaEffectiveFlow.value = false
                     _todaySummaryTextFlow.value = ""
                     _awakeCountTextFlow.value = ""
                     _friendWakeAlertFlow.value = null
@@ -214,6 +218,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _halqaNameFlow.value = ""
         _isCurrentUserAdminFlow.value = false
         _loopMembersFlow.value = emptyList()
+        _isHalqaEffectiveFlow.value = false
         _todaySummaryTextFlow.value = ""
         _awakeCountTextFlow.value = ""
         _friendWakeAlertFlow.value = null
@@ -335,6 +340,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         _loopMembersFlow.value = membersList
+        _isHalqaEffectiveFlow.value = effectiveChain.size >= 2
         _friendWakeAlertFlow.value = alertFriend
 
         val total = effectiveChain.size
@@ -456,6 +462,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _halqaNameFlow.value = ""
                 _inviteCodeFlow.value = ""
                 _loopMembersFlow.value = emptyList()
+                _isHalqaEffectiveFlow.value = false
                 _isCurrentUserAdminFlow.value = false
                 _friendWakeAlertFlow.value = null
                 _awakeCountTextFlow.value = ""

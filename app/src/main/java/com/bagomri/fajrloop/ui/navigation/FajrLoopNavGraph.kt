@@ -147,6 +147,7 @@ fun FajrLoopNavGraph(
             val countdownText by mainViewModel.countdownTextFlow.collectAsState()
             val countdownColor by mainViewModel.countdownColorFlow.collectAsState()
             val countdownBorderMode by mainViewModel.countdownCardBorderModeFlow.collectAsState()
+            val isHalqaEffective by mainViewModel.isHalqaEffectiveFlow.collectAsState()
 
             var showHalqaDetailsSheet by remember { mutableStateOf(false) }
             var showCreateHalqaDialog by remember { mutableStateOf(false) }
@@ -221,6 +222,7 @@ fun FajrLoopNavGraph(
                     halqaName = halqaName,
                     members = sheetMembers,
                     isAdmin = isAdmin,
+                    isHalqaEffective = isHalqaEffective,
                     onDismiss = { showHalqaDetailsSheet = false },
                     onLeaveClick = {
                         showHalqaDetailsSheet = false

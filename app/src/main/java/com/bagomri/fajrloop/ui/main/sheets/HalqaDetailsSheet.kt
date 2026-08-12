@@ -27,12 +27,15 @@ import com.bagomri.fajrloop.ui.theme.PpNmArabic
 import com.bagomri.fajrloop.ui.theme.Radius
 import com.bagomri.fajrloop.ui.theme.Spacing
 
+import androidx.compose.material.icons.filled.Warning
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HalqaDetailsSheet(
     halqaName: String,
     members: List<HalqaMemberItem>,
     isAdmin: Boolean,
+    isHalqaEffective: Boolean = true,
     onDismiss: () -> Unit,
     onLeaveClick: () -> Unit,
     onTestAlarmClick: () -> Unit,
@@ -61,6 +64,34 @@ fun HalqaDetailsSheet(
                 color = FajrLoopColors.Primary,
                 modifier = Modifier.padding(bottom = Spacing.sm)
             )
+
+            if (!isHalqaEffective) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Spacing.md),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "الحلقة تحتاج عضوين على الأقل لتفعيل نظام الإيقاظ المتبادل. ادعُ أصدقاءك!",
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
 
             // Explanatory Info Card
             Box(
