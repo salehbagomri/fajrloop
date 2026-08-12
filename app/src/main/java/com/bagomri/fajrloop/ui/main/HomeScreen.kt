@@ -59,27 +59,25 @@ fun HomeScreen(
     val isTravelActive = remember(context) { com.bagomri.fajrloop.alarm.TravelModeManager.isTravelModeActive(context) }
     val travelStatusText = remember(context) { com.bagomri.fajrloop.alarm.TravelModeManager.getTravelModeStatusText(context) }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = Color.Transparent,
-        modifier = modifier.fillMaxSize()
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .statusBarsPadding()
-                .navigationBarsPadding()
-        ) {
-            FajrBackground()
+    Box(modifier = modifier.fillMaxSize()) {
+        FajrBackground(modifier = Modifier.fillMaxSize())
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = Spacing.xl, vertical = Spacing.md),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            containerColor = Color.Transparent,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            modifier = Modifier.fillMaxSize()
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = Spacing.xl, vertical = Spacing.md),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
             // Header Bar — Padded away from status bar
             Row(
                 modifier = Modifier

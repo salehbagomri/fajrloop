@@ -147,7 +147,7 @@ fun AdhkarScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        FajrBackground()
+        FajrBackground(modifier = Modifier.fillMaxSize())
 
         Column(
             modifier = Modifier

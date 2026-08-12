@@ -32,6 +32,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.flow.MutableStateFlow
 
+import androidx.activity.enableEdgeToEdge
+
 /**
  * MainActivity — النشاط الرئيسي الوحيد للتطبيق (Single Activity Host with Jetpack Compose & Navigation)
  */
@@ -67,6 +69,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         if (AuthManager.isUserSignedIn()) {

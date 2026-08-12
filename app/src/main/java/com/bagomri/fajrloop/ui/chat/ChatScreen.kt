@@ -101,15 +101,15 @@ fun ChatScreen(
         }
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .navigationBarsPadding()
-            .imePadding()
-    ) {
-        FajrBackground()
+    Box(modifier = modifier.fillMaxSize()) {
+        FajrBackground(modifier = Modifier.fillMaxSize())
 
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .navigationBarsPadding()
+                .imePadding()
+        ) {
             // Header Bar with Top Motivational Button
             FajrLoopTopBar(
                 title = title.ifEmpty { "محادثة الحلقة" },

@@ -71,7 +71,7 @@ fun TravelModeScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        FajrBackground()
+        FajrBackground(modifier = Modifier.fillMaxSize())
 
         Column(modifier = Modifier.fillMaxSize()) {
             FajrLoopTopBar(
@@ -82,6 +82,7 @@ fun TravelModeScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .navigationBarsPadding()
                     .verticalScroll(rememberScrollState())
                     .padding(Spacing.xl),
                 verticalArrangement = Arrangement.spacedBy(Spacing.md)

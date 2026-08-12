@@ -72,17 +72,14 @@ fun OnboardingScreen(
     val coroutineScope = rememberCoroutineScope()
     val isLastPage = pagerState.currentPage == onboardingItems.size - 1
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
-    ) {
-        FajrBackground()
+    Box(modifier = modifier.fillMaxSize()) {
+        FajrBackground(modifier = Modifier.fillMaxSize())
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
                 .padding(horizontal = Spacing.xl, vertical = Spacing.md),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

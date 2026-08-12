@@ -48,9 +48,9 @@ fun StatsScreen(
     val tabTitles = listOf("نشاطي", "المتصدرون", "الإنجازات")
 
     Box(modifier = modifier.fillMaxSize()) {
-        FajrBackground()
+        FajrBackground(modifier = Modifier.fillMaxSize())
 
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
             // Top Bar
             FajrLoopTopBar(
                 title = "الإحصائيات",

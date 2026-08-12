@@ -99,7 +99,7 @@ fun BackupCodeScreen(
     val progressFraction = remainingSeconds / (30f * 60f)
 
     Box(modifier = modifier.fillMaxSize()) {
-        FajrBackground()
+        FajrBackground(modifier = Modifier.fillMaxSize())
 
         Column(modifier = Modifier.fillMaxSize()) {
             FajrLoopTopBar(
@@ -110,6 +110,7 @@ fun BackupCodeScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .navigationBarsPadding()
                     .verticalScroll(rememberScrollState())
                     .padding(Spacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally,
