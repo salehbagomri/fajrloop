@@ -26,6 +26,10 @@
         // التعديل مسموح لـ Admin الحلقة، أو عند إنشاء الحلقة، أو عند حذفها، أو عند الانضمام/المغادرة (تغير حالة العضوية)
         ".write": "auth != null && (!data.exists() || data.child('members').child(auth.uid).child('role').val() == 'admin' || (!newData.exists() && data.child('members').child(auth.uid).exists()) || (newData.child('members').child(auth.uid).exists() != data.child('members').child(auth.uid).exists()))",
         
+        "name": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 50"
+        },
+
         // تعديل السلسلة مسموح لـ Admin أو في حال تغير حالة العضوية (الانضمام والمغادرة) أو تفريغ الحلقة
         "chain": {
           ".write": "auth != null && (data.parent().child('members').child(auth.uid).child('role').val() == 'admin' || (!newData.exists() && data.parent().child('members').child(auth.uid).exists()) || (newData.parent().child('members').child(auth.uid).exists() != data.parent().child('members').child(auth.uid).exists()))"
@@ -35,7 +39,19 @@
         "members": {
           ".write": "auth != null && (data.parent().child('members').child(auth.uid).child('role').val() == 'admin' || (!newData.exists() && data.parent().child('members').child(auth.uid).exists()) || (newData.parent().child('members').child(auth.uid).exists() != data.parent().child('members').child(auth.uid).exists()))",
           "$userId": {
-            ".write": "auth != null && (auth.uid == $userId || data.parent().parent().child('members').child(auth.uid).child('role').val() == 'admin' || (!newData.parent().parent().exists() && data.parent().parent().child('members').child(auth.uid).exists()) || (newData.parent().parent().child('members').child(auth.uid).exists() != data.parent().parent().child('members').child(auth.uid).exists()))"
+            ".write": "auth != null && (auth.uid == $userId || data.parent().parent().child('members').child(auth.uid).child('role').val() == 'admin' || (!newData.parent().parent().exists() && data.parent().parent().child('members').child(auth.uid).exists()) || (newData.parent().parent().child('members').child(auth.uid).exists() != data.parent().parent().child('members').child(auth.uid).exists()))",
+            "role": {
+              ".validate": "newData.isString() && (newData.val() === 'admin' || newData.val() === 'member')"
+            },
+            "status": {
+              ".validate": "newData.isString() && (newData.val() === 'active' || newData.val() === 'travel' || newData.val() === 'inactive')"
+            },
+            "position": {
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
+            "fajrTimeMillis": {
+              ".validate": "newData.isNumber() && newData.val() > 0"
+            }
           }
         }
       }
@@ -60,7 +76,10 @@
         "$date": {
           "$userId": {
             // صاحب السجل يمكنه تحديث حالته، والزميل المسؤول عن هذا العضو يمكنه تأكيد استيقاظه (الإنقاذ)
-            ".write": "auth != null && (auth.uid == $userId || root.child('halqas').child($halqaId).child('members').child($userId).child('responsibleForUserId').val() == auth.uid)"
+            ".write": "auth != null && (auth.uid == $userId || root.child('halqas').child($halqaId).child('members').child($userId).child('responsibleForUserId').val() == auth.uid)",
+            "status": {
+              ".validate": "newData.isString() && (newData.val() === 'pending' || newData.val() === 'ringing' || newData.val() === 'challenge_done' || newData.val() === 'awake' || newData.val() === 'panic' || newData.val() === 'missed' || newData.val() === 'travel')"
+            }
           }
         }
       }
