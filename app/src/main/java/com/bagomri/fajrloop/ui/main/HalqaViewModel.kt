@@ -211,11 +211,8 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         var awakeCount = 0
         var alertFriend: FriendWakeAlert? = null
 
-        val effectiveChain = chain.toMutableList()
-        for (mChild in membersSnap.children) {
-            val mId = mChild.key ?: continue
-            if (!effectiveChain.contains(mId)) effectiveChain.add(mId)
-        }
+        // السلسلة الفعلية تعتمد على chain فقط ولا تضيف أعضاء محذوفين تلقائياً
+        val effectiveChain = chain.filter { membersSnap.hasChild(it) }
 
         for ((idx, mId) in effectiveChain.withIndex()) {
             val mSnap = membersSnap.child(mId)

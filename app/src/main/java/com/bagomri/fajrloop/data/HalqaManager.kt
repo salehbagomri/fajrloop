@@ -321,10 +321,21 @@ object HalqaManager {
             }
         }
 
-        val halqaUpdates = hashMapOf<String, Any>(
+        val halqaUpdates = hashMapOf<String, Any?>(
             "chain" to currentChain,
-            "members" to updatedMembers
+            "members/$uid" to null
         )
+        for ((mId, mData) in updatedMembers) {
+            if (mData is Map<*, *>) {
+                val pos = mData["position"]
+                val resp = mData["responsibleForUserId"]
+                if (pos != null) halqaUpdates["members/$mId/position"] = pos
+                if (resp != null) halqaUpdates["members/$mId/responsibleForUserId"] = resp
+                if (mData.containsKey("role")) {
+                    halqaUpdates["members/$mId/role"] = mData["role"]
+                }
+            }
+        }
 
         database.getReference("halqas").child(halqaId).updateChildren(halqaUpdates).awaitTask()
         clearUserHalqaRefSuspend(uid, halqaId)
@@ -404,11 +415,22 @@ object HalqaManager {
                 // إعادة حساب الترتيب الدائري والمسؤوليات للأعضاء المتبقين
                 recalculateLoopResponsibility(currentChain, updatedMembers)
 
-                // إجراء التحديث المباشر على عقدة الحلقة المحددة لضمان تطبيق صلاحيات المسؤول
-                val halqaUpdates = hashMapOf<String, Any>(
+                // إجراء التحديث المباشر على عقدة الحلقة المحددة مع حذف العضو صراحةً بـ null
+                val halqaUpdates = hashMapOf<String, Any?>(
                     "chain" to currentChain,
-                    "members" to updatedMembers
+                    "members/$targetUid" to null
                 )
+                for ((mId, mData) in updatedMembers) {
+                    if (mData is Map<*, *>) {
+                        val pos = mData["position"]
+                        val resp = mData["responsibleForUserId"]
+                        if (pos != null) halqaUpdates["members/$mId/position"] = pos
+                        if (resp != null) halqaUpdates["members/$mId/responsibleForUserId"] = resp
+                        if (mData.containsKey("role")) {
+                            halqaUpdates["members/$mId/role"] = mData["role"]
+                        }
+                    }
+                }
 
                 halqaRef.updateChildren(halqaUpdates)
                     .addOnSuccessListener {
