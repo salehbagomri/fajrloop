@@ -195,3 +195,57 @@ export const onNewChatMessage = functions.database.ref('/chatMessages/{halqaId}/
         console.log(`Chat notification sent to ${tokens.length} devices. Success: ${response.successCount}`);
         return null;
     });
+
+/**
+ * cleanupOldDailyRecords — يُفعَّل تلقائياً كل أسبوع (يوم الجمعة منتصف الليل UTC)
+ * يحذف جميع سجلات dailyRecords الأقدم من 30 يوماً لجميع الحلقات.
+ */
+export const cleanupOldDailyRecords = functions.pubsub
+    .schedule('0 0 * * 5')  // كل يوم جمعة منتصف الليل UTC
+    .timeZone('UTC')
+    .onRun(async (_context) => {
+        const db = admin.database();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const cutoffDateStr = thirtyDaysAgo.toISOString().split('T')[0]; // yyyy-MM-dd
+        
+        console.log(`Starting cleanup of dailyRecords older than: ${cutoffDateStr}`);
+        
+        let deletedCount = 0;
+        
+        try {
+            // جلب كل الحلقات
+            const halqasSnap = await db.ref('/dailyRecords').once('value');
+            if (!halqasSnap.exists()) {
+                console.log('No dailyRecords to clean up.');
+                return null;
+            }
+            
+            const deletePromises: Promise<void>[] = [];
+            
+            halqasSnap.forEach((halqaSnap) => {
+                const halqaId = halqaSnap.key;
+                if (!halqaId) return;
+                
+                halqaSnap.forEach((dateSnap) => {
+                    const dateStr = dateSnap.key;
+                    if (!dateStr) return;
+                    
+                    // إذا كان التاريخ أقدم من 30 يوماً، احذفه
+                    if (dateStr < cutoffDateStr) {
+                        deletePromises.push(
+                            db.ref(`/dailyRecords/${halqaId}/${dateStr}`).remove()
+                        );
+                        deletedCount++;
+                    }
+                });
+            });
+            
+            await Promise.all(deletePromises);
+            console.log(`Cleanup complete. Deleted ${deletedCount} date records.`);
+            return null;
+        } catch (error) {
+            console.error('Error during cleanup:', error);
+            return null;
+        }
+    });
