@@ -20,6 +20,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import com.bagomri.fajrloop.alarm.AlarmPreferences
