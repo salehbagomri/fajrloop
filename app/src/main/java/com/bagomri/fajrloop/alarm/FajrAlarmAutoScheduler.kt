@@ -96,11 +96,6 @@ object FajrAlarmAutoScheduler {
             }
         }
 
-        // مزامنة توقيت الفجر المحلي الخاص بالمستخدم سحابياً
-        if (!halqaId.isNullOrEmpty()) {
-            syncMemberFajrTime(context, halqaId, localNextFajr)
-        }
-
         // قراءة توقيت الفجر الأبكر الموحد للحلقة المخزن
         val halqaEarliestFajr = prefs.getLong(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS, -1L)
 
