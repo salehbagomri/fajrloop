@@ -121,7 +121,7 @@ class AlarmSoundService : Service() {
 
         try {
             val timeStr = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(triggerTime))
-            val cityStr = getSharedPreferences(AlarmPreferences.PREFS_NAME, MODE_PRIVATE).getString("user_city", "مكة المكرمة") ?: "مكة المكرمة"
+            val cityStr = getSharedPreferences(AlarmPreferences.PREFS_NAME, MODE_PRIVATE).getString(AlarmPreferences.KEY_USER_CITY, "مكة المكرمة") ?: "مكة المكرمة"
             com.bagomri.fajrloop.data.AnalyticsHelper.logAlarmTriggered(timeStr, cityStr)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to log alarm_triggered event", e)
@@ -158,7 +158,7 @@ class AlarmSoundService : Service() {
 
         // إزالة علم التفعيل النشط وإلغاء الـ Watchdog لمنع إعادة التشغيل تلقائياً
         val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putBoolean("alarm_active_ringing", false).apply()
+        prefs.edit().putBoolean(AlarmPreferences.KEY_ALARM_ACTIVE_RINGING, false).apply()
         AlarmReceiver.cancelWatchdog(this)
 
         stopRingtone()
@@ -175,7 +175,7 @@ class AlarmSoundService : Service() {
     private fun startRingtone() {
         try {
             val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-            val choice = prefs.getString("alarm_sound_choice", "default") ?: "default"
+            val choice = prefs.getString(AlarmPreferences.KEY_ALARM_SOUND_CHOICE, "default") ?: "default"
 
             val alarmUri = when (choice) {
                 "afasy" -> Uri.parse("android.resource://$packageName/${R.raw.adhan_afasy}")
@@ -327,7 +327,7 @@ class AlarmSoundService : Service() {
         Log.d(TAG, "onTaskRemoved: Application task swiped away!")
 
         val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val isAlarmActive = prefs.getBoolean("alarm_active_ringing", false)
+        val isAlarmActive = prefs.getBoolean(AlarmPreferences.KEY_ALARM_ACTIVE_RINGING, false)
         if (isAlarmActive) {
             try {
                 val workRequest = androidx.work.OneTimeWorkRequestBuilder<AlarmReviveWorker>()

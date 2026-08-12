@@ -60,7 +60,7 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
 
         val sUid = supervisorUid
         val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-        val halqaId = prefs.getString("current_halqa_id", null)
+        val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
         if (!sUid.isNullOrEmpty() && !halqaId.isNullOrEmpty()) {
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
             FirebaseDatabase.getInstance()
@@ -288,7 +288,7 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
     fun updateDailyStatus(status: String) {
         val uid = userRepository.getUserId()
         val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-        val halqaId = prefs.getString("current_halqa_id", null)
+        val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
 
         if (!uid.isNullOrEmpty() && !halqaId.isNullOrEmpty()) {
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
@@ -320,7 +320,7 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
         dailyRecordListener?.let {
             val uid = userRepository.getUserId()
             val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-            val halqaId = prefs.getString("current_halqa_id", null)
+            val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
             if (!uid.isNullOrEmpty() && !halqaId.isNullOrEmpty()) {
                 val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
                 FirebaseDatabase.getInstance()
@@ -334,7 +334,7 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
         supervisorRecordListener?.let {
             val sUid = supervisorUid
             val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-            val halqaId = prefs.getString("current_halqa_id", null)
+            val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
             if (!sUid.isNullOrEmpty() && !halqaId.isNullOrEmpty()) {
                 val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
                 FirebaseDatabase.getInstance()

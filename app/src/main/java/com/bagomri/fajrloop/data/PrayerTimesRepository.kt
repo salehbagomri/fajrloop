@@ -17,10 +17,10 @@ class PrayerTimesRepository(private val context: Context) {
      * حساب مواقيت الصلاة لتاريخ معين بناءً على إحداثيات موقع المستخدم المحفوظ وطريقة الحساب
      */
     fun getPrayerTimesForDate(date: Date): PrayerTimes {
-        val latitude = prefs.getString("user_latitude_d", "14.5425")?.toDoubleOrNull() ?: 14.5425
-        val longitude = prefs.getString("user_longitude_d", "49.1242")?.toDoubleOrNull() ?: 49.1242
-        val cityName = prefs.getString("user_city", "المكلا") ?: "المكلا"
-        val method = prefs.getString("prayer_calc_method", "umm_al_qura") ?: "umm_al_qura"
+        val latitude = prefs.getString(AlarmPreferences.KEY_USER_LATITUDE, "14.5425")?.toDoubleOrNull() ?: 14.5425
+        val longitude = prefs.getString(AlarmPreferences.KEY_USER_LONGITUDE, "49.1242")?.toDoubleOrNull() ?: 49.1242
+        val cityName = prefs.getString(AlarmPreferences.KEY_USER_CITY, "المكلا") ?: "المكلا"
+        val method = prefs.getString(AlarmPreferences.KEY_PRAYER_CALC_METHOD, "umm_al_qura") ?: "umm_al_qura"
 
         val calculated = PrayerTimesCalculator.calculate(
             latitude = latitude,
@@ -38,12 +38,12 @@ class PrayerTimesRepository(private val context: Context) {
      */
     fun saveLocationAndMethod(latitude: Double, longitude: Double, cityName: String, method: String) {
         prefs.edit().apply {
-            putFloat("user_latitude", latitude.toFloat())
-            putString("user_latitude_d", latitude.toString())
-            putFloat("user_longitude", longitude.toFloat())
-            putString("user_longitude_d", longitude.toString())
-            putString("user_city", cityName)
-            putString("prayer_calc_method", method)
+            putFloat(AlarmPreferences.KEY_USER_LATITUDE_FLOAT, latitude.toFloat())
+            putString(AlarmPreferences.KEY_USER_LATITUDE, latitude.toString())
+            putFloat(AlarmPreferences.KEY_USER_LONGITUDE_FLOAT, longitude.toFloat())
+            putString(AlarmPreferences.KEY_USER_LONGITUDE, longitude.toString())
+            putString(AlarmPreferences.KEY_USER_CITY, cityName)
+            putString(AlarmPreferences.KEY_PRAYER_CALC_METHOD, method)
             apply()
         }
     }

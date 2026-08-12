@@ -20,10 +20,10 @@ object TravelModeManager {
      */
     fun isTravelModeActive(context: Context): Boolean {
         val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val isEnabled = prefs.getBoolean("travel_mode_enabled", false)
+        val isEnabled = prefs.getBoolean(AlarmPreferences.KEY_TRAVEL_MODE_ENABLED, false)
         if (!isEnabled) return false
 
-        val untilTimestamp = prefs.getLong("travel_mode_until_timestamp", Long.MAX_VALUE)
+        val untilTimestamp = prefs.getLong(AlarmPreferences.KEY_TRAVEL_MODE_UNTIL_TIMESTAMP, Long.MAX_VALUE)
         if (untilTimestamp != Long.MAX_VALUE && System.currentTimeMillis() > untilTimestamp) {
             // انقضت مدة السفر المحجوزة! تعطيل وضع السفر تلقائياً واستعادة المنبه
             Log.d(TAG, "✈️ Travel mode duration expired. Auto-disabling.")
@@ -45,7 +45,7 @@ object TravelModeManager {
     fun getTravelModeStatusText(context: Context): String {
         if (!isTravelModeActive(context)) return "غير نشط حالياً"
         val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val untilText = prefs.getString("travel_mode_until", "حتى الإلغاء اليدوي") ?: "حتى الإلغاء اليدوي"
+        val untilText = prefs.getString(AlarmPreferences.KEY_TRAVEL_MODE_UNTIL, "حتى الإلغاء اليدوي") ?: "حتى الإلغاء اليدوي"
         return "نشط - $untilText"
     }
 
@@ -61,10 +61,10 @@ object TravelModeManager {
     ) {
         val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit()
-            .putBoolean("travel_mode_enabled", enabled)
-            .putString("travel_mode_type", type)
-            .putString("travel_mode_until", untilText)
-            .putLong("travel_mode_until_timestamp", untilTimestamp)
+            .putBoolean(AlarmPreferences.KEY_TRAVEL_MODE_ENABLED, enabled)
+            .putString(AlarmPreferences.KEY_TRAVEL_MODE_TYPE, type)
+            .putString(AlarmPreferences.KEY_TRAVEL_MODE_UNTIL, untilText)
+            .putLong(AlarmPreferences.KEY_TRAVEL_MODE_UNTIL_TIMESTAMP, untilTimestamp)
             .apply()
 
         if (enabled) {
@@ -89,7 +89,7 @@ object TravelModeManager {
                 userRef.child("status").setValue(if (enabled) "travel" else "active")
 
                 // المزامنة الحية داخل عقدة اعضاء الحلقة لتظهر فوراً لدى الأصدقاء
-                val halqaId = prefs.getString("current_halqa_id", null)
+                val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
                 if (!halqaId.isNullOrEmpty()) {
                     db.getReference("halqas")
                         .child(halqaId)
@@ -108,7 +108,7 @@ object TravelModeManager {
                                 .child(uid)
                                 .child("status")
                                 .setValue(if (enabled) "travel" else "active")
-                            prefs.edit().putString("current_halqa_id", hId).apply()
+                            prefs.edit().putString(AlarmPreferences.KEY_CURRENT_HALQA_ID, hId).apply()
                             Log.d(TAG, "✅ Realtime synced travel status to Halqa via user node: $hId")
                         }
                     }

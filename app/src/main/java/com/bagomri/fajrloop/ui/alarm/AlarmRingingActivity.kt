@@ -202,7 +202,7 @@ class AlarmRingingActivity : ComponentActivity() {
         setupObservers()
 
         val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val halqaId = prefs.getString("current_halqa_id", null)
+        val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
         if (!halqaId.isNullOrEmpty()) {
             viewModel.updateDailyStatus("pending")
             viewModel.startObservingDailyRecord(halqaId)
@@ -265,7 +265,7 @@ class AlarmRingingActivity : ComponentActivity() {
                         com.bagomri.fajrloop.data.AnalyticsHelper.logEmergencyPanic()
                     },
                     onSnoozeClick = {
-                        val currentHalqa = prefs.getString("current_halqa_id", null)
+                        val currentHalqa = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
                         if (!currentHalqa.isNullOrEmpty()) {
                             isSnoozed = true
                             viewModel.triggerSnooze(currentHalqa)
@@ -389,7 +389,7 @@ class AlarmRingingActivity : ComponentActivity() {
                         }
 
                         val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-                        val showAdhkar = prefs.getBoolean("show_adhkar_after_alarm", true)
+                        val showAdhkar = prefs.getBoolean(AlarmPreferences.KEY_SHOW_ADHKAR_AFTER_ALARM, true)
                         if (showAdhkar) {
                             val mainIntent = Intent(this@AlarmRingingActivity, com.bagomri.fajrloop.ui.main.MainActivity::class.java).apply {
                                 putExtra("navigate_to", "morning_adhkar")
@@ -422,7 +422,7 @@ class AlarmRingingActivity : ComponentActivity() {
         }
 
         val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val halqaId = prefs.getString("current_halqa_id", null)
+        val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
         if (halqaId.isNullOrEmpty()) {
             showToast("❌ خطأ: لم يتم العثور على معرّف الحلقة")
             return

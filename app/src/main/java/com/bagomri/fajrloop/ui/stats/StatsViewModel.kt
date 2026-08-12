@@ -60,7 +60,7 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        halqaId = prefs.getString("current_halqa_id", null)
+        halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
         currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
         if (!halqaId.isNullOrEmpty()) {

@@ -97,7 +97,7 @@ class AlarmReceiver : BroadcastReceiver() {
             }
 
             // تفعيل حالة رنين المنبه النشط في التفضيلات لمنع الإغلاق
-            prefs.edit().putBoolean("alarm_active_ringing", true).apply()
+            prefs.edit().putBoolean(AlarmPreferences.KEY_ALARM_ACTIVE_RINGING, true).apply()
 
             val label = intent.getStringExtra(EXTRA_ALARM_LABEL) ?: "صلاة الفجر"
             val triggerTime = intent.getLongExtra(EXTRA_TRIGGER_TIME, System.currentTimeMillis())
@@ -117,7 +117,7 @@ class AlarmReceiver : BroadcastReceiver() {
             scheduleWatchdog(context)
 
         } else if (intent.action == ACTION_ALARM_WATCHDOG) {
-            val isAlarmActive = prefs.getBoolean("alarm_active_ringing", false)
+            val isAlarmActive = prefs.getBoolean(AlarmPreferences.KEY_ALARM_ACTIVE_RINGING, false)
             Log.d(TAG, "Watchdog tick. isAlarmActive=$isAlarmActive")
 
             if (isAlarmActive) {

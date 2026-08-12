@@ -47,7 +47,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
         val targetHalqaId = activeHalqaId
-            ?: prefs.getString("current_halqa_id", null)
+            ?: prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
 
         if (targetHalqaId.isNullOrEmpty()) {
             Log.w("ChatViewModel", "⚠️ targetHalqaId is null or empty, cannot start listening")

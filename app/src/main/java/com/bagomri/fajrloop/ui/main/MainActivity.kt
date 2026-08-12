@@ -117,7 +117,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val onboardingPrefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val onboardingCompleted = onboardingPrefs.getBoolean("onboarding_completed", false)
+        val onboardingCompleted = onboardingPrefs.getBoolean(AlarmPreferences.KEY_ONBOARDING_COMPLETED, false)
 
         if (!onboardingCompleted) {
             return Screen.Onboarding.route

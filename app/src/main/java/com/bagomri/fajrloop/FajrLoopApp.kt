@@ -28,7 +28,7 @@ class FajrLoopApp : Application() {
                 // إذا تم فتح أي شاشة أخرى غير شاشة الرنين بينما المنبه لا يزال يرن فعلياً، أعد شاشة الرنين فوراً للمقدمة
                 if (activity !is AlarmRingingActivity) {
                     val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-                    val isAlarmActive = prefs.getBoolean("alarm_active_ringing", false)
+                    val isAlarmActive = prefs.getBoolean(AlarmPreferences.KEY_ALARM_ACTIVE_RINGING, false)
                     if (isAlarmActive) {
                         Log.d("FajrLoopApp", "Alarm is actively ringing. Relaunching AlarmRingingActivity...")
                         val relaunchIntent = Intent(activity, AlarmRingingActivity::class.java).apply {

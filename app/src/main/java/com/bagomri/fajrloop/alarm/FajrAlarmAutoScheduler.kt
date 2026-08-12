@@ -54,7 +54,7 @@ object FajrAlarmAutoScheduler {
      */
     fun scheduleNextFajrAlarm(context: Context): Long {
         val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val halqaId = prefs.getString("current_halqa_id", null)
+        val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
         val hasHalqa = !halqaId.isNullOrEmpty()
         val alarmEnabled = hasHalqa && prefs.getBoolean(AlarmPreferences.KEY_ALARM_ENABLED, true)
 
@@ -75,8 +75,8 @@ object FajrAlarmAutoScheduler {
         val now = System.currentTimeMillis()
 
         var prayerTimes = prayerTimesRepository.getPrayerTimesForDate(Date())
-        val type = prefs.getString("alarm_timing_type", "with") ?: "with"
-        val offset = prefs.getInt("alarm_timing_offset_minutes", 0)
+        val type = prefs.getString(AlarmPreferences.KEY_ALARM_TIMING_TYPE, "with") ?: "with"
+        val offset = prefs.getInt(AlarmPreferences.KEY_ALARM_TIMING_OFFSET_MINUTES, 0)
         val offsetMillis = offset * 60 * 1000L
 
         val adjustedToday = when (type) {
@@ -102,7 +102,7 @@ object FajrAlarmAutoScheduler {
         }
 
         // قراءة توقيت الفجر الأبكر الموحد للحلقة المخزن
-        val halqaEarliestFajr = prefs.getLong("halqa_earliest_fajr_millis", -1L)
+        val halqaEarliestFajr = prefs.getLong(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS, -1L)
 
         val targetAlarmTime = if (halqaEarliestFajr > now && halqaEarliestFajr < localNextFajr) {
             Log.d(TAG, "🌟 Unified Halqa Timing ACTIVE: Using earliest Fajr (${Date(halqaEarliestFajr)}) instead of local (${Date(localNextFajr)})")

@@ -81,7 +81,7 @@ fun FajrLoopNavGraph(
             OnboardingScreen(
                 onComplete = {
                     val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-                    prefs.edit().putBoolean("onboarding_completed", true).apply()
+                    prefs.edit().putBoolean(AlarmPreferences.KEY_ONBOARDING_COMPLETED, true).apply()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }
                     }
@@ -354,15 +354,15 @@ fun FajrLoopNavGraph(
         composable(Screen.Settings.route) {
             val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
 
-            var userCity by remember { mutableStateOf(prefs.getString("user_city", "مكة المكرمة") ?: "مكة المكرمة") }
-            var calcMethod by remember { mutableStateOf(prefs.getString("prayer_calc_method", "جامعة أم القرى (مكة المكرمة)") ?: "جامعة أم القرى (مكة المكرمة)") }
+            var userCity by remember { mutableStateOf(prefs.getString(AlarmPreferences.KEY_USER_CITY, "مكة المكرمة") ?: "مكة المكرمة") }
+            var calcMethod by remember { mutableStateOf(prefs.getString(AlarmPreferences.KEY_PRAYER_CALC_METHOD, "جامعة أم القرى (مكة المكرمة)") ?: "جامعة أم القرى (مكة المكرمة)") }
 
-            var alarmTimingType by remember { mutableStateOf(prefs.getString("alarm_timing_type", "with") ?: "with") }
-            var alarmTimingOffset by remember { mutableIntStateOf(prefs.getInt("alarm_timing_offset_minutes", 0)) }
-            var alarmTimingDesc by remember { mutableStateOf(prefs.getString("alarm_timing_desc", "مع أذان الفجر بالضبط") ?: "مع أذان الفجر بالضبط") }
+            var alarmTimingType by remember { mutableStateOf(prefs.getString(AlarmPreferences.KEY_ALARM_TIMING_TYPE, "with") ?: "with") }
+            var alarmTimingOffset by remember { mutableIntStateOf(prefs.getInt(AlarmPreferences.KEY_ALARM_TIMING_OFFSET_MINUTES, 0)) }
+            var alarmTimingDesc by remember { mutableStateOf(prefs.getString(AlarmPreferences.KEY_ALARM_TIMING_DESC, "مع أذان الفجر بالضبط") ?: "مع أذان الفجر بالضبط") }
 
-            val savedChallengeType = prefs.getString("challenge_type", "math") ?: "math"
-            val savedChallengeDiff = prefs.getString("challenge_difficulty", "medium") ?: "medium"
+            val savedChallengeType = prefs.getString(AlarmPreferences.KEY_CHALLENGE_TYPE, "math") ?: "math"
+            val savedChallengeDiff = prefs.getString(AlarmPreferences.KEY_CHALLENGE_DIFFICULTY, "medium") ?: "medium"
             fun formatChallenge(t: String, d: String): String {
                 val tName = when(t) {
                     "word" -> "ترتيب كلمة"
@@ -380,7 +380,7 @@ fun FajrLoopNavGraph(
             var challengeDifficulty by remember { mutableStateOf(savedChallengeDiff) }
             var challengeText by remember { mutableStateOf(formatChallenge(savedChallengeType, savedChallengeDiff)) }
 
-            val savedSoundCode = prefs.getString("alarm_sound_choice", "default") ?: "default"
+            val savedSoundCode = prefs.getString(AlarmPreferences.KEY_ALARM_SOUND_CHOICE, "default") ?: "default"
             fun formatSoundName(code: String): String {
                 return when(code) {
                     "afasy" -> "الأذان بصوت الشيخ مشاري العفاسي"
@@ -394,9 +394,9 @@ fun FajrLoopNavGraph(
 
             var travelModeStatus by remember { mutableStateOf(com.bagomri.fajrloop.alarm.TravelModeManager.getTravelModeStatusText(context)) }
 
-            var isVibrateEnabled by remember { mutableStateOf(prefs.getBoolean("vibrate_on_alarm", true)) }
-            var isAdhkarEnabled by remember { mutableStateOf(prefs.getBoolean("show_adhkar_after_alarm", true)) }
-            var isDuaEnabled by remember { mutableStateOf(prefs.getBoolean("daily_dua_notification", true)) }
+            var isVibrateEnabled by remember { mutableStateOf(prefs.getBoolean(AlarmPreferences.KEY_VIBRATE_ON_ALARM, true)) }
+            var isAdhkarEnabled by remember { mutableStateOf(prefs.getBoolean(AlarmPreferences.KEY_SHOW_ADHKAR_AFTER_ALARM, true)) }
+            var isDuaEnabled by remember { mutableStateOf(prefs.getBoolean(AlarmPreferences.KEY_DAILY_DUA_NOTIFICATION, true)) }
 
             fun performLocationFetch() {
                 val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -427,9 +427,9 @@ fun FajrLoopNavGraph(
 
                             userCity = detectedName
                             prefs.edit()
-                                .putString("user_city", detectedName)
-                                .putFloat("user_latitude", location.latitude.toFloat())
-                                .putFloat("user_longitude", location.longitude.toFloat())
+                                .putString(AlarmPreferences.KEY_USER_CITY, detectedName)
+                                .putFloat(AlarmPreferences.KEY_USER_LATITUDE_FLOAT, location.latitude.toFloat())
+                                .putFloat(AlarmPreferences.KEY_USER_LONGITUDE_FLOAT, location.longitude.toFloat())
                                 .apply()
 
                             val uid = AuthManager.getUserId()
@@ -479,15 +479,15 @@ fun FajrLoopNavGraph(
                 isDuaEnabled = isDuaEnabled,
                 onVibrateChange = { checked ->
                     isVibrateEnabled = checked
-                    prefs.edit().putBoolean("vibrate_on_alarm", checked).apply()
+                    prefs.edit().putBoolean(AlarmPreferences.KEY_VIBRATE_ON_ALARM, checked).apply()
                 },
                 onAdhkarChange = { checked ->
                     isAdhkarEnabled = checked
-                    prefs.edit().putBoolean("show_adhkar_after_alarm", checked).apply()
+                    prefs.edit().putBoolean(AlarmPreferences.KEY_SHOW_ADHKAR_AFTER_ALARM, checked).apply()
                 },
                 onDuaChange = { checked ->
                     isDuaEnabled = checked
-                    prefs.edit().putBoolean("daily_dua_notification", checked).apply()
+                    prefs.edit().putBoolean(AlarmPreferences.KEY_DAILY_DUA_NOTIFICATION, checked).apply()
                 },
                 onLocationClick = {
                     val hasFinePermission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -509,7 +509,7 @@ fun FajrLoopNavGraph(
 
                 onSaveCalcMethod = { method ->
                     calcMethod = method
-                    prefs.edit().putString("prayer_calc_method", method).apply()
+                    prefs.edit().putString(AlarmPreferences.KEY_PRAYER_CALC_METHOD, method).apply()
                     Toast.makeText(context, "تم حفظ طريقة الحساب بنجاح", Toast.LENGTH_SHORT).show()
                 },
                 onSaveAlarmTiming = { type, offset, desc ->
@@ -517,9 +517,9 @@ fun FajrLoopNavGraph(
                     alarmTimingOffset = offset
                     alarmTimingDesc = desc
                     prefs.edit()
-                        .putString("alarm_timing_type", type)
-                        .putInt("alarm_timing_offset_minutes", offset)
-                        .putString("alarm_timing_desc", desc)
+                        .putString(AlarmPreferences.KEY_ALARM_TIMING_TYPE, type)
+                        .putInt(AlarmPreferences.KEY_ALARM_TIMING_OFFSET_MINUTES, offset)
+                        .putString(AlarmPreferences.KEY_ALARM_TIMING_DESC, desc)
                         .apply()
                     Toast.makeText(context, "تم حفظ توقيت المنبه بنجاح", Toast.LENGTH_SHORT).show()
                 },
@@ -528,15 +528,15 @@ fun FajrLoopNavGraph(
                     challengeDifficulty = diff
                     challengeText = formatChallenge(type, diff)
                     prefs.edit()
-                        .putString("challenge_type", type)
-                        .putString("challenge_difficulty", diff)
+                        .putString(AlarmPreferences.KEY_CHALLENGE_TYPE, type)
+                        .putString(AlarmPreferences.KEY_CHALLENGE_DIFFICULTY, diff)
                         .apply()
                     Toast.makeText(context, "تم حفظ تحدي الاستيقاظ بنجاح", Toast.LENGTH_SHORT).show()
                 },
                 onSaveAlarmSound = { code, title ->
                     alarmSoundCode = code
                     alarmSoundText = title
-                    prefs.edit().putString("alarm_sound_choice", code).apply()
+                    prefs.edit().putString(AlarmPreferences.KEY_ALARM_SOUND_CHOICE, code).apply()
                     Toast.makeText(context, "تم حفظ نغمة المنبه: $title", Toast.LENGTH_SHORT).show()
                 },
                 onPermissionsManageClick = {
@@ -566,8 +566,8 @@ fun FajrLoopNavGraph(
         composable(Screen.TravelMode.route) {
             val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
             val isEnabled = com.bagomri.fajrloop.alarm.TravelModeManager.isTravelModeActive(context)
-            val type = prefs.getString("travel_mode_type", "indefinite") ?: "indefinite"
-            val until = prefs.getString("travel_mode_until", "حتى الإلغاء اليدوي") ?: "حتى الإلغاء اليدوي"
+            val type = prefs.getString(AlarmPreferences.KEY_TRAVEL_MODE_TYPE, "indefinite") ?: "indefinite"
+            val until = prefs.getString(AlarmPreferences.KEY_TRAVEL_MODE_UNTIL, "حتى الإلغاء اليدوي") ?: "حتى الإلغاء اليدوي"
 
             TravelModeScreen(
                 initialEnabled = isEnabled,
@@ -597,7 +597,7 @@ fun FajrLoopNavGraph(
 
         composable(Screen.BackupCode.route) {
             val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-            val halqaId = prefs.getString("current_halqa_id", null)
+            val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
             val dateStr = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
             val seed = ((dateStr + (halqaId ?: "")).hashCode()).absoluteValue
             val totpCode = ((seed % 900000) + 100000).toString()

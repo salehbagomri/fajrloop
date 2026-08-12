@@ -25,30 +25,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Initial state loading
     private val initialProfile: UserProfile? = run {
         val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val name = prefs.getString("cached_user_display_name", null)
-        val photo = prefs.getString("cached_user_photo_url", "")
-        val halqaId = prefs.getString("current_halqa_id", "")
+        val name = prefs.getString(AlarmPreferences.KEY_CACHED_USER_DISPLAY_NAME, null)
+        val photo = prefs.getString(AlarmPreferences.KEY_CACHED_USER_PHOTO_URL, "")
+        val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, "")
         if (name != null) UserProfile(displayName = name, photoUrl = photo ?: "", currentHalqaId = halqaId ?: "") else null
     }
 
     private val initialHalqaId: String? = run {
         val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.getString("current_halqa_id", null)
+        prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
     }
 
     private val initialHalqaName: String = run {
         val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.getString("current_halqa_name", "") ?: ""
+        prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_NAME, "") ?: ""
     }
 
     private val initialTodaySummary: String = run {
         val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.getString("cached_today_summary_text", "") ?: ""
+        prefs.getString(AlarmPreferences.KEY_CACHED_TODAY_SUMMARY_TEXT, "") ?: ""
     }
 
     private val initialAwakeCount: String = run {
         val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.getString("cached_awake_count_text", "") ?: ""
+        prefs.getString(AlarmPreferences.KEY_CACHED_AWAKE_COUNT_TEXT, "") ?: ""
     }
 
     // StateFlows
@@ -121,13 +121,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // مزامنة مع SharedPreferences
                 val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
                 val editor = prefs.edit()
-                editor.putString("current_halqa_id", hId)
+                editor.putString(AlarmPreferences.KEY_CURRENT_HALQA_ID, hId)
                 if (profile != null) {
-                    editor.putString("cached_user_display_name", profile.displayName)
-                    editor.putString("cached_user_photo_url", profile.photoUrl)
+                    editor.putString(AlarmPreferences.KEY_CACHED_USER_DISPLAY_NAME, profile.displayName)
+                    editor.putString(AlarmPreferences.KEY_CACHED_USER_PHOTO_URL, profile.photoUrl)
                 } else {
-                    editor.remove("cached_user_display_name")
-                    editor.remove("cached_user_photo_url")
+                    editor.remove(AlarmPreferences.KEY_CACHED_USER_DISPLAY_NAME)
+                    editor.remove(AlarmPreferences.KEY_CACHED_USER_PHOTO_URL)
                 }
                 editor.apply()
 
@@ -146,10 +146,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     stopObservingDailyRecords()
 
                     prefs.edit()
-                        .remove("current_halqa_id")
-                        .remove("current_halqa_name")
-                        .remove("cached_awake_count_text")
-                        .remove("cached_today_summary_text")
+                        .remove(AlarmPreferences.KEY_CURRENT_HALQA_ID)
+                        .remove(AlarmPreferences.KEY_CURRENT_HALQA_NAME)
+                        .remove(AlarmPreferences.KEY_CACHED_AWAKE_COUNT_TEXT)
+                        .remove(AlarmPreferences.KEY_CACHED_TODAY_SUMMARY_TEXT)
                         .apply()
                 } else {
                     val name = snapshot.child("name").value as? String ?: "حلقة"
@@ -167,8 +167,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                     val halqaId = snapshot.key!!
                     prefs.edit()
-                        .putString("current_halqa_id", halqaId)
-                        .putString("current_halqa_name", name)
+                        .putString(AlarmPreferences.KEY_CURRENT_HALQA_ID, halqaId)
+                        .putString(AlarmPreferences.KEY_CURRENT_HALQA_NAME, name)
                         .apply()
 
                     val now = System.currentTimeMillis()
@@ -182,14 +182,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
 
-                    val prevEarliest = prefs.getLong("halqa_earliest_fajr_millis", -1L)
+                    val prevEarliest = prefs.getLong(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS, -1L)
                     val newEarliest = earliestFajr ?: -1L
 
                     if (prevEarliest != newEarliest) {
                         if (earliestFajr != null) {
-                            prefs.edit().putLong("halqa_earliest_fajr_millis", earliestFajr).apply()
+                            prefs.edit().putLong(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS, earliestFajr).apply()
                         } else {
-                            prefs.edit().remove("halqa_earliest_fajr_millis").apply()
+                            prefs.edit().remove(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS).apply()
                         }
                         com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.scheduleNextFajrAlarm(getApplication())
                     }
@@ -349,8 +349,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit()
-            .putString("cached_awake_count_text", countText)
-            .putString("cached_today_summary_text", summaryText)
+            .putString(AlarmPreferences.KEY_CACHED_AWAKE_COUNT_TEXT, countText)
+            .putString(AlarmPreferences.KEY_CACHED_TODAY_SUMMARY_TEXT, summaryText)
             .apply()
     }
 
@@ -463,10 +463,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
                 prefs.edit()
-                    .remove("current_halqa_id")
-                    .remove("current_halqa_name")
-                    .remove("cached_awake_count_text")
-                    .remove("cached_today_summary_text")
+                    .remove(AlarmPreferences.KEY_CURRENT_HALQA_ID)
+                    .remove(AlarmPreferences.KEY_CURRENT_HALQA_NAME)
+                    .remove(AlarmPreferences.KEY_CACHED_AWAKE_COUNT_TEXT)
+                    .remove(AlarmPreferences.KEY_CACHED_TODAY_SUMMARY_TEXT)
                     .apply()
             }
             onResult(success, error)
