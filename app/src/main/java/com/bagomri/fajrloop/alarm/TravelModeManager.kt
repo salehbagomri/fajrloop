@@ -73,7 +73,7 @@ object TravelModeManager {
             Log.d(TAG, "✈️ Travel mode ENABLED. Local alarm cancelled.")
         } else {
             // 2. إعادة جدولة المنبه المحلي
-            AlarmScheduler.scheduleTestAlarm(context, 10)
+            FajrAlarmAutoScheduler.scheduleNextFajrAlarm(context)
             Log.d(TAG, "🔔 Travel mode DISABLED. Rescheduled local alarm.")
         }
 

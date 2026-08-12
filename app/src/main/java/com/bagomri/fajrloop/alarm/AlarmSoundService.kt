@@ -195,8 +195,8 @@ class AlarmSoundService : Service() {
                 setDataSource(this@AlarmSoundService, alarmUri)
                 isLooping = true
                 setVolume(1.0f, 1.0f)
-                prepare()
-                start()
+                setOnPreparedListener { it.start() }
+                prepareAsync()
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error starting ringtone", e)
