@@ -321,14 +321,22 @@ object HalqaManager {
             }
         }
 
-        recalculateLoopResponsibility(currentChain, updatedMembers)
-
         val updates = hashMapOf<String, Any?>(
             "/halqas/$halqaId/chain" to currentChain,
-            "/halqas/$halqaId/members" to updatedMembers,
+            "/halqas/$halqaId/members/$uid" to null,
             "/users/$uid/currentHalqaId" to "",
             "/users/$uid/joinedHalqas/$halqaId" to null
         )
+
+        for ((mId, mData) in updatedMembers) {
+            if (mData is Map<*, *>) {
+                updates["/halqas/$halqaId/members/$mId/position"] = mData["position"]
+                updates["/halqas/$halqaId/members/$mId/responsibleForUserId"] = mData["responsibleForUserId"]
+                if (mData.containsKey("role")) {
+                    updates["/halqas/$halqaId/members/$mId/role"] = mData["role"]
+                }
+            }
+        }
 
         database.reference.updateChildren(updates).awaitTask()
         Unit
@@ -407,11 +415,23 @@ object HalqaManager {
                 // إعادة حساب الترتيب الدائري والمسؤوليات للأعضاء المتبقين
                 recalculateLoopResponsibility(currentChain, updatedMembers)
 
-                // إجراء التحديث الذري على عقدة الحلقة
-                // ملاحظة: تنظيف بيانات المستخدم المحذوف يتم تلقائياً عبر كشف الطرد في HalqaViewModel
+                // إجراء التحديث الذري الشامل:
+                // 1. تحديث السلسلة
+                // 2. حذف عقدة العضو المطرود صراحةً من مسار members في الفايربيس
+                // 3. تحديث المراكز والمسؤوليات للأعضاء المتبقين
                 val updates = hashMapOf<String, Any?>()
                 updates["/halqas/$halqaId/chain"] = currentChain
-                updates["/halqas/$halqaId/members"] = updatedMembers
+                updates["/halqas/$halqaId/members/$targetUid"] = null
+
+                for ((mId, mData) in updatedMembers) {
+                    if (mData is Map<*, *>) {
+                        updates["/halqas/$halqaId/members/$mId/position"] = mData["position"]
+                        updates["/halqas/$halqaId/members/$mId/responsibleForUserId"] = mData["responsibleForUserId"]
+                        if (mData.containsKey("role")) {
+                            updates["/halqas/$halqaId/members/$mId/role"] = mData["role"]
+                        }
+                    }
+                }
 
                 database.reference.updateChildren(updates)
                     .addOnSuccessListener { onComplete(true, null) }
@@ -463,9 +483,17 @@ object HalqaManager {
                 // إعادة حساب الترتيب والمسؤوليات بناءً على الترتيب الجديد للسلسلة
                 recalculateLoopResponsibility(newChain, updatedMembers)
 
-                val updates = hashMapOf<String, Any>()
+                val updates = hashMapOf<String, Any?>()
                 updates["/halqas/$halqaId/chain"] = newChain
-                updates["/halqas/$halqaId/members"] = updatedMembers
+
+                for ((mId, mData) in updatedMembers) {
+                    if (mData is Map<*, *>) {
+                        val pos = mData["position"]
+                        val resp = mData["responsibleForUserId"]
+                        if (pos != null) updates["/halqas/$halqaId/members/$mId/position"] = pos
+                        if (resp != null) updates["/halqas/$halqaId/members/$mId/responsibleForUserId"] = resp
+                    }
+                }
 
                 database.reference.updateChildren(updates)
                     .addOnSuccessListener { onComplete(true, null) }
