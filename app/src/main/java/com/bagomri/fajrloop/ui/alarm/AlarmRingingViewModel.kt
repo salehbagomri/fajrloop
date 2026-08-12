@@ -202,7 +202,9 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun verifyTotpCode(userInput: String, halqaId: String): Boolean {
-        return com.bagomri.fajrloop.alarm.EmergencyCodeUtils.verifyTotpCode(userInput, halqaId)
+        val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val secret = prefs.getString("halqa_shared_secret_$halqaId", "") ?: ""
+        return com.bagomri.fajrloop.alarm.EmergencyCodeUtils.verifyTotpCode(userInput, halqaId, secret)
     }
 
     fun startObservingDailyRecord(halqaId: String) {

@@ -14,8 +14,14 @@ import com.bagomri.fajrloop.ui.alarm.AlarmRingingActivity
  */
 class FajrLoopApp : Application() {
 
+    companion object {
+        lateinit var instance: FajrLoopApp
+            private set
+    }
+
     override fun onCreate() {
         super.onCreate()
+        instance = this
         try {
             com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().log("FajrLoop App Initialized successfully")
         } catch (e: Exception) {

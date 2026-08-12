@@ -57,13 +57,20 @@ class AlarmRingingViewModelTest {
     @Test
     fun testTotpCodeVerification() {
         val halqaId = "test_halqa_123"
-        val expected = com.bagomri.fajrloop.alarm.EmergencyCodeUtils.generateTotpCode(halqaId)
+        val sharedSecret = "secret_abc_789"
 
-        val isValid = viewModel.verifyTotpCode(expected, halqaId)
-        assertTrue(isValid)
+        // Test with secret
+        val expectedWithSecret = com.bagomri.fajrloop.alarm.EmergencyCodeUtils.generateTotpCode(halqaId, sharedSecret = sharedSecret)
+        val isValidWithSecret = com.bagomri.fajrloop.alarm.EmergencyCodeUtils.verifyTotpCode(expectedWithSecret, halqaId, sharedSecret)
+        assertTrue(isValidWithSecret)
+
+        // Test fallback without secret
+        val expectedFallback = com.bagomri.fajrloop.alarm.EmergencyCodeUtils.generateTotpCode(halqaId)
+        val isValidFallback = viewModel.verifyTotpCode(expectedFallback, halqaId)
+        assertTrue(isValidFallback)
 
         val isInvalid = viewModel.verifyTotpCode("000000", halqaId)
-        if (expected != "000000") {
+        if (expectedFallback != "000000" && expectedWithSecret != "000000") {
             assertFalse(isInvalid)
         }
     }

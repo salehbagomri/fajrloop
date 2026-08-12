@@ -598,8 +598,9 @@ fun FajrLoopNavGraph(
         composable(Screen.BackupCode.route) {
             val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
             val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
+            val secret = if (!halqaId.isNullOrEmpty()) prefs.getString("halqa_shared_secret_$halqaId", "") ?: "" else ""
             val totpCode = if (!halqaId.isNullOrEmpty()) {
-                com.bagomri.fajrloop.alarm.EmergencyCodeUtils.generateTotpCode(halqaId)
+                com.bagomri.fajrloop.alarm.EmergencyCodeUtils.generateTotpCode(halqaId, sharedSecret = secret)
             } else {
                 "000000"
             }

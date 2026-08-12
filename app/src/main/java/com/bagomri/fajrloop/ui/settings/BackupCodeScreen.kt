@@ -49,8 +49,14 @@ import kotlin.math.absoluteValue
  * Generates a real TOTP-style 6-digit code based on halqaId + current 30-minute window.
  * The code rotates every 30 minutes automatically.
  */
-fun generateTotpCode(halqaId: String): String {
-    val rawCode = com.bagomri.fajrloop.alarm.EmergencyCodeUtils.generateTotpCode(halqaId)
+fun generateTotpCode(halqaId: String, sharedSecret: String = ""): String {
+    val secret = if (sharedSecret.isNotEmpty()) sharedSecret else {
+        try {
+            val prefs = com.bagomri.fajrloop.FajrLoopApp.instance.getSharedPreferences(com.bagomri.fajrloop.alarm.AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+            prefs.getString("halqa_shared_secret_$halqaId", "") ?: ""
+        } catch (e: Exception) { "" }
+    }
+    val rawCode = com.bagomri.fajrloop.alarm.EmergencyCodeUtils.generateTotpCode(halqaId, sharedSecret = secret)
     return com.bagomri.fajrloop.alarm.EmergencyCodeUtils.formatTotpDisplay(rawCode)
 }
 
