@@ -293,7 +293,7 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
         return map
     }
 
-    private fun buildLeaderboard(recordsSnap: DataSnapshot, membersSnap: DataSnapshot): Triple<List<LeaderboardItem>, String, String> {
+    private fun buildLeaderboard(recordsSnap: DataSnapshot, membersSnap: DataSnapshot?): Triple<List<LeaderboardItem>, String, String> {
         val tempMap = mutableMapOf<String, Int>()
         val rescuesMap = mutableMapOf<String, Int>()
 
@@ -313,14 +313,16 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         val tempList = mutableListOf<LeaderboardItem>()
-        for (mSnap in membersSnap.children) {
-            val mId = mSnap.key ?: continue
-            val name = mSnap.child("displayName").value as? String ?: "عضو"
-            val photo = mSnap.child("photoUrl").value as? String ?: ""
-            val activeDays = tempMap[mId] ?: 0
-            val rescues = rescuesMap[mId] ?: 0
+        if (membersSnap != null) {
+            for (mSnap in membersSnap.children) {
+                val mId = mSnap.key ?: continue
+                val name = mSnap.child("displayName").value as? String ?: "عضو"
+                val photo = mSnap.child("photoUrl").value as? String ?: ""
+                val activeDays = tempMap[mId] ?: 0
+                val rescues = rescuesMap[mId] ?: 0
 
-            tempList.add(LeaderboardItem(0, mId, name, photo, activeDays, rescues))
+                tempList.add(LeaderboardItem(0, mId, name, photo, activeDays, rescues))
+            }
         }
 
         tempList.sortByDescending { it.streak }
