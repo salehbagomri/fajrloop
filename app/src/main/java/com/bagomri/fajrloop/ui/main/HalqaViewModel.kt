@@ -75,6 +75,10 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
     private var dailyRecordsListener: ValueEventListener? = null
     private var lastScheduledTestAlarmTime: Long = 0L
 
+    private var latestChain: List<String> = emptyList()
+    private var latestMembersSnap: DataSnapshot? = null
+    private var lastDailyRecordsSnap: DataSnapshot? = null
+
     init {
         startObservingHalqa()
     }
@@ -93,6 +97,8 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
                 // كشف الطرد: الحلقة موجودة لكن المستخدم الحالي ليس عضواً فيها
                 if (!membersSnap.hasChild(uid)) {
                     android.util.Log.w("HalqaViewModel", "تم اكتشاف طرد المستخدم من الحلقة")
+                    // تنظيف مسار المستخدم في الفايربيس (يملك المستخدم صلاحية الكتابة لعقدته الخاصة)
+                    FirebaseDatabase.getInstance().getReference("users").child(uid).child("currentHalqaId").setValue("")
                     clearHalqaState()
                     return@observeUserHalqa
                 }
@@ -133,7 +139,12 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
                     Toast.makeText(getApplication(), "🧪 تمت جدولة اختبار منبه الحلقة ليرن بعد دقيقة!", Toast.LENGTH_LONG).show()
                 }
 
-                startObservingDailyRecords(halqaId, chain, membersSnap)
+                // حفظ أحدث بيانات الحلقة وتحديث قائمة الأعضاء فوراً دون إبطاء
+                latestChain = chain
+                latestMembersSnap = membersSnap
+                updateChainAndSummary(chain, membersSnap, lastDailyRecordsSnap)
+
+                startObservingDailyRecords(halqaId)
                 _isLoadingMembers.value = false
             }
         }
@@ -150,6 +161,9 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         _awakeCountTextFlow.value = ""
         _friendWakeAlertFlow.value = null
         _isLoadingMembers.value = false
+        latestChain = emptyList()
+        latestMembersSnap = null
+        lastDailyRecordsSnap = null
         stopObservingDailyRecords()
 
         prefs.edit().remove(AlarmPreferences.KEY_CURRENT_HALQA_ID).remove(AlarmPreferences.KEY_CURRENT_HALQA_NAME)
@@ -162,14 +176,19 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         stopObservingDailyRecords()
     }
 
-    private fun startObservingDailyRecords(halqaId: String, chain: List<String>, membersSnap: DataSnapshot) {
+    private fun startObservingDailyRecords(halqaId: String) {
         stopObservingDailyRecords()
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
         val recordsRef = FirebaseDatabase.getInstance().getReference("dailyRecords").child(halqaId).child(currentDate)
 
         dailyRecordsListener = recordsRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                updateChainAndSummary(chain, membersSnap, snapshot)
+                lastDailyRecordsSnap = snapshot
+                val chain = latestChain
+                val membersSnap = latestMembersSnap
+                if (membersSnap != null) {
+                    updateChainAndSummary(chain, membersSnap, snapshot)
+                }
             }
             override fun onCancelled(error: DatabaseError) {}
         })
@@ -186,7 +205,7 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         dailyRecordsListener = null
     }
 
-    private fun updateChainAndSummary(chain: List<String>, membersSnap: DataSnapshot, recordsSnap: DataSnapshot) {
+    private fun updateChainAndSummary(chain: List<String>, membersSnap: DataSnapshot, recordsSnap: DataSnapshot?) {
         val currentUid = userRepository.getUserId() ?: ""
         val membersList = mutableListOf<LoopMemberItem>()
         var awakeCount = 0
@@ -212,7 +231,7 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
             var status = "pending"
             val profileStatus = mSnap.child("status").value as? String
             if (profileStatus == "travel" || profileStatus == "traveling") status = "travel"
-            else if (recordsSnap.child(mId).exists()) status = recordsSnap.child(mId).child("status").value as? String ?: "pending"
+            else if (recordsSnap != null && recordsSnap.child(mId).exists()) status = recordsSnap.child(mId).child("status").value as? String ?: "pending"
 
             if (status == "awake") awakeCount++
 
