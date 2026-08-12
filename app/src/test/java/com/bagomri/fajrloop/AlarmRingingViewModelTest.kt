@@ -74,4 +74,27 @@ class AlarmRingingViewModelTest {
             assertFalse(isInvalid)
         }
     }
+
+    @Test
+    fun testFindActiveSupervisorSkipsTravelMembers() {
+        val chain = listOf("user1", "user2", "user3", "user4")
+        val members = mapOf(
+            "user1" to mapOf("status" to "active"),
+            "user2" to mapOf("status" to "travel"),
+            "user3" to mapOf("status" to "travel"),
+            "user4" to mapOf("status" to "active")
+        )
+
+        val supervisorForUser1 = viewModel.findActiveSupervisor(chain, members, "user1")
+        assertEquals("user4", supervisorForUser1)
+
+        val activeMembers = mapOf(
+            "user1" to mapOf("status" to "active"),
+            "user2" to mapOf("status" to "active"),
+            "user3" to mapOf("status" to "travel"),
+            "user4" to mapOf("status" to "active")
+        )
+        val supervisorForUser1Active = viewModel.findActiveSupervisor(chain, activeMembers, "user1")
+        assertEquals("user2", supervisorForUser1Active)
+    }
 }

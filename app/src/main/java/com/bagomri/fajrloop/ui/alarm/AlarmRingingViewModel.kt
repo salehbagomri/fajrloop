@@ -235,37 +235,80 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
         })
     }
 
+    fun findActiveSupervisor(chain: List<String>, members: Map<String, Any?>, startUid: String): String {
+        val n = chain.size
+        val startIndex = chain.indexOf(startUid)
+        if (startIndex == -1 || n <= 1) return startUid
+
+        // ابدأ من العضو المسؤول (التالي في السلسلة)
+        val responsibleIndex = (startIndex + 1) % n
+
+        for (step in 0 until n) {
+            val candidateIndex = (responsibleIndex + step) % n
+            val candidateUid = chain[candidateIndex]
+            if (candidateUid == startUid) continue // تجنب المستخدم نفسه
+
+            val candidateData = members[candidateUid] as? Map<*, *>
+            val candidateStatus = candidateData?.get("status") as? String
+
+            if (candidateStatus != "travel") {
+                return candidateUid  // أول عضو غير مسافر
+            }
+        }
+
+        // إذا كل الأعضاء مسافرون، ارجع للمسؤول الأصلي
+        return chain[(startIndex + 1) % n]
+    }
+
     fun loadPartnerDetails(halqaId: String) {
         val uid = userRepository.getUserId() ?: return
         FirebaseDatabase.getInstance().getReference("halqas").child(halqaId)
             .addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     if (snapshot.exists()) {
+                        val chain = (snapshot.child("chain").value as? List<*>)?.filterIsInstance<String>() ?: emptyList()
                         val membersSnap = snapshot.child("members")
-                        var supervisorUid: String? = null
-                        
+
+                        val membersMap = mutableMapOf<String, Any?>()
                         for (member in membersSnap.children) {
-                            val respFor = member.child("responsibleForUserId").value as? String
-                            if (respFor == uid && member.key != uid) {
-                                supervisorUid = member.key
-                                val name = member.child("displayName").value as? String ?: "المسؤول"
-                                _supervisorNameFlow.value = name
-                                break
+                            val key = member.key ?: continue
+                            membersMap[key] = member.value as? Map<*, *>
+                        }
+
+                        var supervisorUid: String? = null
+
+                        if (chain.isNotEmpty()) {
+                            val activeSuper = findActiveSupervisor(chain, membersMap, uid)
+                            if (activeSuper != uid) {
+                                supervisorUid = activeSuper
                             }
                         }
-                        
+
+                        if (supervisorUid == null) {
+                            for (member in membersSnap.children) {
+                                val key = member.key ?: continue
+                                if (key != uid) {
+                                    val status = member.child("status").value as? String
+                                    if (status != "travel") {
+                                        supervisorUid = key
+                                        break
+                                    }
+                                }
+                            }
+                        }
+
                         if (supervisorUid == null) {
                             for (member in membersSnap.children) {
                                 if (member.key != uid) {
                                     supervisorUid = member.key
-                                    val name = member.child("displayName").value as? String ?: "المسؤول"
-                                    _supervisorNameFlow.value = name
                                     break
                                 }
                             }
                         }
-                        
+
                         if (supervisorUid != null) {
+                            val name = membersSnap.child(supervisorUid).child("displayName").value as? String ?: "المسؤول"
+                            _supervisorNameFlow.value = name
                             this@AlarmRingingViewModel.supervisorUid = supervisorUid
                             startObservingSupervisorStatus(halqaId, supervisorUid)
 
