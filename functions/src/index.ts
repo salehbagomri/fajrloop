@@ -75,7 +75,13 @@ export const onChallengeComplete = functions.database.ref('/dailyRecords/{halqaI
         }
 
         const halqaId = context.params.halqaId;
+        const date = context.params.date;
         const userId = context.params.userId;
+
+        // حفظ challengeDoneAtMillis إذا لم يكن مسجلاً
+        if (!after.challengeDoneAtMillis) {
+            await admin.database().ref(`/dailyRecords/${halqaId}/${date}/${userId}/challengeDoneAtMillis`).set(Date.now());
+        }
 
         // جلب اسم العضو
         const userSnap = await admin.database().ref(`/users/${userId}`).once('value');
@@ -248,4 +254,80 @@ export const cleanupOldDailyRecords = functions.pubsub
             console.error('Error during cleanup:', error);
             return null;
         }
+    });
+
+/**
+ * escalateUnconfirmedWakes — يُفعَّل تلقائياً كل 10 دقائق.
+ * إذا كانت حالة العضو challenge_done ومرّت أكثر من 10 دقائق دون تأكيد الاستيقاظ،
+ * تتحول الحالة تلقائياً إلى panic ويُرسَل إشعار للعضو التالي في السلسلة.
+ */
+export const escalateUnconfirmedWakes = functions.pubsub
+    .schedule('*/10 * * * *')  // كل 10 دقائق
+    .timeZone('UTC')
+    .onRun(async (_context) => {
+        const db = admin.database();
+        const now = Date.now();
+        const tenMinutesAgo = now - (10 * 60 * 1000);
+        const today = new Date().toISOString().split('T')[0];
+        
+        // جلب كل سجلات اليوم
+        const recordsSnap = await db.ref('/dailyRecords').once('value');
+        if (!recordsSnap.exists()) return null;
+        
+        const escalatePromises: Promise<void>[] = [];
+        
+        recordsSnap.forEach((halqaSnap) => {
+            const halqaId = halqaSnap.key!;
+            const todaySnap = halqaSnap.child(today);
+            
+            todaySnap.forEach((userSnap) => {
+                const userId = userSnap.key!;
+                const status = userSnap.child('status').val();
+                const challengeDoneAt = userSnap.child('challengeDoneAtMillis').val() as number;
+                
+                // إذا كانت الحالة challenge_done ومرّت 10 دقائق
+                if (status === 'challenge_done' && challengeDoneAt && challengeDoneAt < tenMinutesAgo) {
+                    escalatePromises.push((async () => {
+                        // جلب بيانات الحلقة
+                        const halqaSnap2 = await db.ref(`/halqas/${halqaId}`).once('value');
+                        const chain = halqaSnap2.child('chain').val() as string[] || [];
+                        const members = halqaSnap2.child('members').val() || {};
+                        
+                        const responsibleId = members[userId]?.responsibleForUserId;
+                        
+                        // العضو التالي بعد المسؤول
+                        const responsibleIndex = chain.indexOf(responsibleId);
+                        const nextIndex = (responsibleIndex + 1) % chain.length;
+                        const nextMemberId = chain[nextIndex];
+                        
+                        if (!nextMemberId || nextMemberId === userId) return;
+                        
+                        // تسجيل panic تلقائي
+                        await db.ref(`/dailyRecords/${halqaId}/${today}/${userId}/status`).set('panic');
+                        
+                        // إرسال إشعار للعضو التالي
+                        const tokenSnap = await db.ref(`/users/${nextMemberId}/fcmToken`).once('value');
+                        const token = tokenSnap.val();
+                        if (!token) return;
+                        
+                        const displayName = members[userId]?.displayName || 'صديقك';
+                        await admin.messaging().send({
+                            token,
+                            data: {
+                                type: 'emergency_panic',
+                                title: '⚠️ تصعيد تلقائي — مساعدة عاجلة',
+                                body: `[${displayName}] حل التحدي منذ 10 دقائق لكن لم يُؤكَّد استيقاظه — ساعده الآن!`,
+                                friendUid: userId,
+                                friendName: displayName
+                            }
+                        });
+                        
+                        console.log(`Auto-escalated wake for user ${userId} in halqa ${halqaId}`);
+                    })());
+                }
+            });
+        });
+        
+        await Promise.all(escalatePromises);
+        return null;
     });
