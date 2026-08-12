@@ -36,6 +36,7 @@ fun HalqaDetailsSheet(
     members: List<HalqaMemberItem>,
     isAdmin: Boolean,
     isHalqaEffective: Boolean = true,
+    isLoading: Boolean = false,
     onDismiss: () -> Unit,
     onLeaveClick: () -> Unit,
     onTestAlarmClick: () -> Unit,
@@ -124,22 +125,45 @@ fun HalqaDetailsSheet(
                 }
             }
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f, fill = false),
-                verticalArrangement = Arrangement.spacedBy(Spacing.xs)
-            ) {
-                itemsIndexed(members) { index, member ->
-                    LoopMemberRow(
-                        member = member,
-                        isAdminView = isAdmin,
-                        onConfirmWake = onConfirmWake,
-                        onCallClick = onCallClick,
-                        onMoveUp = { onMoveUp(index) },
-                        onMoveDown = { onMoveDown(index) },
-                        onRemoveMember = onRemoveMember
-                    )
+            if (isLoading && members.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = Spacing.xl),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(
+                            color = FajrLoopColors.Primary,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(Spacing.sm))
+                        Text(
+                            text = "جاري تحميل الأعضاء...",
+                            fontFamily = PpNmArabic,
+                            fontSize = 14.sp,
+                            color = FajrLoopColors.TextSecondary
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+                ) {
+                    itemsIndexed(members) { index, member ->
+                        LoopMemberRow(
+                            member = member,
+                            isAdminView = isAdmin,
+                            onConfirmWake = onConfirmWake,
+                            onCallClick = onCallClick,
+                            onMoveUp = { onMoveUp(index) },
+                            onMoveDown = { onMoveDown(index) },
+                            onRemoveMember = onRemoveMember
+                        )
+                    }
                 }
             }
 

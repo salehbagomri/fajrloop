@@ -156,6 +156,7 @@ fun FajrLoopNavGraph(
             val countdownColor by prayerTimesViewModel.countdownColorFlow.collectAsState()
             val countdownBorderMode by prayerTimesViewModel.countdownCardBorderModeFlow.collectAsState()
             val isHalqaEffective by halqaViewModel.isHalqaEffectiveFlow.collectAsState()
+            val isLoadingMembers by halqaViewModel.isLoadingMembers.collectAsState()
 
             val snackbarHostState = remember { SnackbarHostState() }
 
@@ -252,6 +253,7 @@ fun FajrLoopNavGraph(
                     members = sheetMembers,
                     isAdmin = isAdmin,
                     isHalqaEffective = isHalqaEffective,
+                    isLoading = isLoadingMembers,
                     onDismiss = { showHalqaDetailsSheet = false },
                     onLeaveClick = {
                         showHalqaDetailsSheet = false

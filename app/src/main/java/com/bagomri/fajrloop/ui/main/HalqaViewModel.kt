@@ -59,6 +59,9 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
     private val _friendWakeAlertFlow = MutableStateFlow<FriendWakeAlert?>(null)
     val friendWakeAlertFlow: StateFlow<FriendWakeAlert?> = _friendWakeAlertFlow.asStateFlow()
 
+    private val _isLoadingMembers = MutableStateFlow(true)
+    val isLoadingMembers: StateFlow<Boolean> = _isLoadingMembers.asStateFlow()
+
     private val _errorFlow = MutableSharedFlow<String>(replay = 0)
     val errorFlow: SharedFlow<String> = _errorFlow.asSharedFlow()
 
@@ -78,19 +81,28 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
 
     fun startObservingHalqa() {
         stopObservingHalqa()
-        val uid = userRepository.getUserId() ?: return
+        _isLoadingMembers.value = true
+        val uid = userRepository.getUserId() ?: run { _isLoadingMembers.value = false; return }
 
         halqaListener = halqaRepository.observeUserHalqa { snapshot ->
             if (snapshot == null || !snapshot.exists()) {
                 clearHalqaState()
             } else {
+                val membersSnap = snapshot.child("members")
+
+                // كشف الطرد: الحلقة موجودة لكن المستخدم الحالي ليس عضواً فيها
+                if (!membersSnap.hasChild(uid)) {
+                    android.util.Log.w("HalqaViewModel", "تم اكتشاف طرد المستخدم من الحلقة")
+                    clearHalqaState()
+                    return@observeUserHalqa
+                }
+
                 val name = snapshot.child("name").value as? String ?: "حلقة"
                 val inviteCode = snapshot.child("inviteCode").value as? String ?: ""
                 _halqaNameFlow.value = name
                 _inviteCodeFlow.value = inviteCode
 
                 val chain = (snapshot.child("chain").value as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                val membersSnap = snapshot.child("members")
                 _isCurrentUserAdminFlow.value = membersSnap.child(uid).child("role").value as? String == "admin"
 
                 val halqaId = snapshot.key!!
@@ -122,6 +134,7 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 startObservingDailyRecords(halqaId, chain, membersSnap)
+                _isLoadingMembers.value = false
             }
         }
     }
@@ -136,6 +149,7 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         _todaySummaryTextFlow.value = ""
         _awakeCountTextFlow.value = ""
         _friendWakeAlertFlow.value = null
+        _isLoadingMembers.value = false
         stopObservingDailyRecords()
 
         prefs.edit().remove(AlarmPreferences.KEY_CURRENT_HALQA_ID).remove(AlarmPreferences.KEY_CURRENT_HALQA_NAME)
