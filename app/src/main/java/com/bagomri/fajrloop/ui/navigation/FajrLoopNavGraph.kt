@@ -598,9 +598,11 @@ fun FajrLoopNavGraph(
         composable(Screen.BackupCode.route) {
             val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
             val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
-            val dateStr = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
-            val seed = ((dateStr + (halqaId ?: "")).hashCode()).absoluteValue
-            val totpCode = ((seed % 900000) + 100000).toString()
+            val totpCode = if (!halqaId.isNullOrEmpty()) {
+                com.bagomri.fajrloop.alarm.EmergencyCodeUtils.generateTotpCode(halqaId)
+            } else {
+                "000000"
+            }
 
             BackupCodeScreen(
                 halqaId = halqaId,

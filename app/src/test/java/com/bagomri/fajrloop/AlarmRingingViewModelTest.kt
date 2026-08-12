@@ -57,15 +57,13 @@ class AlarmRingingViewModelTest {
     @Test
     fun testTotpCodeVerification() {
         val halqaId = "test_halqa_123"
-        val dateStr = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US).format(java.util.Date())
-        val seed = (dateStr + halqaId).hashCode().let { if (it < 0) -it else it }
-        val expected = (seed % 900000) + 100000
+        val expected = com.bagomri.fajrloop.alarm.EmergencyCodeUtils.generateTotpCode(halqaId)
 
-        val isValid = viewModel.verifyTotpCode(expected.toString(), halqaId)
+        val isValid = viewModel.verifyTotpCode(expected, halqaId)
         assertTrue(isValid)
 
-        val isInvalid = viewModel.verifyTotpCode("123456", halqaId)
-        if (expected != 123456) {
+        val isInvalid = viewModel.verifyTotpCode("000000", halqaId)
+        if (expected != "000000") {
             assertFalse(isInvalid)
         }
     }
