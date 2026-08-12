@@ -28,6 +28,9 @@ import com.bagomri.fajrloop.ui.chat.ChatScreen
 import com.bagomri.fajrloop.ui.chat.ChatViewModel
 import com.bagomri.fajrloop.ui.main.HomeScreen
 import com.bagomri.fajrloop.ui.main.MainViewModel
+import com.bagomri.fajrloop.ui.main.PrayerTimesViewModel
+import com.bagomri.fajrloop.ui.main.HalqaViewModel
+import com.bagomri.fajrloop.ui.main.LoopMemberItem
 import com.bagomri.fajrloop.ui.onboarding.OnboardingScreen
 import com.bagomri.fajrloop.ui.main.components.HalqaMemberItem
 import com.bagomri.fajrloop.ui.main.dialogs.*
@@ -631,7 +634,7 @@ fun FajrLoopNavGraph(
         }
 
         composable(Screen.Chat.route) {
-            val activeHalqaId by mainViewModel.halqaIdFlow.collectAsState()
+            val activeHalqaId by halqaViewModel.halqaIdFlow.collectAsState()
             val messages by chatViewModel.messagesFlow.collectAsState()
             val halqaName by chatViewModel.halqaNameFlow.collectAsState()
 

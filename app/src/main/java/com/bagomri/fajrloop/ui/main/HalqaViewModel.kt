@@ -25,48 +25,30 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
     private val userRepository = UserRepository()
     private val halqaRepository = HalqaRepository()
 
-    private val initialHalqaId: String? = run {
-        val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
-    }
+    private val prefs by lazy { application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE) }
 
-    private val initialHalqaName: String = run {
-        val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_NAME, "") ?: ""
-    }
-
-    private val initialTodaySummary: String = run {
-        val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.getString(AlarmPreferences.KEY_CACHED_TODAY_SUMMARY_TEXT, "") ?: ""
-    }
-
-    private val initialAwakeCount: String = run {
-        val prefs = application.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.getString(AlarmPreferences.KEY_CACHED_AWAKE_COUNT_TEXT, "") ?: ""
-    }
-
-    private val _halqaIdFlow = MutableStateFlow<String?>(initialHalqaId)
+    private val _halqaIdFlow = MutableStateFlow<String?>(prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null))
     val halqaIdFlow: StateFlow<String?> = _halqaIdFlow.asStateFlow()
 
-    private val _halqaNameFlow = MutableStateFlow<String>(initialHalqaName)
+    private val _halqaNameFlow = MutableStateFlow(prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_NAME, "") ?: "")
     val halqaNameFlow: StateFlow<String> = _halqaNameFlow.asStateFlow()
 
-    private val _inviteCodeFlow = MutableStateFlow<String>("")
+    private val _inviteCodeFlow = MutableStateFlow("")
     val inviteCodeFlow: StateFlow<String> = _inviteCodeFlow.asStateFlow()
 
-    private val _isCurrentUserAdminFlow = MutableStateFlow<Boolean>(false)
+    private val _isCurrentUserAdminFlow = MutableStateFlow(false)
     val isCurrentUserAdminFlow: StateFlow<Boolean> = _isCurrentUserAdminFlow.asStateFlow()
 
     private val _loopMembersFlow = MutableStateFlow<List<LoopMemberItem>>(emptyList())
     val loopMembersFlow: StateFlow<List<LoopMemberItem>> = _loopMembersFlow.asStateFlow()
 
-    private val _isHalqaEffectiveFlow = MutableStateFlow<Boolean>(false)
+    private val _isHalqaEffectiveFlow = MutableStateFlow(false)
     val isHalqaEffectiveFlow: StateFlow<Boolean> = _isHalqaEffectiveFlow.asStateFlow()
 
-    private val _todaySummaryTextFlow = MutableStateFlow<String>(initialTodaySummary)
+    private val _todaySummaryTextFlow = MutableStateFlow(prefs.getString(AlarmPreferences.KEY_CACHED_TODAY_SUMMARY_TEXT, "") ?: "")
     val todaySummaryTextFlow: StateFlow<String> = _todaySummaryTextFlow.asStateFlow()
 
-    private val _awakeCountTextFlow = MutableStateFlow<String>(initialAwakeCount)
+    private val _awakeCountTextFlow = MutableStateFlow(prefs.getString(AlarmPreferences.KEY_CACHED_AWAKE_COUNT_TEXT, "") ?: "")
     val awakeCountTextFlow: StateFlow<String> = _awakeCountTextFlow.asStateFlow()
 
     private val _friendWakeAlertFlow = MutableStateFlow<FriendWakeAlert?>(null)
@@ -85,54 +67,41 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         val uid = userRepository.getUserId() ?: return
 
         halqaListener = halqaRepository.observeUserHalqa { snapshot ->
-            val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
             if (snapshot == null || !snapshot.exists()) {
-                clearHalqaState(prefs)
+                clearHalqaState()
             } else {
                 val name = snapshot.child("name").value as? String ?: "حلقة"
                 val inviteCode = snapshot.child("inviteCode").value as? String ?: ""
                 _halqaNameFlow.value = name
                 _inviteCodeFlow.value = inviteCode
 
-                val chain = (snapshot.child("chain").value as? List<*>)
-                    ?.filterIsInstance<String>() ?: emptyList()
-
+                val chain = (snapshot.child("chain").value as? List<*>)?.filterIsInstance<String>() ?: emptyList()
                 val membersSnap = snapshot.child("members")
-                val isAdmin = membersSnap.child(uid).child("role").value as? String == "admin"
-                _isCurrentUserAdminFlow.value = isAdmin
+                _isCurrentUserAdminFlow.value = membersSnap.child(uid).child("role").value as? String == "admin"
 
                 val halqaId = snapshot.key!!
                 _halqaIdFlow.value = halqaId
-                prefs.edit()
-                    .putString(AlarmPreferences.KEY_CURRENT_HALQA_ID, halqaId)
-                    .putString(AlarmPreferences.KEY_CURRENT_HALQA_NAME, name)
-                    .apply()
+                prefs.edit().putString(AlarmPreferences.KEY_CURRENT_HALQA_ID, halqaId).putString(AlarmPreferences.KEY_CURRENT_HALQA_NAME, name).apply()
 
                 val now = System.currentTimeMillis()
                 var earliestFajr: Long? = null
                 for (mChild in membersSnap.children) {
                     val mFajr = mChild.child("fajrTimeMillis").value as? Long
-                    if (mFajr != null && mFajr > now) {
-                        if (earliestFajr == null || mFajr < earliestFajr) {
-                            earliestFajr = mFajr
-                        }
+                    if (mFajr != null && mFajr > now && (earliestFajr == null || mFajr < earliestFajr)) {
+                        earliestFajr = mFajr
                     }
                 }
 
                 val prevEarliest = prefs.getLong(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS, -1L)
                 val newEarliest = earliestFajr ?: -1L
-
                 if (prevEarliest != newEarliest) {
-                    if (earliestFajr != null) {
-                        prefs.edit().putLong(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS, earliestFajr).apply()
-                    } else {
-                        prefs.edit().remove(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS).apply()
-                    }
+                    if (earliestFajr != null) prefs.edit().putLong(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS, earliestFajr).apply()
+                    else prefs.edit().remove(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS).apply()
                     FajrAlarmAutoScheduler.scheduleNextFajrAlarm(getApplication())
                 }
 
                 val testAlarmTime = snapshot.child("testAlarmTime").value as? Long
-                if (testAlarmTime != null && testAlarmTime > System.currentTimeMillis() && testAlarmTime != lastScheduledTestAlarmTime) {
+                if (testAlarmTime != null && testAlarmTime > now && testAlarmTime != lastScheduledTestAlarmTime) {
                     lastScheduledTestAlarmTime = testAlarmTime
                     AlarmScheduler.scheduleAlarm(getApplication(), testAlarmTime, "اختبار منبه الحلقة 🧪")
                     Toast.makeText(getApplication(), "🧪 تمت جدولة اختبار منبه الحلقة ليرن بعد دقيقة!", Toast.LENGTH_LONG).show()
@@ -143,7 +112,7 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun clearHalqaState(prefs: android.content.SharedPreferences) {
+    private fun clearHalqaState() {
         _halqaIdFlow.value = null
         _halqaNameFlow.value = ""
         _inviteCodeFlow.value = ""
@@ -155,18 +124,12 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         _friendWakeAlertFlow.value = null
         stopObservingDailyRecords()
 
-        prefs.edit()
-            .remove(AlarmPreferences.KEY_CURRENT_HALQA_ID)
-            .remove(AlarmPreferences.KEY_CURRENT_HALQA_NAME)
-            .remove(AlarmPreferences.KEY_CACHED_AWAKE_COUNT_TEXT)
-            .remove(AlarmPreferences.KEY_CACHED_TODAY_SUMMARY_TEXT)
-            .apply()
+        prefs.edit().remove(AlarmPreferences.KEY_CURRENT_HALQA_ID).remove(AlarmPreferences.KEY_CURRENT_HALQA_NAME)
+            .remove(AlarmPreferences.KEY_CACHED_AWAKE_COUNT_TEXT).remove(AlarmPreferences.KEY_CACHED_TODAY_SUMMARY_TEXT).apply()
     }
 
     fun stopObservingHalqa() {
-        halqaListener?.let {
-            halqaRepository.removeObserver(it)
-        }
+        halqaListener?.let { halqaRepository.removeObserver(it) }
         halqaListener = null
         stopObservingDailyRecords()
     }
@@ -174,10 +137,7 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
     private fun startObservingDailyRecords(halqaId: String, chain: List<String>, membersSnap: DataSnapshot) {
         stopObservingDailyRecords()
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-        val recordsRef = FirebaseDatabase.getInstance()
-            .getReference("dailyRecords")
-            .child(halqaId)
-            .child(currentDate)
+        val recordsRef = FirebaseDatabase.getInstance().getReference("dailyRecords").child(halqaId).child(currentDate)
 
         dailyRecordsListener = recordsRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -192,21 +152,13 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
             val currentId = _halqaIdFlow.value
             if (!currentId.isNullOrEmpty()) {
                 val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-                FirebaseDatabase.getInstance()
-                    .getReference("dailyRecords")
-                    .child(currentId)
-                    .child(currentDate)
-                    .removeEventListener(it)
+                FirebaseDatabase.getInstance().getReference("dailyRecords").child(currentId).child(currentDate).removeEventListener(it)
             }
         }
         dailyRecordsListener = null
     }
 
-    private fun updateChainAndSummary(
-        chain: List<String>,
-        membersSnap: DataSnapshot,
-        recordsSnap: DataSnapshot
-    ) {
+    private fun updateChainAndSummary(chain: List<String>, membersSnap: DataSnapshot, recordsSnap: DataSnapshot) {
         val currentUid = userRepository.getUserId() ?: ""
         val membersList = mutableListOf<LoopMemberItem>()
         var awakeCount = 0
@@ -215,9 +167,7 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         val effectiveChain = chain.toMutableList()
         for (mChild in membersSnap.children) {
             val mId = mChild.key ?: continue
-            if (!effectiveChain.contains(mId)) {
-                effectiveChain.add(mId)
-            }
+            if (!effectiveChain.contains(mId)) effectiveChain.add(mId)
         }
 
         for ((idx, mId) in effectiveChain.withIndex()) {
@@ -228,44 +178,22 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
             val photoUrl = mSnap.child("photoUrl").value as? String ?: ""
             val role = mSnap.child("role").value as? String ?: "member"
             val responsibleForUserId = mSnap.child("responsibleForUserId").value as? String ?: ""
-
             val targetSnap = membersSnap.child(responsibleForUserId)
             val targetName = targetSnap.child("displayName").value as? String ?: ""
 
             var status = "pending"
             val profileStatus = mSnap.child("status").value as? String
-            if (profileStatus == "travel" || profileStatus == "traveling") {
-                status = "travel"
-            } else if (recordsSnap.child(mId).exists()) {
-                status = recordsSnap.child(mId).child("status").value as? String ?: "pending"
-            }
+            if (profileStatus == "travel" || profileStatus == "traveling") status = "travel"
+            else if (recordsSnap.child(mId).exists()) status = recordsSnap.child(mId).child("status").value as? String ?: "pending"
 
-            if (status == "awake") {
-                awakeCount++
-            }
+            if (status == "awake") awakeCount++
 
             if (status == "challenge_done" && responsibleForUserId == currentUid) {
                 val firstName = displayName.split(" ").first()
-                alertFriend = FriendWakeAlert(
-                    uid = mId,
-                    displayName = firstName,
-                    message = "صديقك $firstName حل تحدي الاستيقاظ وبانتظار تأكيدك لإيقاف منبهه."
-                )
+                alertFriend = FriendWakeAlert(mId, firstName, "صديقك $firstName حل تحدي الاستيقاظ وبانتظار تأكيدك لإيقاف منبهه.")
             }
 
-            membersList.add(
-                LoopMemberItem(
-                    userId = mId,
-                    displayName = displayName,
-                    photoUrl = photoUrl,
-                    status = status,
-                    isCurrentUser = mId == currentUid,
-                    role = role,
-                    responsibleForUserId = responsibleForUserId,
-                    targetName = targetName,
-                    position = idx + 1
-                )
-            )
+            membersList.add(LoopMemberItem(mId, displayName, photoUrl, status, mId == currentUid, role, responsibleForUserId, targetName, idx + 1))
         }
 
         _loopMembersFlow.value = membersList
@@ -275,18 +203,10 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         val total = effectiveChain.size
         val countText = "$awakeCount / $total"
         _awakeCountTextFlow.value = countText
-        val summaryText = if (awakeCount == total && total > 0) {
-            "ما شاء الله! استيقظت الحلقة بالكامل 🎉"
-        } else {
-            "استيقظ $awakeCount من أصل $total أعضاء حتى الآن."
-        }
+        val summaryText = if (awakeCount == total && total > 0) "ما شاء الله! استيقظت الحلقة بالكامل 🎉" else "استيقظ $awakeCount من أصل $total أعضاء حتى الآن."
         _todaySummaryTextFlow.value = summaryText
 
-        val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit()
-            .putString(AlarmPreferences.KEY_CACHED_AWAKE_COUNT_TEXT, countText)
-            .putString(AlarmPreferences.KEY_CACHED_TODAY_SUMMARY_TEXT, summaryText)
-            .apply()
+        prefs.edit().putString(AlarmPreferences.KEY_CACHED_AWAKE_COUNT_TEXT, countText).putString(AlarmPreferences.KEY_CACHED_TODAY_SUMMARY_TEXT, summaryText).apply()
     }
 
     fun confirmFriendWake(friendUid: String, onResult: (Boolean, String?) -> Unit) {
@@ -294,15 +214,8 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
         val halqaId = _halqaIdFlow.value ?: return
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
-        FirebaseDatabase.getInstance()
-            .getReference("dailyRecords")
-            .child(halqaId)
-            .child(currentDate)
-            .child(friendUid)
-            .updateChildren(mapOf(
-                "status" to "awake",
-                "confirmedBy" to currentUid
-            ))
+        FirebaseDatabase.getInstance().getReference("dailyRecords").child(halqaId).child(currentDate).child(friendUid)
+            .updateChildren(mapOf("status" to "awake", "confirmedBy" to currentUid))
             .addOnSuccessListener { onResult(true, null) }
             .addOnFailureListener { e -> onResult(false, e.localizedMessage) }
     }
@@ -326,28 +239,21 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
 
     fun leaveHalqa(onResult: (Boolean, String?) -> Unit) {
         halqaRepository.leaveHalqa { success, error ->
-            if (success) {
-                val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-                clearHalqaState(prefs)
-            }
+            if (success) clearHalqaState()
             onResult(success, error)
         }
     }
 
     fun createHalqa(name: String, onResult: (Boolean, String?) -> Unit) {
         halqaRepository.createHalqa(name) { success, result ->
-            if (success) {
-                startObservingHalqa()
-            }
+            if (success) startObservingHalqa()
             onResult(success, result)
         }
     }
 
     fun joinHalqa(inviteCode: String, onResult: (Boolean, String?) -> Unit) {
         halqaRepository.joinHalqa(inviteCode) { success, result ->
-            if (success) {
-                startObservingHalqa()
-            }
+            if (success) startObservingHalqa()
             onResult(success, result)
         }
     }
@@ -362,8 +268,7 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearHalqaData() {
-        val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        clearHalqaState(prefs)
+        clearHalqaState()
         stopObservingHalqa()
     }
 
