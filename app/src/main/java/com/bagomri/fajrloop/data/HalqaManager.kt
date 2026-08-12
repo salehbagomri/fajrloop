@@ -321,24 +321,13 @@ object HalqaManager {
             }
         }
 
-        val updates = hashMapOf<String, Any?>(
-            "/halqas/$halqaId/chain" to currentChain,
-            "/halqas/$halqaId/members/$uid" to null,
-            "/users/$uid/currentHalqaId" to "",
-            "/users/$uid/joinedHalqas/$halqaId" to null
+        val halqaUpdates = hashMapOf<String, Any>(
+            "chain" to currentChain,
+            "members" to updatedMembers
         )
 
-        for ((mId, mData) in updatedMembers) {
-            if (mData is Map<*, *>) {
-                updates["/halqas/$halqaId/members/$mId/position"] = mData["position"]
-                updates["/halqas/$halqaId/members/$mId/responsibleForUserId"] = mData["responsibleForUserId"]
-                if (mData.containsKey("role")) {
-                    updates["/halqas/$halqaId/members/$mId/role"] = mData["role"]
-                }
-            }
-        }
-
-        database.reference.updateChildren(updates).awaitTask()
+        database.getReference("halqas").child(halqaId).updateChildren(halqaUpdates).awaitTask()
+        clearUserHalqaRefSuspend(uid, halqaId)
         Unit
     }
 
@@ -415,27 +404,21 @@ object HalqaManager {
                 // إعادة حساب الترتيب الدائري والمسؤوليات للأعضاء المتبقين
                 recalculateLoopResponsibility(currentChain, updatedMembers)
 
-                // إجراء التحديث الذري الشامل:
-                // 1. تحديث السلسلة
-                // 2. حذف عقدة العضو المطرود صراحةً من مسار members في الفايربيس
-                // 3. تحديث المراكز والمسؤوليات للأعضاء المتبقين
-                val updates = hashMapOf<String, Any?>()
-                updates["/halqas/$halqaId/chain"] = currentChain
-                updates["/halqas/$halqaId/members/$targetUid"] = null
+                // إجراء التحديث المباشر على عقدة الحلقة المحددة لضمان تطبيق صلاحيات المسؤول
+                val halqaUpdates = hashMapOf<String, Any>(
+                    "chain" to currentChain,
+                    "members" to updatedMembers
+                )
 
-                for ((mId, mData) in updatedMembers) {
-                    if (mData is Map<*, *>) {
-                        updates["/halqas/$halqaId/members/$mId/position"] = mData["position"]
-                        updates["/halqas/$halqaId/members/$mId/responsibleForUserId"] = mData["responsibleForUserId"]
-                        if (mData.containsKey("role")) {
-                            updates["/halqas/$halqaId/members/$mId/role"] = mData["role"]
-                        }
+                halqaRef.updateChildren(halqaUpdates)
+                    .addOnSuccessListener {
+                        Log.d(TAG, "✅ Member $targetUid removed from halqa $halqaId")
+                        onComplete(true, null)
                     }
-                }
-
-                database.reference.updateChildren(updates)
-                    .addOnSuccessListener { onComplete(true, null) }
-                    .addOnFailureListener { onComplete(false, it.localizedMessage) }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "❌ Failed to remove member from halqa", e)
+                        onComplete(false, e.localizedMessage)
+                    }
             }
 
             override fun onCancelled(error: DatabaseError) {

@@ -186,6 +186,12 @@ fun FajrLoopNavGraph(
             var showLeaveHalqaDialog by remember { mutableStateOf(false) }
             var removeMemberTarget by remember { mutableStateOf<Pair<String, String>?>(null) } // (uid, name)
 
+            LaunchedEffect(halqaId) {
+                if (halqaId.isNullOrEmpty()) {
+                    showHalqaDetailsSheet = false
+                }
+            }
+
             HomeScreen(
                 userName = userProfile?.displayName ?: "",
                 userPhotoUrl = userProfile?.photoUrl ?: "",
