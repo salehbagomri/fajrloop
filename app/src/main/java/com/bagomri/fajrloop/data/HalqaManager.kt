@@ -407,13 +407,11 @@ object HalqaManager {
                 // إعادة حساب الترتيب الدائري والمسؤوليات للأعضاء المتبقين
                 recalculateLoopResponsibility(currentChain, updatedMembers)
 
-                // إجراء التحديث الذري: تحديث الحلقة + تنظيف بيانات العضو المحذوف
+                // إجراء التحديث الذري على عقدة الحلقة
+                // ملاحظة: تنظيف بيانات المستخدم المحذوف يتم تلقائياً عبر كشف الطرد في HalqaViewModel
                 val updates = hashMapOf<String, Any?>()
                 updates["/halqas/$halqaId/chain"] = currentChain
                 updates["/halqas/$halqaId/members"] = updatedMembers
-                // تنظيف بيانات العضو المحذوف حتى يكتشف جهازه الطرد فوراً
-                updates["/users/$targetUid/currentHalqaId"] = ""
-                updates["/users/$targetUid/joinedHalqas/$halqaId"] = null
 
                 database.reference.updateChildren(updates)
                     .addOnSuccessListener { onComplete(true, null) }

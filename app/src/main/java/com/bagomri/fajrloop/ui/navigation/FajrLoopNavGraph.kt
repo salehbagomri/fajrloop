@@ -12,6 +12,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -183,6 +184,7 @@ fun FajrLoopNavGraph(
             var showJoinHalqaDialog by remember { mutableStateOf(false) }
             var showInviteCodeDialog by remember { mutableStateOf(false) }
             var showLeaveHalqaDialog by remember { mutableStateOf(false) }
+            var removeMemberTarget by remember { mutableStateOf<Pair<String, String>?>(null) } // (uid, name)
 
             HomeScreen(
                 userName = userProfile?.displayName ?: "",
@@ -298,13 +300,7 @@ fun FajrLoopNavGraph(
                         }
                     },
                     onRemoveMember = { targetUid, name ->
-                        halqaViewModel.removeMemberFromHalqa(targetUid) { success, err ->
-                            if (success) {
-                                Toast.makeText(context, "تم حذف $name من الحلقة", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, "خطأ: $err", Toast.LENGTH_SHORT).show()
-                            }
-                        }
+                        removeMemberTarget = Pair(targetUid, name)
                     }
                 )
             }
@@ -378,6 +374,47 @@ fun FajrLoopNavGraph(
                             } else {
                                 Toast.makeText(context, "فشلت مغادرة الحلقة: $error", Toast.LENGTH_SHORT).show()
                             }
+                        }
+                    }
+                )
+            }
+
+            // مربع تأكيد حذف العضو
+            removeMemberTarget?.let { (targetUid, memberName) ->
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { removeMemberTarget = null },
+                    title = {
+                        Text(
+                            text = "حذف عضو من الحلقة",
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        )
+                    },
+                    text = {
+                        Text("هل أنت متأكد من حذف «$memberName» من الحلقة؟ لن يتمكن من رؤية بيانات الحلقة بعد الحذف.")
+                    },
+                    confirmButton = {
+                        androidx.compose.material3.TextButton(
+                            onClick = {
+                                val name = memberName
+                                val uid = targetUid
+                                removeMemberTarget = null
+                                halqaViewModel.removeMemberFromHalqa(uid) { success, err ->
+                                    if (success) {
+                                        Toast.makeText(context, "تم حذف $name من الحلقة", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, "خطأ: $err", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        ) {
+                            Text("حذف", color = androidx.compose.material3.MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    dismissButton = {
+                        androidx.compose.material3.TextButton(
+                            onClick = { removeMemberTarget = null }
+                        ) {
+                            Text("إلغاء")
                         }
                     }
                 )
