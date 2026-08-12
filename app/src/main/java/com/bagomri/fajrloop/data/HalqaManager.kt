@@ -189,69 +189,69 @@ object HalqaManager {
                     val halqaId = halqaSnapshot.key ?: return
                     val isoDate = getIso8601String(Date())
 
-                    // 2. استخدام Transaction لمعالجة الانضمام الذري لمنع Race Conditions عند انضمام متزامن
-                    database.getReference("halqas").child(halqaId).runTransaction(object : Transaction.Handler {
-                        override fun doTransaction(currentData: MutableData): Transaction.Result {
-                            val halqa = currentData.value as? Map<*, *> ?: return Transaction.success(currentData)
+                    val currentChain = (halqaSnapshot.child("chain").value as? List<*>)
+                        ?.filterIsInstance<String>()
+                        ?.toMutableList() ?: mutableListOf()
 
-                            // جلب السلسلة الحالية من داخل Transaction
-                            val chain = (halqa["chain"] as? List<*>)?.filterIsInstance<String>()?.toMutableList() ?: mutableListOf()
-
-                            // التحقق من الانضمام المسبق
-                            if (chain.contains(uid)) return Transaction.success(currentData)
-
-                            // إضافة العضو
-                            chain.add(uid)
-                            val newMemberMap = mapOf(
-                                "userId" to uid,
-                                "displayName" to (currentUser.displayName ?: "عضو جديد"),
-                                "photoUrl" to (currentUser.photoUrl?.toString() ?: ""),
-                                "role" to "member",
-                                "position" to (chain.size - 1),
-                                "status" to "active",
-                                "joinedAt" to isoDate
-                            )
-
-                            // الحصول على الأعضاء الحاليين
-                            val members = (halqa["members"] as? Map<*, *>)?.toMutableMap() ?: mutableMapOf()
-                            members[uid] = newMemberMap
-
-                            // إعادة حساب المسؤوليات
-                            val n = chain.size
-                            for (i in 0 until n) {
-                                val mId = chain[i]
-                                val responsibleUid = chain[(i + 1) % n]
-                                val mData = (members[mId] as? Map<*, *>)?.toMutableMap() ?: mutableMapOf()
-                                mData["position"] = i
-                                mData["responsibleForUserId"] = responsibleUid
-                                members[mId] = mData
+                    // إذا كان العضو منضماً مسبقاً، نربطه بالحلقة فقط
+                    if (currentChain.contains(uid)) {
+                        val userUpdates = hashMapOf<String, Any>(
+                            "/users/$uid/currentHalqaId" to halqaId,
+                            "/users/$uid/joinedHalqas/$halqaId" to true
+                        )
+                        database.reference.updateChildren(userUpdates)
+                            .addOnSuccessListener {
+                                ensureLocalSharedSecret(halqaId) {
+                                    onComplete(true, halqaId)
+                                }
                             }
+                            .addOnFailureListener { onComplete(false, it.localizedMessage) }
+                        return
+                    }
 
-                            // تحديث القيم
-                            currentData.child("chain").value = chain
-                            currentData.child("members").value = members
-                            return Transaction.success(currentData)
-                        }
+                    // إضافة العضو للسلسلة وتحديث بيانات الأعضاء
+                    currentChain.add(uid)
 
-                        override fun onComplete(error: DatabaseError?, committed: Boolean, currentData: DataSnapshot?) {
-                            if (committed && error == null) {
-                                // تحديث بيانات المستخدم بعد نجاح Transaction
-                                val updates = hashMapOf<String, Any>(
-                                    "/users/$uid/currentHalqaId" to halqaId,
-                                    "/users/$uid/joinedHalqas/$halqaId" to true
-                                )
-                                database.reference.updateChildren(updates)
-                                    .addOnSuccessListener {
-                                        ensureLocalSharedSecret(halqaId) {
-                                            onComplete(true, halqaId)
-                                        }
-                                    }
-                                    .addOnFailureListener { onComplete(false, it.localizedMessage) }
-                            } else {
-                                onComplete(false, error?.message ?: "فشل في الانضمام")
+                    val membersSnapshot = halqaSnapshot.child("members")
+                    val updatedMembers = mutableMapOf<String, Any>()
+
+                    for (memberChild in membersSnapshot.children) {
+                        val mId = memberChild.key ?: continue
+                        val mData = memberChild.value as? Map<*, *> ?: continue
+                        updatedMembers[mId] = mData.toMutableMap()
+                    }
+
+                    val newMemberMap = mapOf(
+                        "userId" to uid,
+                        "displayName" to (currentUser.displayName ?: "عضو جديد"),
+                        "photoUrl" to (currentUser.photoUrl?.toString() ?: ""),
+                        "role" to "member",
+                        "position" to (currentChain.size - 1),
+                        "status" to "active",
+                        "joinedAt" to isoDate
+                    )
+                    updatedMembers[uid] = newMemberMap
+
+                    // إعادة حساب مسؤوليات الاستيقاظ الدائرية
+                    recalculateLoopResponsibility(currentChain, updatedMembers)
+
+                    // التحديث الذري الشامل للسلسلة، الأعضاء، وبيانات مستخدم الانضمام
+                    val updates = hashMapOf<String, Any>(
+                        "/halqas/$halqaId/chain" to currentChain,
+                        "/halqas/$halqaId/members" to updatedMembers,
+                        "/users/$uid/currentHalqaId" to halqaId,
+                        "/users/$uid/joinedHalqas/$halqaId" to true
+                    )
+
+                    database.reference.updateChildren(updates)
+                        .addOnSuccessListener {
+                            ensureLocalSharedSecret(halqaId) {
+                                onComplete(true, halqaId)
                             }
                         }
-                    })
+                        .addOnFailureListener {
+                            onComplete(false, it.localizedMessage ?: "فشل الانضمام للحلقة")
+                        }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
