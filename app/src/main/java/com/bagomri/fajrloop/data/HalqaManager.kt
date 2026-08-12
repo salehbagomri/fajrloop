@@ -258,111 +258,97 @@ object HalqaManager {
     }
 
     /**
-     * مغادرة الحلقة الحالية
+     * مغادرة الحلقة الحالية (نسخة suspend قابلة للاختبار ومجردة من الـ callbacks المتداخلة)
      */
-    fun leaveHalqa(onComplete: (Boolean, String?) -> Unit) {
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            onComplete(false, "المستخدم غير مسجل الدخول")
-            return
-        }
-
+    suspend fun leaveHalqaSuspend(): Result<Unit> = runCatching {
+        val currentUser = auth.currentUser ?: throw Exception("المستخدم غير مسجل الدخول")
         val uid = currentUser.uid
 
-        // 1. جلب معرف الحلقة الحالية للمستخدم من حسابه الشخصي
-        database.getReference("users").child(uid).child("currentHalqaId")
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val halqaId = snapshot.value as? String
-                    if (halqaId.isNullOrEmpty()) {
-                        onComplete(true, null) // المستخدم ليس في أي حلقة
-                        return
-                    }
+        val userHalqaSnap = database.getReference("users").child(uid).child("currentHalqaId").awaitSingleValue()
+        val halqaId = userHalqaSnap.value as? String
+        if (halqaId.isNullOrEmpty()) {
+            return@runCatching Unit
+        }
 
-                    // 2. جلب تفاصيل الحلقة
-                    database.getReference("halqas").child(halqaId)
-                        .addListenerForSingleValueEvent(object : ValueEventListener {
-                            override fun onDataChange(halqaSnapshot: DataSnapshot) {
-                                if (!halqaSnapshot.exists()) {
-                                    // الحلقة غير موجودة سحابياً، نزيلها من حساب المستخدم
-                                    clearUserHalqaRef(uid, halqaId, onComplete)
-                                    return
-                                }
+        val halqaSnapshot = database.getReference("halqas").child(halqaId).awaitSingleValue()
+        if (!halqaSnapshot.exists()) {
+            clearUserHalqaRefSuspend(uid, halqaId)
+            return@runCatching Unit
+        }
 
-                                val currentChain = (halqaSnapshot.child("chain").value as? List<*>)
-                                    ?.filterIsInstance<String>()
-                                    ?.toMutableList() ?: mutableListOf()
+        val currentChain = (halqaSnapshot.child("chain").value as? List<*>)
+            ?.filterIsInstance<String>()
+            ?.toMutableList() ?: mutableListOf()
 
-                                val membersSnapshot = halqaSnapshot.child("members")
+        val membersSnapshot = halqaSnapshot.child("members")
+        currentChain.remove(uid)
 
-                                // إزالة المستخدم الحالي من السلسلة
-                                currentChain.remove(uid)
+        if (currentChain.isEmpty()) {
+            val updates = hashMapOf<String, Any?>(
+                "/halqas/$halqaId" to null,
+                "/halqaSecrets/$halqaId" to null,
+                "/users/$uid/currentHalqaId" to "",
+                "/users/$uid/joinedHalqas/$halqaId" to null
+            )
+            database.reference.updateChildren(updates).awaitTask()
+            return@runCatching Unit
+        }
 
-                                // إذا لم يتبقَ أي أعضاء في الحلقة، يتم حذفها وسرها بالكامل أمنياً
-                                if (currentChain.isEmpty()) {
-                                    val updates = hashMapOf<String, Any?>()
-                                    updates["/halqas/$halqaId"] = null
-                                    updates["/halqaSecrets/$halqaId"] = null
-                                    updates["/users/$uid/currentHalqaId"] = ""
-                                    updates["/users/$uid/joinedHalqas/$halqaId"] = null
+        val updatedMembers = mutableMapOf<String, Any>()
+        var wasAdmin = false
 
-                                    database.reference.updateChildren(updates)
-                                        .addOnSuccessListener { onComplete(true, null) }
-                                        .addOnFailureListener { onComplete(false, it.localizedMessage) }
-                                    return
-                                }
+        for (memberChild in membersSnapshot.children) {
+            val mId = memberChild.key ?: continue
+            if (mId == uid) {
+                val role = memberChild.child("role").value as? String
+                if (role == "admin") wasAdmin = true
+                continue
+            }
+            val mData = memberChild.value as? Map<*, *> ?: continue
+            updatedMembers[mId] = mData.toMutableMap()
+        }
 
-                                // إذا كان هناك أعضاء متبقون، نقوم بإعادة هيكلة الحلقة
-                                val updatedMembers = mutableMapOf<String, Any>()
-                                var wasAdmin = false
+        if (wasAdmin && currentChain.isNotEmpty()) {
+            val newAdminId = currentChain[0]
+            val adminData = updatedMembers[newAdminId] as? MutableMap<*, *>
+            if (adminData != null) {
+                @Suppress("UNCHECKED_CAST")
+                val mutableAdminData = adminData as MutableMap<String, Any>
+                mutableAdminData["role"] = "admin"
+            }
+        }
 
-                                for (memberChild in membersSnapshot.children) {
-                                    val mId = memberChild.key ?: continue
-                                    if (mId == uid) {
-                                        val role = memberChild.child("role").value as? String
-                                        if (role == "admin") wasAdmin = true
-                                        continue // تجاهل العضو المغادر
-                                    }
-                                    val mData = memberChild.value as? Map<*, *> ?: continue
-                                    updatedMembers[mId] = mData.toMutableMap()
-                                }
+        recalculateLoopResponsibility(currentChain, updatedMembers)
 
-                                // إذا غادر الـ Admin، نقوم بترقية أول عضو متبقي في السلسلة ليصبح Admin
-                                if (wasAdmin && currentChain.isNotEmpty()) {
-                                    val newAdminId = currentChain[0]
-                                    val adminData = updatedMembers[newAdminId] as? MutableMap<*, *>
-                                    if (adminData != null) {
-                                        @Suppress("UNCHECKED_CAST")
-                                        val mutableAdminData = adminData as MutableMap<String, Any>
-                                        mutableAdminData["role"] = "admin"
-                                    }
-                                }
+        val updates = hashMapOf<String, Any?>(
+            "/halqas/$halqaId/chain" to currentChain,
+            "/halqas/$halqaId/members" to updatedMembers,
+            "/users/$uid/currentHalqaId" to "",
+            "/users/$uid/joinedHalqas/$halqaId" to null
+        )
 
-                                // إعادة حساب الترتيب الدائري والمسؤوليات للأعضاء المتبقين
-                                recalculateLoopResponsibility(currentChain, updatedMembers)
+        database.reference.updateChildren(updates).awaitTask()
+        Unit
+    }
 
-                                // إجراء التحديث الذري
-                                val updates = hashMapOf<String, Any?>()
-                                updates["/halqas/$halqaId/chain"] = currentChain
-                                updates["/halqas/$halqaId/members"] = updatedMembers
-                                updates["/users/$uid/currentHalqaId"] = ""
-                                updates["/users/$uid/joinedHalqas/$halqaId"] = null
+    private suspend fun clearUserHalqaRefSuspend(uid: String, halqaId: String) {
+        val updates = hashMapOf<String, Any?>(
+            "/users/$uid/currentHalqaId" to "",
+            "/users/$uid/joinedHalqas/$halqaId" to null
+        )
+        database.reference.updateChildren(updates).awaitTask()
+    }
 
-                                database.reference.updateChildren(updates)
-                                    .addOnSuccessListener { onComplete(true, null) }
-                                    .addOnFailureListener { onComplete(false, it.localizedMessage) }
-                            }
-
-                            override fun onCancelled(error: DatabaseError) {
-                                onComplete(false, error.message)
-                            }
-                        })
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    onComplete(false, error.message)
-                }
-            })
+    /**
+     * مغادرة الحلقة الحالية (للتوافق العكسي)
+     */
+    fun leaveHalqa(onComplete: (Boolean, String?) -> Unit) {
+        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+            leaveHalqaSuspend().fold(
+                onSuccess = { onComplete(true, null) },
+                onFailure = { onComplete(false, it.message) }
+            )
+        }
     }
 
     /**
@@ -652,3 +638,29 @@ object HalqaManager {
         override fun onCancelled(error: DatabaseError) {}
     }
 }
+
+// Extension functions تحويل Firebase callbacks إلى Coroutines علّاقة معلقة (suspend)
+
+suspend fun com.google.firebase.database.Query.awaitSingleValue(): DataSnapshot =
+    kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+        addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                cont.resumeWith(Result.success(snapshot))
+            }
+            override fun onCancelled(error: DatabaseError) {
+                cont.resumeWith(Result.failure(error.toException()))
+            }
+        })
+    }
+
+suspend fun com.google.firebase.database.DatabaseReference.awaitVoid(): Unit =
+    kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+        addOnSuccessListener { cont.resumeWith(Result.success(Unit)) }
+        addOnFailureListener { cont.resumeWith(Result.failure(it)) }
+    }
+
+suspend fun <T> com.google.android.gms.tasks.Task<T>.awaitTask(): T =
+    kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+        addOnSuccessListener { cont.resumeWith(Result.success(it)) }
+        addOnFailureListener { cont.resumeWith(Result.failure(it)) }
+    }

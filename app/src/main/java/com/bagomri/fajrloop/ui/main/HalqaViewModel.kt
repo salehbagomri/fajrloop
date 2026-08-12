@@ -262,10 +262,19 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun leaveHalqa(onResult: (Boolean, String?) -> Unit) {
-        halqaRepository.leaveHalqa { success, error ->
-            if (success) clearHalqaState()
-            else if (error != null) emitError(error)
-            onResult(success, error)
+        viewModelScope.launch {
+            val result = halqaRepository.leaveHalqaSuspend()
+            result.fold(
+                onSuccess = {
+                    clearHalqaState()
+                    onResult(true, null)
+                },
+                onFailure = { err ->
+                    val msg = err.localizedMessage ?: "حدث خطأ أثناء المغادرة"
+                    emitError(msg)
+                    onResult(false, msg)
+                }
+            )
         }
     }
 

@@ -20,7 +20,14 @@ class HalqaRepository {
     }
 
     /**
-     * مغادرة العضو للحلقة الحالية
+     * مغادرة العضو للحلقة الحالية (نسخة suspend)
+     */
+    suspend fun leaveHalqaSuspend(): Result<Unit> {
+        return HalqaManager.leaveHalqaSuspend()
+    }
+
+    /**
+     * مغادرة العضو للحلقة الحالية (للتوافق العكسي)
      */
     fun leaveHalqa(onComplete: (Boolean, String?) -> Unit) {
         HalqaManager.leaveHalqa(onComplete)
