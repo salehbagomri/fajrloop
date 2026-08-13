@@ -71,6 +71,14 @@ fun AlarmRingingScreen(
         label = "pulseScale"
     )
 
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(mathInput, wordInput, pledgeInput) {
+        if (mathInput.isNotEmpty() || wordInput.isNotEmpty() || pledgeInput.isNotEmpty()) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
         FajrBackground(modifier = Modifier.fillMaxSize())
 
@@ -86,7 +94,8 @@ fun AlarmRingingScreen(
                     .padding(paddingValues)
                     .statusBarsPadding()
                     .navigationBarsPadding()
-                    .verticalScroll(rememberScrollState())
+                    .imePadding()
+                    .verticalScroll(scrollState)
                     .padding(Spacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
