@@ -215,10 +215,19 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
         return scrambledWords[random.nextInt(scrambledWords.size)]
     }
 
-    fun verifyTotpCode(userInput: String, halqaId: String): Boolean {
-        val prefs = getApplication<Application>().getSharedPreferences(AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-        val secret = prefs.getString("halqa_shared_secret_$halqaId", "") ?: ""
-        return com.bagomri.fajrloop.alarm.EmergencyCodeUtils.verifyTotpCode(userInput, halqaId, secret)
+    fun validatePledgeText(input: String): Boolean {
+        val normalized = input.trim()
+            .replace("أ", "ا")
+            .replace("إ", "ا")
+            .replace("آ", "ا")
+            .replace("ة", "ه")
+
+        val hasTaahed = normalized.contains("اتعهد")
+        val hasAstyqez = normalized.contains("استيقظ") || normalized.contains("اقوم")
+        val hasSalat = normalized.contains("صلاه الفجر") || normalized.contains("صلاة الفجر") || normalized.contains("الفجر")
+        val hasWallah = normalized.contains("والله") && normalized.contains("شهيد")
+
+        return (hasTaahed || (hasAstyqez && hasSalat)) && hasWallah
     }
 
     fun startObservingDailyRecord(halqaId: String) {

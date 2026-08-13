@@ -247,10 +247,8 @@ class AlarmRingingActivity : ComponentActivity() {
                     shakeCount = shakeCount,
                     shakeRequired = shakeRequired,
                     isChallengeSolved = isSolved,
-                    isPanicActive = isPanic,
                     snoozeCountLeft = snoozeCount,
                     supervisorName = supervisorName,
-                    supervisorPhone = supervisorPhone,
                     snackbarHostState = snackbarHostState,
                     onMathSubmit = { inputVal ->
                         if (inputVal == mathAnswer) {
@@ -271,12 +269,12 @@ class AlarmRingingActivity : ComponentActivity() {
                             showToast("❌ الكلمة غير صحيحة، حاول مجدداً")
                         }
                     },
-                    onTotpSubmit = { code ->
-                        verifyTotpCode(code)
-                    },
-                    onSosClick = {
-                        viewModel.triggerEmergencySos()
-                        com.bagomri.fajrloop.data.AnalyticsHelper.logEmergencyPanic()
+                    onPledgeSubmit = { pledgeText ->
+                        if (viewModel.validatePledgeText(pledgeText)) {
+                            viewModel.dismissAlarm("awake")
+                        } else {
+                            showToast("✍️ يرجى كتابة عبارة التعهد كاملة لتأكيد القيام")
+                        }
                     },
                     onSnoozeClick = {
                         val currentHalqa = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
@@ -286,12 +284,6 @@ class AlarmRingingActivity : ComponentActivity() {
                         } else {
                             showToast("حدث خطأ في تحديد الحلقة")
                         }
-                    },
-                    onCallPartnerClick = { phone ->
-                        launchDialer(phone)
-                    },
-                    onConfirmWake = {
-                        viewModel.dismissAlarm("awake")
                     }
                 )
             }
@@ -427,69 +419,6 @@ class AlarmRingingActivity : ComponentActivity() {
 
     private fun unregisterShakeSensor() {
         sensorManager?.unregisterListener(sensorEventListener)
-    }
-
-    private fun verifyTotpCode(userInput: String) {
-        if (userInput.length < 6) {
-            showToast("❌ يرجى إدخال رمز من 6 أرقام")
-            return
-        }
-
-        val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-        val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
-        if (halqaId.isNullOrEmpty()) {
-            showToast("❌ خطأ: لم يتم العثور على معرّف الحلقة")
-            return
-        }
-
-        if (viewModel.verifyTotpCode(userInput, halqaId)) {
-            showToast("✅ رمز الطوارئ صحيح! تم إلغاء قفل المنبه.")
-            viewModel.dismissAlarm("awake")
-        } else {
-            showToast("❌ رمز الطوارئ غير صحيح، حاول مجدداً")
-        }
-    }
-
-    private fun launchDialer(phoneNumber: String) {
-        try {
-            isLaunchingDialer = true
-            dialerLaunchTime = System.currentTimeMillis()
-            wasInActiveCall = false
-
-            val dialIntent = if (phoneNumber.isNotEmpty()) {
-                Intent(Intent.ACTION_DIAL, android.net.Uri.parse("tel:$phoneNumber"))
-            } else {
-                Intent(Intent.ACTION_DIAL, android.net.Uri.parse("tel:"))
-            }
-            dialIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as android.app.KeyguardManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && keyguardManager.isKeyguardLocked) {
-                keyguardManager.requestDismissKeyguard(this, object : android.app.KeyguardManager.KeyguardDismissCallback() {
-                    override fun onDismissSucceeded() {
-                        super.onDismissSucceeded()
-                        startActivity(dialIntent)
-                    }
-                    override fun onDismissCancelled() {
-                        super.onDismissCancelled()
-                        isLaunchingDialer = false
-                        showToast("🔓 يرجى إلغاء قفل الشاشة لإجراء المكالمة")
-                    }
-                    override fun onDismissError() {
-                        super.onDismissError()
-                        startActivity(dialIntent)
-                    }
-                })
-            } else {
-                startActivity(dialIntent)
-            }
-
-            handler.removeCallbacks(dialerWatchdog)
-            handler.postDelayed(dialerWatchdog, 1000)
-        } catch (e: Exception) {
-            isLaunchingDialer = false
-            showToast("❌ تعذر فتح تطبيق الاتصال")
-        }
     }
 
     private fun showToast(message: String) {
