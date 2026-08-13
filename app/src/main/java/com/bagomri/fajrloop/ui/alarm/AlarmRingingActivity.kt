@@ -49,7 +49,7 @@ class AlarmRingingActivity : ComponentActivity() {
     private var triggerTime = 0L
 
     private var challengeType = "math"
-    private var challengeDifficulty = "medium"
+    private var challengeDifficulty = "easy"
     private var isAlarmDismissed = false
     private var isVolumeEnforced = true
     private var isLaunchingDialer = false
@@ -325,7 +325,7 @@ class AlarmRingingActivity : ComponentActivity() {
     private fun loadChallengeSettings() {
         val prefs = getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
         challengeType = prefs.getString(AlarmPreferences.KEY_CHALLENGE_TYPE, "math") ?: "math"
-        challengeDifficulty = prefs.getString(AlarmPreferences.KEY_CHALLENGE_DIFFICULTY, "medium") ?: "medium"
+        challengeDifficulty = prefs.getString(AlarmPreferences.KEY_CHALLENGE_DIFFICULTY, "easy") ?: "easy"
     }
 
     private fun setupChallenge() {

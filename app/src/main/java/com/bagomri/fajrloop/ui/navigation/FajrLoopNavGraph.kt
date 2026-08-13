@@ -441,7 +441,7 @@ fun FajrLoopNavGraph(
             var alarmTimingDesc by remember { mutableStateOf(prefs.getString(AlarmPreferences.KEY_ALARM_TIMING_DESC, "مع أذان الفجر بالضبط") ?: "مع أذان الفجر بالضبط") }
 
             val savedChallengeType = prefs.getString(AlarmPreferences.KEY_CHALLENGE_TYPE, "math") ?: "math"
-            val savedChallengeDiff = prefs.getString(AlarmPreferences.KEY_CHALLENGE_DIFFICULTY, "medium") ?: "medium"
+            val savedChallengeDiff = prefs.getString(AlarmPreferences.KEY_CHALLENGE_DIFFICULTY, "easy") ?: "easy"
             fun formatChallenge(t: String, d: String): String {
                 val tName = when(t) {
                     "word" -> "ترتيب كلمة"

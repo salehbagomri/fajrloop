@@ -32,7 +32,7 @@ fun SettingsScreen(
     alarmTimingOffset: Int = 0,
     challengeText: String,
     challengeType: String = "math",
-    challengeDifficulty: String = "medium",
+    challengeDifficulty: String = "easy",
     alarmSoundText: String,
     alarmSoundCode: String = "default",
     travelModeStatus: String,

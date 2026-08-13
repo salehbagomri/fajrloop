@@ -19,7 +19,7 @@ class AlarmRepository(private val context: Context) {
         val triggerTime = prefs.getLong(AlarmPreferences.KEY_ALARM_TIME_MILLIS, -1L)
         val label = prefs.getString(AlarmPreferences.KEY_ALARM_LABEL, "صلاة الفجر") ?: "صلاة الفجر"
         val type = prefs.getString(AlarmPreferences.KEY_CHALLENGE_TYPE, "math") ?: "math"
-        val difficulty = prefs.getString(AlarmPreferences.KEY_CHALLENGE_DIFFICULTY, "medium") ?: "medium"
+        val difficulty = prefs.getString(AlarmPreferences.KEY_CHALLENGE_DIFFICULTY, "easy") ?: "easy"
         val hasHalqa = !prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null).isNullOrEmpty()
         val enabled = hasHalqa && prefs.getBoolean(AlarmPreferences.KEY_ALARM_ENABLED, true)
         return AlarmConfig(triggerTime, label, type, difficulty, enabled)

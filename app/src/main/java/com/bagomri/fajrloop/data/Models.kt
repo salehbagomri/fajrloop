@@ -34,7 +34,7 @@ data class AlarmConfig(
     val triggerTimeMillis: Long = -1L,
     val label: String = "صلاة الفجر",
     val challengeType: String = "math", // math, shake, word
-    val challengeDifficulty: String = "medium", // easy, medium, hard
+    val challengeDifficulty: String = "easy", // easy, medium, hard
     val enabled: Boolean = false
 )
 
@@ -69,7 +69,7 @@ data class UserSettings(
     val prayerCalcMethod: String = "umm_al_qura",
     val alarmMinutesBefore: Int = 0,
     val challengeType: String = "math",
-    val challengeDifficulty: String = "medium",
+    val challengeDifficulty: String = "easy",
     val alarmSound: String = "default",
     val vibration: Boolean = true,
     val travelMode: Boolean = false,

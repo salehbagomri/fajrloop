@@ -79,7 +79,7 @@ object AuthManager {
                         "prayerCalcMethod" to "umm_al_qura",
                         "alarmMinutesBefore" to 0,
                         "challengeType" to "math",
-                        "challengeDifficulty" to "medium",
+                        "challengeDifficulty" to "easy",
                         "alarmSound" to "default",
                         "vibration" to true,
                         "travelMode" to false,

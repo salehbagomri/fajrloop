@@ -49,7 +49,7 @@ class UserRepository {
                         prayerCalcMethod = settingsSnap.child("prayerCalcMethod").value as? String ?: "umm_al_qura",
                         alarmMinutesBefore = (settingsSnap.child("alarmMinutesBefore").value as? Number)?.toInt() ?: 0,
                         challengeType = settingsSnap.child("challengeType").value as? String ?: "math",
-                        challengeDifficulty = settingsSnap.child("challengeDifficulty").value as? String ?: "medium",
+                        challengeDifficulty = settingsSnap.child("challengeDifficulty").value as? String ?: "easy",
                         alarmSound = settingsSnap.child("alarmSound").value as? String ?: "default",
                         vibration = settingsSnap.child("vibration").value as? Boolean ?: true,
                         travelMode = settingsSnap.child("travelMode").value as? Boolean ?: false,
