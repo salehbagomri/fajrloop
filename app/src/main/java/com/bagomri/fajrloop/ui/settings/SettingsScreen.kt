@@ -39,6 +39,8 @@ fun SettingsScreen(
     isVibrateEnabled: Boolean,
     isAdhkarEnabled: Boolean,
     isDuaEnabled: Boolean,
+    isAdmin: Boolean = false,
+    isInHalqa: Boolean = false,
     onVibrateChange: (Boolean) -> Unit,
     onAdhkarChange: (Boolean) -> Unit,
     onDuaChange: (Boolean) -> Unit,
@@ -62,6 +64,7 @@ fun SettingsScreen(
     var showChallengeDialog by remember { mutableStateOf(false) }
     var showSoundDialog by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
+    var showNonAdminNotice by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         FajrBackground(modifier = Modifier.fillMaxSize())
@@ -116,11 +119,18 @@ fun SettingsScreen(
 
                 // Section 3: Alarm Customization
                 SettingsSection(title = "المنبه والتحدي") {
+                    val timingSubtitle = if (isInHalqa && !isAdmin) "$alarmTimingDesc (موحّد للحلقة 🔒)" else alarmTimingDesc
                     SettingsRow(
                         title = "توقيت رنين المنبه",
-                        subtitle = alarmTimingDesc,
+                        subtitle = timingSubtitle,
                         icon = FajrIcons.AlarmTiming,
-                        onClick = { showTimingDialog = true }
+                        onClick = {
+                            if (isInHalqa && !isAdmin) {
+                                showNonAdminNotice = true
+                            } else {
+                                showTimingDialog = true
+                            }
+                        }
                     )
                     HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
@@ -217,6 +227,20 @@ fun SettingsScreen(
                 initialOffset = alarmTimingOffset,
                 onSaveTiming = onSaveAlarmTiming,
                 onDismiss = { showTimingDialog = false }
+            )
+        }
+
+        if (showNonAdminNotice) {
+            AlertDialog(
+                onDismissRequest = { showNonAdminNotice = false },
+                title = { Text("توقيت المنبه موحّد للحلقة 🔒", color = FajrLoopColors.TextPrimary) },
+                text = { Text("توقيت رنين المنبه موحّد لجميع أعضاء الحلقة ويتم تحديده بواسطة مسؤول الحلقة لضمان استيقاظ الجميع في نفس اللحظة.", color = FajrLoopColors.TextSecondary) },
+                confirmButton = {
+                    TextButton(onClick = { showNonAdminNotice = false }) {
+                        Text("حسناً", color = FajrLoopColors.Primary)
+                    }
+                },
+                containerColor = FajrLoopColors.Surface
             )
         }
 

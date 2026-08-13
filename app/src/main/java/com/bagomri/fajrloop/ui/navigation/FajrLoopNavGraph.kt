@@ -432,6 +432,8 @@ fun FajrLoopNavGraph(
 
         composable(Screen.Settings.route) {
             val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+            val currentHalqaId by halqaViewModel.halqaIdFlow.collectAsState()
+            val isHalqaAdmin by halqaViewModel.isCurrentUserAdminFlow.collectAsState()
 
             var userCity by remember { mutableStateOf(prefs.getString(AlarmPreferences.KEY_USER_CITY, "مكة المكرمة") ?: "مكة المكرمة") }
             var calcMethod by remember { mutableStateOf(prefs.getString(AlarmPreferences.KEY_PRAYER_CALC_METHOD, "جامعة أم القرى (مكة المكرمة)") ?: "جامعة أم القرى (مكة المكرمة)") }
@@ -556,6 +558,8 @@ fun FajrLoopNavGraph(
                 isVibrateEnabled = isVibrateEnabled,
                 isAdhkarEnabled = isAdhkarEnabled,
                 isDuaEnabled = isDuaEnabled,
+                isAdmin = isHalqaAdmin,
+                isInHalqa = !currentHalqaId.isNullOrEmpty(),
                 onVibrateChange = { checked ->
                     isVibrateEnabled = checked
                     prefs.edit().putBoolean(AlarmPreferences.KEY_VIBRATE_ON_ALARM, checked).apply()
@@ -600,7 +604,18 @@ fun FajrLoopNavGraph(
                         .putInt(AlarmPreferences.KEY_ALARM_TIMING_OFFSET_MINUTES, offset)
                         .putString(AlarmPreferences.KEY_ALARM_TIMING_DESC, desc)
                         .apply()
-                    Toast.makeText(context, "تم حفظ توقيت المنبه بنجاح", Toast.LENGTH_SHORT).show()
+
+                    if (!currentHalqaId.isNullOrEmpty() && isHalqaAdmin) {
+                        HalqaManager.updateHalqaAlarmTiming(currentHalqaId!!, type, offset, desc) { success: Boolean, error: String? ->
+                            if (success) {
+                                Toast.makeText(context, "تم توحيد توقيت المنبه لجميع أعضاء الحلقة ✨", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "فشل تحديث توقيت الحلقة: $error", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(context, "تم حفظ توقيت المنبه بنجاح", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 onSaveChallenge = { type, diff ->
                     challengeType = type

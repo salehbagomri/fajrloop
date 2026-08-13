@@ -115,6 +115,23 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
                 _halqaIdFlow.value = halqaId
                 prefs.edit().putString(AlarmPreferences.KEY_CURRENT_HALQA_ID, halqaId).putString(AlarmPreferences.KEY_CURRENT_HALQA_NAME, name).apply()
 
+                val halqaTimingType = snapshot.child("alarmTimingType").value as? String ?: "with"
+                val halqaTimingOffset = (snapshot.child("alarmTimingOffset").value as? Number)?.toInt() ?: 0
+                val halqaTimingDesc = snapshot.child("alarmTimingDesc").value as? String ?: "مع أذان الفجر بالضبط"
+
+                val currentType = prefs.getString(AlarmPreferences.KEY_ALARM_TIMING_TYPE, "with")
+                val currentOffset = prefs.getInt(AlarmPreferences.KEY_ALARM_TIMING_OFFSET_MINUTES, 0)
+
+                var timingChanged = false
+                if (currentType != halqaTimingType || currentOffset != halqaTimingOffset) {
+                    prefs.edit()
+                        .putString(AlarmPreferences.KEY_ALARM_TIMING_TYPE, halqaTimingType)
+                        .putInt(AlarmPreferences.KEY_ALARM_TIMING_OFFSET_MINUTES, halqaTimingOffset)
+                        .putString(AlarmPreferences.KEY_ALARM_TIMING_DESC, halqaTimingDesc)
+                        .apply()
+                    timingChanged = true
+                }
+
                 val now = System.currentTimeMillis()
                 var earliestFajr: Long? = null
                 for (mChild in membersSnap.children) {
@@ -126,7 +143,7 @@ class HalqaViewModel(application: Application) : AndroidViewModel(application) {
 
                 val prevEarliest = prefs.getLong(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS, -1L)
                 val newEarliest = earliestFajr ?: -1L
-                if (prevEarliest != newEarliest) {
+                if (prevEarliest != newEarliest || timingChanged) {
                     if (earliestFajr != null) prefs.edit().putLong(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS, earliestFajr).apply()
                     else prefs.edit().remove(AlarmPreferences.KEY_HALQA_EARLIEST_FAJR_MILLIS).apply()
                     FajrAlarmAutoScheduler.scheduleNextFajrAlarm(getApplication())

@@ -76,6 +76,9 @@ object HalqaManager {
             "createdBy" to uid,
             "createdAt" to isoDate,
             "type" to "fajr", // حقل type إلزامي للتوسع مستقبلاً
+            "alarmTimingType" to "with",
+            "alarmTimingOffset" to 0,
+            "alarmTimingDesc" to "مع أذان الفجر بالضبط",
             "chain" to listOf(uid),
             "members" to mapOf(uid to memberMap)
         )
@@ -669,6 +672,52 @@ object HalqaManager {
         database.getReference("halqas").child(halqaId).updateChildren(updates)
             .addOnSuccessListener { onComplete(true, null) }
             .addOnFailureListener { e -> onComplete(false, e.localizedMessage) }
+    }
+
+    /**
+     * تحديث توقيت رنين منبه الحلقة الموحد (بواسطة المسؤول Admin فقط)
+     */
+    fun updateHalqaAlarmTiming(
+        halqaId: String,
+        type: String,
+        offset: Int,
+        desc: String,
+        onComplete: (Boolean, String?) -> Unit
+    ) {
+        val uid = auth.currentUser?.uid ?: run {
+            onComplete(false, "المستخدم غير مسجل الدخول")
+            return
+        }
+
+        val halqaRef = database.getReference("halqas").child(halqaId)
+        halqaRef.child("members").child(uid).child("role").addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val role = snapshot.value as? String
+                if (role != "admin") {
+                    onComplete(false, "تعديل توقيت رنين الحلقة متاح لمسؤول الحلقة فقط")
+                    return
+                }
+
+                val updates = mapOf<String, Any>(
+                    "alarmTimingType" to type,
+                    "alarmTimingOffset" to offset,
+                    "alarmTimingDesc" to desc
+                )
+
+                halqaRef.updateChildren(updates)
+                    .addOnSuccessListener {
+                        Log.d(TAG, "✅ Halqa alarm timing updated: $desc")
+                        onComplete(true, null)
+                    }
+                    .addOnFailureListener { e ->
+                        onComplete(false, e.localizedMessage)
+                    }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                onComplete(false, error.message)
+            }
+        })
     }
 
     private fun createEmptyListener() = object : ValueEventListener {
