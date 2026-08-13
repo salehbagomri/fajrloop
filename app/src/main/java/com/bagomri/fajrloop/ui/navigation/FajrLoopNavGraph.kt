@@ -478,55 +478,74 @@ fun FajrLoopNavGraph(
             var isAdhkarEnabled by remember { mutableStateOf(prefs.getBoolean(AlarmPreferences.KEY_SHOW_ADHKAR_AFTER_ALARM, true)) }
             var isDuaEnabled by remember { mutableStateOf(prefs.getBoolean(AlarmPreferences.KEY_DAILY_DUA_NOTIFICATION, true)) }
 
+            fun applyDetectedLocation(loc: android.location.Location) {
+                var detectedName = "موقعي الحالي"
+                try {
+                    val geocoder = Geocoder(context, Locale("ar"))
+                    @Suppress("DEPRECATION")
+                    val addresses = geocoder.getFromLocation(loc.latitude, loc.longitude, 1)
+                    if (!addresses.isNullOrEmpty()) {
+                        val addr = addresses[0]
+                        val name = addr.locality ?: addr.subAdminArea ?: addr.adminArea
+                        if (!name.isNullOrEmpty()) detectedName = name
+                    }
+                } catch (e: Exception) {
+                    detectedName = "موقعي الحالي"
+                }
+
+                userCity = detectedName
+                prefs.edit()
+                    .putString(AlarmPreferences.KEY_USER_CITY, detectedName)
+                    .putFloat(AlarmPreferences.KEY_USER_LATITUDE_FLOAT, loc.latitude.toFloat())
+                    .putFloat(AlarmPreferences.KEY_USER_LONGITUDE_FLOAT, loc.longitude.toFloat())
+                    .apply()
+
+                val uid = AuthManager.getUserId()
+                if (uid != null) {
+                    UserRepository().updateUserLocation(
+                        uid,
+                        UserLocation(latitude = loc.latitude, longitude = loc.longitude, cityName = detectedName)
+                    ) {}
+                }
+
+                Toast.makeText(context, "📍 تم تحديد موقعك بنجاح: $detectedName", Toast.LENGTH_SHORT).show()
+            }
+
             fun performLocationFetch() {
                 val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-                val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
-                                   locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+                val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
 
-                if (!isGpsEnabled) {
+                if (!isGpsEnabled && !isNetworkEnabled) {
                     Toast.makeText(context, "يرجى تشغيل خيار موقع GPS لتحديد مدينتك تلقائياً", Toast.LENGTH_LONG).show()
                     val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                     context.startActivity(intent)
-                } else {
-                    try {
-                        val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                            ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                    return
+                }
 
-                        if (location != null) {
-                            var detectedName = "موقعي الحالي"
-                            try {
-                                val geocoder = Geocoder(context, Locale("ar"))
-                                val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                                if (!addresses.isNullOrEmpty()) {
-                                    val addr = addresses[0]
-                                    detectedName = addr.locality ?: addr.subAdminArea ?: addr.adminArea ?: "موقعي الحالي"
-                                }
-                            } catch (e: Exception) {
-                                detectedName = "موقعي الحالي"
+                try {
+                    val lastKnown = if (isGpsEnabled) locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                        else locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+
+                    if (lastKnown != null) {
+                        applyDetectedLocation(lastKnown)
+                    } else {
+                        Toast.makeText(context, "جاري تحديد إحداثيات GPS الدقيقة...", Toast.LENGTH_SHORT).show()
+                        val provider = if (isGpsEnabled) LocationManager.GPS_PROVIDER else LocationManager.NETWORK_PROVIDER
+                        val listener = object : android.location.LocationListener {
+                            override fun onLocationChanged(loc: android.location.Location) {
+                                try { locationManager.removeUpdates(this) } catch (e: Exception) {}
+                                applyDetectedLocation(loc)
                             }
-
-                            userCity = detectedName
-                            prefs.edit()
-                                .putString(AlarmPreferences.KEY_USER_CITY, detectedName)
-                                .putFloat(AlarmPreferences.KEY_USER_LATITUDE_FLOAT, location.latitude.toFloat())
-                                .putFloat(AlarmPreferences.KEY_USER_LONGITUDE_FLOAT, location.longitude.toFloat())
-                                .apply()
-
-                            val uid = AuthManager.getUserId()
-                            if (uid != null) {
-                                UserRepository().updateUserLocation(
-                                    uid,
-                                    UserLocation(latitude = location.latitude, longitude = location.longitude, cityName = detectedName)
-                                ) {}
-                            }
-
-                            Toast.makeText(context, "تم تحديد موقعك بنجاح: $detectedName", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, "جاري تحديد إحداثيات GPS، يرجى المحاولة بعد لحظات", Toast.LENGTH_SHORT).show()
+                            override fun onProviderDisabled(p: String) {}
+                            override fun onProviderEnabled(p: String) {}
+                            @Suppress("DEPRECATION")
+                            override fun onStatusChanged(p: String?, s: Int, e: android.os.Bundle?) {}
                         }
-                    } catch (e: Exception) {
-                        Toast.makeText(context, "حدث خطأ أثناء تحديد الموقع: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                        locationManager.requestLocationUpdates(provider, 0L, 0f, listener, android.os.Looper.getMainLooper())
                     }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "حدث خطأ أثناء تحديد الموقع: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                 }
             }
 
