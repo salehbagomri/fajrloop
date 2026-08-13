@@ -214,10 +214,8 @@ class AlarmRingingActivity : ComponentActivity() {
         setContent {
             FajrLoopTheme {
                 val isSolved by viewModel.isChallengeSolvedFlow.collectAsState()
-                val isPanic by viewModel.isPanicActiveFlow.collectAsState()
                 val snoozeCount by viewModel.snoozeCountLeftFlow.collectAsState()
                 val supervisorName by viewModel.supervisorNameFlow.collectAsState()
-                val supervisorPhone by viewModel.supervisorPhoneFlow.collectAsState()
 
                 val mathQuestion by mathQuestionFlow.collectAsState()
                 val scrambledWord by scrambledWordFlow.collectAsState()
@@ -363,18 +361,7 @@ class AlarmRingingActivity : ComponentActivity() {
             }
         }
 
-        lifecycleScope.launch {
-            viewModel.isPanicActiveFlow.collect { panic ->
-                if (panic) {
-                    startService(Intent(this@AlarmRingingActivity, AlarmSoundService::class.java).apply {
-                        action = AlarmSoundService.ACTION_SOFTEN_ALARM
-                    })
-                    isVolumeEnforced = false
-                    handler.removeCallbacks(volumeEnforcer)
-                    showToast("🚨 تم إرسال نداء استغاثة عاجل لأعضاء الحلقة")
-                }
-            }
-        }
+
 
         lifecycleScope.launch {
             viewModel.dismissFinishedFlow.collect { finished ->

@@ -35,10 +35,6 @@ object AnalyticsHelper {
         Firebase.analytics.logEvent("wake_confirmed", bundle)
     }
 
-    fun logEmergencyPanic() {
-        Firebase.analytics.logEvent("emergency_panic", null)
-    }
-
     fun logHalqaCreated() {
         Firebase.analytics.logEvent("halqa_created", null)
     }

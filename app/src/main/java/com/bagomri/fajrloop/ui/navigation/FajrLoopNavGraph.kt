@@ -55,7 +55,6 @@ sealed class Screen(val route: String) {
     object Settings : Screen("settings")
     object TravelMode : Screen("travel_mode")
     object Guide : Screen("guide")
-    object BackupCode : Screen("backup_code")
     object Stats : Screen("stats")
     object Chat : Screen("chat")
     object MorningAdhkar : Screen("morning_adhkar")
@@ -588,7 +587,6 @@ fun FajrLoopNavGraph(
                     }
                 },
                 onTravelModeClick = { navController.navigate(Screen.TravelMode.route) },
-                onBackupCodeClick = { navController.navigate(Screen.BackupCode.route) },
 
                 onSaveCalcMethod = { method ->
                     calcMethod = method
@@ -686,24 +684,6 @@ fun FajrLoopNavGraph(
 
         composable(Screen.Guide.route) {
             GuideScreen(
-                onBackClick = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.BackupCode.route) {
-            val prefs = context.getSharedPreferences(AlarmPreferences.PREFS_NAME, Context.MODE_PRIVATE)
-            val halqaId = prefs.getString(AlarmPreferences.KEY_CURRENT_HALQA_ID, null)
-            val secret = if (!halqaId.isNullOrEmpty()) prefs.getString("halqa_shared_secret_$halqaId", "") ?: "" else ""
-            val totpCode = if (!halqaId.isNullOrEmpty()) {
-                com.bagomri.fajrloop.alarm.EmergencyCodeUtils.generateTotpCode(halqaId, sharedSecret = secret)
-            } else {
-                "000000"
-            }
-
-            BackupCodeScreen(
-                halqaId = halqaId,
-                totpCode = totpCode,
-                isAlarmEnabled = true,
                 onBackClick = { navController.popBackStack() }
             )
         }

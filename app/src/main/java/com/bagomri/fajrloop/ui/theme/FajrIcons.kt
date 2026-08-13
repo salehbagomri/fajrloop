@@ -48,7 +48,6 @@ object FajrIcons {
 
     // ── الإعدادات (Settings) ──
     val TravelMode = Icons.Outlined.FlightTakeoff
-    val EmergencyCode = Icons.Outlined.VpnKey
     val Location = Icons.Outlined.LocationOn
     val PrayerCalc = Icons.Outlined.Place
     val AlarmTiming = Icons.Outlined.Timer

@@ -45,10 +45,6 @@ class FajrLoopMessagingService : FirebaseMessagingService() {
         createNotificationChannel()
 
         when (type) {
-            "emergency_panic" -> {
-                sendPanicNotification(title, body)
-                launchMainActivity()
-            }
             "challenge_done" -> {
                 sendConfirmationNotification(title, body)
             }
@@ -62,33 +58,7 @@ class FajrLoopMessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun sendPanicNotification(title: String, body: String) {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
 
-        val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-
-        val notification = NotificationCompat.Builder(this, FCM_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher_round)
-            .setContentTitle(title)
-            .setContentText(body)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setAutoCancel(true)
-            .setSound(soundUri)
-            .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000))
-            .setContentIntent(pendingIntent)
-            .build()
-
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(NOTIFICATION_ID_PANIC, notification)
-    }
 
     private fun sendConfirmationNotification(title: String, body: String) {
         val intent = Intent(this, MainActivity::class.java).apply {

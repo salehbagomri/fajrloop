@@ -39,14 +39,8 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
     private val _isAlarmDismissedFlow = MutableStateFlow(false)
     val isAlarmDismissedFlow: StateFlow<Boolean> = _isAlarmDismissedFlow.asStateFlow()
 
-    private val _isPanicActiveFlow = MutableStateFlow(false)
-    val isPanicActiveFlow: StateFlow<Boolean> = _isPanicActiveFlow.asStateFlow()
-
     private val _supervisorNameFlow = MutableStateFlow("المسؤول")
     val supervisorNameFlow: StateFlow<String> = _supervisorNameFlow.asStateFlow()
-
-    private val _supervisorPhoneFlow = MutableStateFlow("")
-    val supervisorPhoneFlow: StateFlow<String> = _supervisorPhoneFlow.asStateFlow()
 
     private val _dismissFinishedFlow = MutableStateFlow(false)
     val dismissFinishedFlow: StateFlow<Boolean> = _dismissFinishedFlow.asStateFlow()
@@ -141,10 +135,7 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    fun triggerEmergencySos() {
-        _isPanicActiveFlow.value = true
-        updateDailyStatus("panic")
-    }
+
 
     fun dismissAlarm(status: String) {
         _isAlarmDismissedFlow.value = true
@@ -336,19 +327,6 @@ class AlarmRingingViewModel(application: Application) : AndroidViewModel(applica
                             _supervisorNameFlow.value = name
                             this@AlarmRingingViewModel.supervisorUid = supervisorUid
                             startObservingSupervisorStatus(halqaId, supervisorUid)
-
-                            FirebaseDatabase.getInstance().getReference("users").child(supervisorUid)
-                                .addListenerForSingleValueEvent(object : ValueEventListener {
-                                    override fun onDataChange(userSnap: DataSnapshot) {
-                                        val phone = userSnap.child("phone").value as? String 
-                                            ?: userSnap.child("phoneNumber").value as? String 
-                                            ?: ""
-                                        _supervisorPhoneFlow.value = phone
-                                    }
-                                    override fun onCancelled(error: DatabaseError) {
-                                        emitError(error.message)
-                                    }
-                                })
                         }
                     }
                 }

@@ -46,7 +46,6 @@ fun SettingsScreen(
     onDuaChange: (Boolean) -> Unit,
     onLocationClick: () -> Unit,
     onTravelModeClick: () -> Unit,
-    onBackupCodeClick: () -> Unit,
     onSaveCalcMethod: (String) -> Unit,
     onSaveAlarmTiming: (String, Int, String) -> Unit,
     onSaveChallenge: (String, String) -> Unit,
@@ -83,20 +82,13 @@ fun SettingsScreen(
                     .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(Spacing.lg)
             ) {
-                // Section 1: Travel & Emergency
-                SettingsSection(title = "السفر والطوارئ") {
+                // Section 1: Travel
+                SettingsSection(title = "السفر والمرونة") {
                     SettingsRow(
                         title = "وضع السفر",
                         subtitle = travelModeStatus,
                         icon = FajrIcons.TravelMode,
                         onClick = onTravelModeClick
-                    )
-                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
-                    SettingsRow(
-                        title = "كود الطوارئ (TOTP)",
-                        subtitle = "رمز مؤقت لإيقاف المنبه عند الطوارئ",
-                        icon = FajrIcons.EmergencyCode,
-                        onClick = onBackupCodeClick
                     )
                 }
 
@@ -296,7 +288,6 @@ private fun SettingsScreenPreview() {
             onDuaChange = {},
             onLocationClick = {},
             onTravelModeClick = {},
-            onBackupCodeClick = {},
             onSaveCalcMethod = {},
             onSaveAlarmTiming = { _, _, _ -> },
             onSaveChallenge = { _, _ -> },

@@ -42,7 +42,6 @@ object HalqaManager {
 
         val uid = currentUser.uid
         val halqasRef = database.getReference("halqas")
-        val secretsRef = database.getReference("halqaSecrets")
         val usersRef = database.getReference("users")
 
         // 1. توليد معرّف عشوائي للحلقة الجديدة
@@ -52,9 +51,8 @@ object HalqaManager {
             return
         }
 
-        // 2. توليد كود الدعوة والمفتاح السري
+        // 2. توليد كود الدعوة
         val inviteCode = HalqaUtils.generateInviteCode()
-        val sharedSecret = HalqaUtils.generateSharedSecret()
         val isoDate = getIso8601String(Date())
 
         // 3. هيكلة بيانات الحلقة الجديدة
@@ -83,22 +81,15 @@ object HalqaManager {
             "members" to mapOf(uid to memberMap)
         )
 
-        // 4. هيكلة بيانات المفتاح السري المشترك (في عقدة مستقلة لمنع التعديل)
-        val secretMap = mapOf(
-            "sharedSecret" to sharedSecret
-        )
-
-        // 5. التحديث الذري للـ Realtime Database
+        // 4. التحديث الذري للـ Realtime Database
         val updates = hashMapOf<String, Any>()
         updates["/halqas/$halqaId"] = halqaMap
-        updates["/halqaSecrets/$halqaId"] = secretMap
         updates["/users/$uid/currentHalqaId"] = halqaId
         updates["/users/$uid/joinedHalqas/$halqaId"] = true
 
         database.reference.updateChildren(updates)
             .addOnSuccessListener {
                 Log.d(TAG, "✅ Halqa created successfully: $name (Code: $inviteCode)")
-                saveSharedSecretLocally(halqaId, sharedSecret)
                 onComplete(true, halqaId)
             }
             .addOnFailureListener {
@@ -204,9 +195,7 @@ object HalqaManager {
                         )
                         database.reference.updateChildren(userUpdates)
                             .addOnSuccessListener {
-                                ensureLocalSharedSecret(halqaId) {
-                                    onComplete(true, halqaId)
-                                }
+                                onComplete(true, halqaId)
                             }
                             .addOnFailureListener { onComplete(false, it.localizedMessage) }
                         return
@@ -248,9 +237,7 @@ object HalqaManager {
 
                     database.reference.updateChildren(updates)
                         .addOnSuccessListener {
-                            ensureLocalSharedSecret(halqaId) {
-                                onComplete(true, halqaId)
-                            }
+                            onComplete(true, halqaId)
                         }
                         .addOnFailureListener {
                             onComplete(false, it.localizedMessage ?: "فشل الانضمام للحلقة")
@@ -532,8 +519,6 @@ object HalqaManager {
                     return
                 }
 
-                ensureLocalSharedSecret(halqaId)
-
                 val currentPair = activeHalqaListenersMap[this]
                 if (currentPair?.first == halqaId) return // لم تتغير الحلقة الحالية
 
@@ -595,42 +580,7 @@ object HalqaManager {
             .addOnCompleteListener { onComplete(true, null) }
     }
 
-    private fun saveSharedSecretLocally(halqaId: String, sharedSecret: String) {
-        if (sharedSecret.isEmpty()) return
-        try {
-            val context = com.bagomri.fajrloop.FajrLoopApp.instance
-            val prefs = context.getSharedPreferences(com.bagomri.fajrloop.alarm.AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-            prefs.edit().putString("halqa_shared_secret_$halqaId", sharedSecret).apply()
-            Log.d(TAG, "🔑 Shared secret saved locally for Halqa: $halqaId")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to save shared secret locally", e)
-        }
-    }
 
-    fun ensureLocalSharedSecret(halqaId: String, onComplete: (() -> Unit)? = null) {
-        try {
-            val context = com.bagomri.fajrloop.FajrLoopApp.instance
-            val prefs = context.getSharedPreferences(com.bagomri.fajrloop.alarm.AlarmPreferences.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-            val existingSecret = prefs.getString("halqa_shared_secret_$halqaId", "")
-            if (!existingSecret.isNullOrEmpty()) {
-                onComplete?.invoke()
-                return
-            }
-            database.getReference("halqaSecrets").child(halqaId).child("sharedSecret").get()
-                .addOnSuccessListener { snap ->
-                    val secret = snap.value as? String ?: ""
-                    if (secret.isNotEmpty()) {
-                        saveSharedSecretLocally(halqaId, secret)
-                    }
-                    onComplete?.invoke()
-                }
-                .addOnFailureListener {
-                    onComplete?.invoke()
-                }
-        } catch (e: Exception) {
-            onComplete?.invoke()
-        }
-    }
 
     /**
      * إعادة حساب المسؤوليات والمراكز الدائرية بناءً على مصفوفة السلسلة الفعالة
