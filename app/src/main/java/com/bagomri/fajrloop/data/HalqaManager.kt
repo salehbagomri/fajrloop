@@ -183,65 +183,61 @@ object HalqaManager {
                     val halqaId = halqaSnapshot.key ?: return
                     val isoDate = getIso8601String(Date())
 
-                    val currentChain = (halqaSnapshot.child("chain").value as? List<*>)
-                        ?.filterIsInstance<String>()
-                        ?.toMutableList() ?: mutableListOf()
+                    // استخدام runTransaction لضمان الذرية الكاملة وتجنب الـ Race Condition عند انضمام أعضاء متعددين بالتزامن
+                    database.getReference("halqas").child(halqaId).runTransaction(object : Transaction.Handler {
+                        override fun doTransaction(currentData: MutableData): Transaction.Result {
+                            val halqa = currentData.value as? Map<*, *> ?: return Transaction.success(currentData)
 
-                    // إذا كان العضو منضماً مسبقاً، نربطه بالحلقة فقط
-                    if (currentChain.contains(uid)) {
-                        val userUpdates = hashMapOf<String, Any>(
-                            "/users/$uid/currentHalqaId" to halqaId,
-                            "/users/$uid/joinedHalqas/$halqaId" to true
-                        )
-                        database.reference.updateChildren(userUpdates)
-                            .addOnSuccessListener {
-                                onComplete(true, halqaId)
+                            val chain = (halqa["chain"] as? List<*>)?.filterIsInstance<String>()?.toMutableList() ?: mutableListOf()
+                            if (chain.contains(uid)) {
+                                return Transaction.success(currentData)
                             }
-                            .addOnFailureListener { onComplete(false, it.localizedMessage) }
-                        return
-                    }
 
-                    // إضافة العضو للسلسلة وتحديث بيانات الأعضاء
-                    currentChain.add(uid)
+                            chain.add(uid)
 
-                    val membersSnapshot = halqaSnapshot.child("members")
-                    val updatedMembers = mutableMapOf<String, Any>()
+                            @Suppress("UNCHECKED_CAST")
+                            val members = (halqa["members"] as? Map<String, Any>)?.toMutableMap() ?: mutableMapOf()
+                            val newMemberMap = mapOf(
+                                "userId" to uid,
+                                "displayName" to (currentUser.displayName ?: "عضو جديد"),
+                                "photoUrl" to (currentUser.photoUrl?.toString() ?: ""),
+                                "role" to "member",
+                                "position" to (chain.size - 1),
+                                "status" to "active",
+                                "joinedAt" to isoDate
+                            )
+                            members[uid] = newMemberMap
 
-                    for (memberChild in membersSnapshot.children) {
-                        val mId = memberChild.key ?: continue
-                        val mData = memberChild.value as? Map<*, *> ?: continue
-                        updatedMembers[mId] = mData.toMutableMap()
-                    }
+                            val n = chain.size
+                            for (i in 0 until n) {
+                                val currentUid = chain[i]
+                                val responsibleUid = chain[(i + 1) % n]
+                                @Suppress("UNCHECKED_CAST")
+                                val memberData = (members[currentUid] as? Map<String, Any>)?.toMutableMap() ?: mutableMapOf()
+                                memberData["position"] = i
+                                memberData["responsibleForUserId"] = responsibleUid
+                                members[currentUid] = memberData
+                            }
 
-                    val newMemberMap = mapOf(
-                        "userId" to uid,
-                        "displayName" to (currentUser.displayName ?: "عضو جديد"),
-                        "photoUrl" to (currentUser.photoUrl?.toString() ?: ""),
-                        "role" to "member",
-                        "position" to (currentChain.size - 1),
-                        "status" to "active",
-                        "joinedAt" to isoDate
-                    )
-                    updatedMembers[uid] = newMemberMap
-
-                    // إعادة حساب مسؤوليات الاستيقاظ الدائرية
-                    recalculateLoopResponsibility(currentChain, updatedMembers)
-
-                    // التحديث الذري الشامل للسلسلة، الأعضاء، وبيانات مستخدم الانضمام
-                    val updates = hashMapOf<String, Any>(
-                        "/halqas/$halqaId/chain" to currentChain,
-                        "/halqas/$halqaId/members" to updatedMembers,
-                        "/users/$uid/currentHalqaId" to halqaId,
-                        "/users/$uid/joinedHalqas/$halqaId" to true
-                    )
-
-                    database.reference.updateChildren(updates)
-                        .addOnSuccessListener {
-                            onComplete(true, halqaId)
+                            currentData.child("chain").value = chain
+                            currentData.child("members").value = members
+                            return Transaction.success(currentData)
                         }
-                        .addOnFailureListener {
-                            onComplete(false, it.localizedMessage ?: "فشل الانضمام للحلقة")
+
+                        override fun onComplete(error: DatabaseError?, committed: Boolean, currentData: DataSnapshot?) {
+                            if (committed && error == null) {
+                                val userUpdates = hashMapOf<String, Any>(
+                                    "/users/$uid/currentHalqaId" to halqaId,
+                                    "/users/$uid/joinedHalqas/$halqaId" to true
+                                )
+                                database.reference.updateChildren(userUpdates)
+                                    .addOnSuccessListener { onComplete(true, halqaId) }
+                                    .addOnFailureListener { onComplete(false, it.localizedMessage) }
+                            } else {
+                                onComplete(false, error?.message ?: "فشل الانضمام للحلقة")
+                            }
                         }
+                    })
                 }
 
                 override fun onCancelled(error: DatabaseError) {
