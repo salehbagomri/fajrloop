@@ -19,14 +19,18 @@ import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -233,18 +237,17 @@ private fun DeveloperContactCard(
                     fontFamily = PpNmArabic,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = FajrLoopColors.TextPrimary,
-                    maxLines = 1
+                    color = FajrLoopColors.TextPrimary
                 )
-                Text(
-                    text = subtitle,
-                    fontFamily = PpNmArabic,
-                    fontSize = 12.sp,
-                    color = FajrLoopColors.TextSecondary,
-                    maxLines = 1,
-                    softWrap = false,
-                    modifier = Modifier.padding(top = Spacing.xxs)
-                )
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Text(
+                        text = subtitle,
+                        fontFamily = PpNmArabic,
+                        fontSize = 13.sp,
+                        color = FajrLoopColors.TextSecondary,
+                        modifier = Modifier.padding(top = Spacing.xxs)
+                    )
+                }
             }
         }
     }
