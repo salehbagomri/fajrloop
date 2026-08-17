@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Mosque
 import androidx.compose.material.icons.outlined.Share
@@ -152,68 +155,92 @@ fun DeveloperInfoDialog(
                     fontSize = 16.sp,
                     color = FajrLoopColors.TextPrimary,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = Spacing.xs, bottom = Spacing.md)
+                    modifier = Modifier.padding(top = Spacing.xs, bottom = Spacing.lg)
                 )
 
-                Surface(
-                    color = FajrLoopColors.SurfaceVariant,
-                    shape = RoundedCornerShape(Radius.md),
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = Spacing.lg)
+                        .padding(bottom = Spacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.md)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(Spacing.md),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.sm)
-                    ) {
-                        Text(
-                            text = "📧 البريد الإلكتروني: s.bagomri@gmail.com",
-                            fontFamily = PpNmArabic,
-                            fontSize = 13.sp,
-                            color = FajrLoopColors.TextPrimary
-                        )
+                    // Card 1: Email
+                    DeveloperContactCard(
+                        title = "تواصل عبر البريد الإلكتروني",
+                        subtitle = "s.bagomri@gmail.com",
+                        icon = Icons.Outlined.Email,
+                        onClick = { AppInfoUtils.sendSupportEmail(context, "s.bagomri@gmail.com") }
+                    )
 
-                        Text(
-                            text = "💬 واتساب: +967770727055",
-                            fontFamily = PpNmArabic,
-                            fontSize = 13.sp,
-                            color = FajrLoopColors.TextPrimary
-                        )
+                    // Card 2: WhatsApp
+                    DeveloperContactCard(
+                        title = "التواصل عبر الواتساب",
+                        subtitle = "+967770727055",
+                        icon = Icons.AutoMirrored.Outlined.Chat,
+                        onClick = { AppInfoUtils.openWhatsApp(context, "+967770727055") }
+                    )
 
-                        Text(
-                            text = "🌐 الموقع الإلكتروني: www.bagomri.com",
-                            fontFamily = PpNmArabic,
-                            fontSize = 13.sp,
-                            color = FajrLoopColors.TextPrimary
-                        )
-
-                        Spacer(modifier = Modifier.height(Spacing.xs))
-
-                        FajrSecondaryButton(
-                            text = "مراسلة المطور عبر الإيميل 📧",
-                            onClick = { AppInfoUtils.sendSupportEmail(context, "s.bagomri@gmail.com") },
-                            leadingIcon = Icons.Outlined.Email,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        FajrSecondaryButton(
-                            text = "التواصل عبر واتساب 💬",
-                            onClick = { AppInfoUtils.openWhatsApp(context, "+967770727055") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        FajrSecondaryButton(
-                            text = "زيارة الموقع الإلكتروني 🌐",
-                            onClick = { AppInfoUtils.openWebsite(context, "https://www.bagomri.com") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                    // Card 3: Website
+                    DeveloperContactCard(
+                        title = "زيارة الموقع الإلكتروني",
+                        subtitle = "www.bagomri.com",
+                        icon = Icons.Outlined.Language,
+                        onClick = { AppInfoUtils.openWebsite(context, "https://www.bagomri.com") }
+                    )
                 }
 
                 FajrPrimaryButton(
                     text = "إغلاق",
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeveloperContactCard(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
+    Surface(
+        color = FajrLoopColors.SurfaceVariant,
+        shape = RoundedCornerShape(Radius.md),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.lg, vertical = Spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = FajrLoopColors.Primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(Spacing.md))
+            Column {
+                Text(
+                    text = title,
+                    fontFamily = PpNmArabic,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = FajrLoopColors.TextPrimary
+                )
+                Text(
+                    text = subtitle,
+                    fontFamily = PpNmArabic,
+                    fontSize = 12.sp,
+                    color = FajrLoopColors.TextSecondary,
+                    modifier = Modifier.padding(top = Spacing.xxs)
                 )
             }
         }
