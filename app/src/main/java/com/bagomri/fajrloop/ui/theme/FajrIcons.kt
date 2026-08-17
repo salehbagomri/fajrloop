@@ -20,6 +20,10 @@ import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.RocketLaunch
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Timer
@@ -61,6 +65,10 @@ object FajrIcons {
     val TestAlarm = Icons.Outlined.Science
     val Guide = Icons.AutoMirrored.Outlined.MenuBook
     val Privacy = Icons.Outlined.Lock
+    val Developer = Icons.Outlined.Code
+    val AboutApp = Icons.Outlined.Info
+    val ShareApp = Icons.Outlined.Share
+    val RateApp = Icons.Outlined.Star
     val AppVersion = Icons.Outlined.PhoneAndroid
     val Logout = Icons.AutoMirrored.Outlined.Logout
 

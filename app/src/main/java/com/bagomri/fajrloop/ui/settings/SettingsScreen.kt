@@ -8,20 +8,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import com.bagomri.fajrloop.ui.components.FajrBackground
 import com.bagomri.fajrloop.ui.components.FajrDestructiveButton
 import com.bagomri.fajrloop.ui.components.FajrDestructiveDialog
 import com.bagomri.fajrloop.ui.components.FajrLoopTopBar
 import com.bagomri.fajrloop.ui.settings.components.SettingsRow
 import com.bagomri.fajrloop.ui.settings.components.SettingsSection
-import com.bagomri.fajrloop.ui.settings.dialogs.AlarmSoundDialog
-import com.bagomri.fajrloop.ui.settings.dialogs.AlarmTimingDialog
-import com.bagomri.fajrloop.ui.settings.dialogs.CalcMethodDialog
-import com.bagomri.fajrloop.ui.settings.dialogs.ChallengeSettingsDialog
+import com.bagomri.fajrloop.ui.settings.dialogs.*
 import com.bagomri.fajrloop.ui.theme.FajrIcons
 import com.bagomri.fajrloop.ui.theme.FajrLoopColors
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.bagomri.fajrloop.ui.theme.Spacing
+import com.bagomri.fajrloop.utils.AppInfoUtils
 
 @Composable
 fun SettingsScreen(
@@ -58,12 +57,17 @@ fun SettingsScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var showCalcDialog by remember { mutableStateOf(false) }
     var showTimingDialog by remember { mutableStateOf(false) }
     var showChallengeDialog by remember { mutableStateOf(false) }
     var showSoundDialog by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showNonAdminNotice by remember { mutableStateOf(false) }
+
+    var showPrivacyDialog by remember { mutableStateOf(false) }
+    var showDeveloperDialog by remember { mutableStateOf(false) }
+    var showAboutDialog by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         FajrBackground(modifier = Modifier.fillMaxSize())
@@ -171,24 +175,50 @@ fun SettingsScreen(
                     )
                 }
 
-                // Section 5: Guide & About
-                SettingsSection(title = "عن التطبيق") {
+                // Section 5: Guide & About Info
+                SettingsSection(title = "عن التطبيق والمعلومات") {
                     SettingsRow(
-                        title = "دليل الاستخدام",
+                        title = "دليل الاستخدام الشامل",
+                        subtitle = "شرح طريقة عمل الحلقة والمنبه والخصائص",
                         icon = FajrIcons.Guide,
                         onClick = onGuideClick
                     )
                     HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
-                        title = "سياسة الخصوصية",
+                        title = "سياسة الخصوصية والأمان",
+                        subtitle = "حماية البيانات وصلاحيات الموقع تشفير الفايربيس",
                         icon = FajrIcons.Privacy,
-                        onClick = onPrivacyClick
+                        onClick = { showPrivacyDialog = true }
                     )
                     HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
                     SettingsRow(
-                        title = "إصدار التطبيق",
-                        valueText = "v1.0.0 (Compose)",
-                        icon = FajrIcons.AppVersion
+                        title = "المطور والدعم الفني",
+                        subtitle = "بيانات التطوير والتواصل مع فريق الدعم",
+                        icon = FajrIcons.Developer,
+                        onClick = { showDeveloperDialog = true }
+                    )
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
+                    val versionName = AppInfoUtils.getAppVersionName(context)
+                    val versionCode = AppInfoUtils.getAppVersionCode(context)
+                    SettingsRow(
+                        title = "حول التطبيق ورقم الإصدار",
+                        subtitle = "إصدار v$versionName (البناء $versionCode)",
+                        icon = FajrIcons.AboutApp,
+                        onClick = { showAboutDialog = true }
+                    )
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
+                    SettingsRow(
+                        title = "مشاركة التطبيق مع الأصدقاء",
+                        subtitle = "الدال على الخير كفاعله",
+                        icon = FajrIcons.ShareApp,
+                        onClick = { AppInfoUtils.shareApp(context) }
+                    )
+                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
+                    SettingsRow(
+                        title = "تقييم التطبيق في متجر جوجل بلاي",
+                        subtitle = "شاركنا رأيك ودعمك لتطوير التطبيق",
+                        icon = FajrIcons.RateApp,
+                        onClick = { AppInfoUtils.openPlayStore(context) }
                     )
                 }
 
@@ -233,6 +263,24 @@ fun SettingsScreen(
                     }
                 },
                 containerColor = FajrLoopColors.Surface
+            )
+        }
+
+        if (showPrivacyDialog) {
+            PrivacyPolicyDialog(
+                onDismiss = { showPrivacyDialog = false }
+            )
+        }
+
+        if (showDeveloperDialog) {
+            DeveloperInfoDialog(
+                onDismiss = { showDeveloperDialog = false }
+            )
+        }
+
+        if (showAboutDialog) {
+            AboutAppDialog(
+                onDismiss = { showAboutDialog = false }
             )
         }
 
