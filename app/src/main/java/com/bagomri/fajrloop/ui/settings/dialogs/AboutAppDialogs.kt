@@ -137,7 +137,7 @@ fun DeveloperInfoDialog(
                 )
 
                 Text(
-                    text = "المطور والدعم الفني 👨‍💻",
+                    text = "معلومات المطور 👨‍💻",
                     fontFamily = PpNmArabic,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
@@ -146,12 +146,13 @@ fun DeveloperInfoDialog(
                 )
 
                 Text(
-                    text = "تطوير وإيجاد فريق حلقة الفجر التقني",
+                    text = "Saleh Bagomri",
                     fontFamily = PpNmArabic,
-                    fontSize = 13.sp,
-                    color = FajrLoopColors.TextSecondary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = FajrLoopColors.TextPrimary,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = Spacing.lg)
+                    modifier = Modifier.padding(top = Spacing.xs, bottom = Spacing.md)
                 )
 
                 Surface(
@@ -161,20 +162,49 @@ fun DeveloperInfoDialog(
                         .fillMaxWidth()
                         .padding(bottom = Spacing.lg)
                 ) {
-                    Column(modifier = Modifier.padding(Spacing.md)) {
+                    Column(
+                        modifier = Modifier.padding(Spacing.md),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+                    ) {
                         Text(
-                            text = "يسعدنا تواصلكم واقتراحاتكم لتطوير التطبيق وخدمة أمة الإسلام في الاستيقاظ لصلاة الفجر.",
+                            text = "📧 البريد الإلكتروني: s.bagomri@gmail.com",
                             fontFamily = PpNmArabic,
                             fontSize = 13.sp,
-                            color = FajrLoopColors.TextPrimary,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = Spacing.md)
+                            color = FajrLoopColors.TextPrimary
+                        )
+
+                        Text(
+                            text = "💬 واتساب: +967770727055",
+                            fontFamily = PpNmArabic,
+                            fontSize = 13.sp,
+                            color = FajrLoopColors.TextPrimary
+                        )
+
+                        Text(
+                            text = "🌐 الموقع الإلكتروني: www.bagomri.com",
+                            fontFamily = PpNmArabic,
+                            fontSize = 13.sp,
+                            color = FajrLoopColors.TextPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(Spacing.xs))
+
+                        FajrSecondaryButton(
+                            text = "مراسلة المطور عبر الإيميل 📧",
+                            onClick = { AppInfoUtils.sendSupportEmail(context, "s.bagomri@gmail.com") },
+                            leadingIcon = Icons.Outlined.Email,
+                            modifier = Modifier.fillMaxWidth()
                         )
 
                         FajrSecondaryButton(
-                            text = "مراسلة الدعم الفني عبر الإيميل",
-                            onClick = { AppInfoUtils.sendSupportEmail(context) },
-                            leadingIcon = Icons.Outlined.Email,
+                            text = "التواصل عبر واتساب 💬",
+                            onClick = { AppInfoUtils.openWhatsApp(context, "+967770727055") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        FajrSecondaryButton(
+                            text = "زيارة الموقع الإلكتروني 🌐",
+                            onClick = { AppInfoUtils.openWebsite(context, "https://www.bagomri.com") },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

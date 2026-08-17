@@ -28,6 +28,7 @@ fun SettingsRow(
     valueText: String? = null,
     isChecked: Boolean? = null,
     onCheckedChange: ((Boolean) -> Unit)? = null,
+    trailingIcon: ImageVector? = null,
     onClick: (() -> Unit)? = null
 ) {
     Row(
@@ -97,7 +98,14 @@ fun SettingsRow(
                     )
                 }
 
-                if (onClick != null) {
+                if (trailingIcon != null) {
+                    Icon(
+                        imageVector = trailingIcon,
+                        contentDescription = null,
+                        tint = FajrLoopColors.TextTertiary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                } else if (onClick != null) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowLeft,
                         contentDescription = "الانتقال",

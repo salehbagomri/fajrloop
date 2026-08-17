@@ -85,17 +85,44 @@ object AppInfoUtils {
     }
 
     /**
-     * إرسال بريد إلكتروني للدعم الفني
+     * إرسال بريد إلكتروني للدعم الفني للمطور Saleh Bagomri
      */
-    fun sendSupportEmail(context: Context, supportEmail: String = "support@fajrloop.com") {
+    fun sendSupportEmail(context: Context, supportEmail: String = "s.bagomri@gmail.com") {
         try {
             val intent = Intent(Intent.ACTION_SENDTO).apply {
                 data = Uri.parse("mailto:$supportEmail")
                 putExtra(Intent.EXTRA_SUBJECT, "استفسار / دعم تطبيق حلقة الفجر - الإصدار ${getAppVersionName(context)}")
             }
-            context.startActivity(Intent.createChooser(intent, "إرسال بريد إلكتروني للدعم الفني"))
+            context.startActivity(Intent.createChooser(intent, "إرسال بريد إلكتروني للمطور"))
         } catch (e: Exception) {
-            Toast.makeText(context, "تواصل معنا عبر البريد: $supportEmail", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "تواصل عبر البريد: $supportEmail", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /**
+     * فتح الواتساب للتواصل مع المطور Saleh Bagomri (+967770727055)
+     */
+    fun openWhatsApp(context: Context, phone: String = "+967770727055") {
+        try {
+            val cleanPhone = phone.replace("+", "").replace(" ", "")
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://api.whatsapp.com/send?phone=$cleanPhone"))
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "تواصل عبر الواتساب: $phone", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /**
+     * فتح الموقع الإلكتروني الرسمي للمطور Saleh Bagomri (www.bagomri.com)
+     */
+    fun openWebsite(context: Context, url: String = "https://www.bagomri.com") {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "زيارة الموقع: $url", Toast.LENGTH_LONG).show()
         }
     }
 }

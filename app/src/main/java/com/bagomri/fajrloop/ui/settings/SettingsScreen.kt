@@ -1,8 +1,12 @@
 package com.bagomri.fajrloop.ui.settings
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -68,6 +72,7 @@ fun SettingsScreen(
     var showPrivacyDialog by remember { mutableStateOf(false) }
     var showDeveloperDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    var isAboutExpanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         FajrBackground(modifier = Modifier.fillMaxSize())
@@ -175,51 +180,48 @@ fun SettingsScreen(
                     )
                 }
 
-                // Section 5: Guide & About Info
-                SettingsSection(title = "عن التطبيق والمعلومات") {
+                // Section 5: Expandable About Section
+                SettingsSection(title = "عن التطبيق") {
                     SettingsRow(
-                        title = "دليل الاستخدام الشامل",
-                        subtitle = "شرح طريقة عمل الحلقة والمنبه والخصائص",
-                        icon = FajrIcons.Guide,
-                        onClick = onGuideClick
-                    )
-                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
-                    SettingsRow(
-                        title = "سياسة الخصوصية والأمان",
-                        subtitle = "حماية البيانات وصلاحيات الموقع تشفير الفايربيس",
-                        icon = FajrIcons.Privacy,
-                        onClick = { showPrivacyDialog = true }
-                    )
-                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
-                    SettingsRow(
-                        title = "المطور والدعم الفني",
-                        subtitle = "بيانات التطوير والتواصل مع فريق الدعم",
-                        icon = FajrIcons.Developer,
-                        onClick = { showDeveloperDialog = true }
-                    )
-                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
-                    val versionName = AppInfoUtils.getAppVersionName(context)
-                    val versionCode = AppInfoUtils.getAppVersionCode(context)
-                    SettingsRow(
-                        title = "حول التطبيق ورقم الإصدار",
-                        subtitle = "إصدار v$versionName (البناء $versionCode)",
+                        title = "عن التطبيق والمعلومات",
+                        subtitle = "المعلومات، الدليل، السياسة، والمطور",
                         icon = FajrIcons.AboutApp,
-                        onClick = { showAboutDialog = true }
+                        trailingIcon = if (isAboutExpanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown,
+                        onClick = { isAboutExpanded = !isAboutExpanded }
                     )
-                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
-                    SettingsRow(
-                        title = "مشاركة التطبيق مع الأصدقاء",
-                        subtitle = "الدال على الخير كفاعله",
-                        icon = FajrIcons.ShareApp,
-                        onClick = { AppInfoUtils.shareApp(context) }
-                    )
-                    HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
-                    SettingsRow(
-                        title = "تقييم التطبيق في متجر جوجل بلاي",
-                        subtitle = "شاركنا رأيك ودعمك لتطوير التطبيق",
-                        icon = FajrIcons.RateApp,
-                        onClick = { AppInfoUtils.openPlayStore(context) }
-                    )
+
+                    AnimatedVisibility(visible = isAboutExpanded) {
+                        Column {
+                            HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
+                            SettingsRow(
+                                title = "دليل الاستخدام الشامل",
+                                icon = FajrIcons.Guide,
+                                onClick = onGuideClick
+                            )
+                            HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
+                            SettingsRow(
+                                title = "سياسة الخصوصية الأمان",
+                                icon = FajrIcons.Privacy,
+                                onClick = onPrivacyClick
+                            )
+                            HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
+                            SettingsRow(
+                                title = "المطور والدعم الفني",
+                                subtitle = "Saleh Bagomri",
+                                icon = FajrIcons.Developer,
+                                onClick = { showDeveloperDialog = true }
+                            )
+                            HorizontalDivider(color = FajrLoopColors.BorderSubtle, thickness = 0.5.dp)
+                            val versionName = AppInfoUtils.getAppVersionName(context)
+                            val versionCode = AppInfoUtils.getAppVersionCode(context)
+                            SettingsRow(
+                                title = "حول التطبيق ورقم الإصدار",
+                                subtitle = "v$versionName (البناء $versionCode)",
+                                icon = FajrIcons.AppVersion,
+                                onClick = { showAboutDialog = true }
+                            )
+                        }
+                    }
                 }
 
                 // Section 6: Logout
