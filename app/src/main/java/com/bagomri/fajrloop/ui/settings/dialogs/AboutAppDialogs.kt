@@ -227,19 +227,22 @@ private fun DeveloperContactCard(
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(Spacing.md))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     fontFamily = PpNmArabic,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = FajrLoopColors.TextPrimary
+                    color = FajrLoopColors.TextPrimary,
+                    maxLines = 1
                 )
                 Text(
                     text = subtitle,
                     fontFamily = PpNmArabic,
                     fontSize = 12.sp,
                     color = FajrLoopColors.TextSecondary,
+                    maxLines = 1,
+                    softWrap = false,
                     modifier = Modifier.padding(top = Spacing.xxs)
                 )
             }
