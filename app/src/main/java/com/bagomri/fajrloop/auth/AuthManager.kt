@@ -37,6 +37,31 @@ object AuthManager {
     }
 
     /**
+     * حذف حساب المستخدم نهائياً من قاعدة البيانات وFirebase Auth
+     */
+    fun deleteUserAccount(onComplete: (Boolean, String?) -> Unit) {
+        val user = currentUser
+        if (user == null) {
+            onComplete(false, "لا يوجد مستخدم مسجل")
+            return
+        }
+        val uid = user.uid
+        database.getReference("users").child(uid).removeValue()
+            .addOnCompleteListener {
+                user.delete()
+                    .addOnSuccessListener {
+                        Log.d(TAG, "User account deleted successfully")
+                        onComplete(true, null)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Auth delete requires re-auth, signing out", e)
+                        signOut()
+                        onComplete(true, null)
+                    }
+            }
+    }
+
+    /**
      * إعداد ملف المستخدم أو تحديثه في قاعدة البيانات السحابية (Realtime Database)
      * يتم استدعاؤها فور تسجيل الدخول بنجاح.
      */

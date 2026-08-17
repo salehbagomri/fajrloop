@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.bagomri.fajrloop.ui.components.FajrBackground
 import com.bagomri.fajrloop.ui.components.FajrDestructiveButton
 import com.bagomri.fajrloop.ui.components.FajrDestructiveDialog
+import com.bagomri.fajrloop.ui.components.FajrSecondaryButton
 import com.bagomri.fajrloop.ui.components.FajrLoopTopBar
 import com.bagomri.fajrloop.ui.settings.components.SettingsRow
 import com.bagomri.fajrloop.ui.settings.components.SettingsSection
@@ -58,6 +59,7 @@ fun SettingsScreen(
     onGuideClick: () -> Unit,
     onPrivacyClick: () -> Unit,
     onLogoutClick: () -> Unit,
+    onDeleteAccountClick: (() -> Unit)? = null,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -67,6 +69,7 @@ fun SettingsScreen(
     var showChallengeDialog by remember { mutableStateOf(false) }
     var showSoundDialog by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
+    var showDeleteAccountConfirm by remember { mutableStateOf(false) }
     var showNonAdminNotice by remember { mutableStateOf(false) }
 
     var showPrivacyDialog by remember { mutableStateOf(false) }
@@ -224,13 +227,23 @@ fun SettingsScreen(
                     }
                 }
 
-                // Section 6: Logout
-                FajrDestructiveButton(
-                    text = "تسجيل الخروج",
-                    onClick = { showLogoutConfirm = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = FajrIcons.Logout
-                )
+                // Section 6: Account Actions
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    FajrDestructiveButton(
+                        text = "تسجيل الخروج",
+                        onClick = { showLogoutConfirm = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = FajrIcons.Logout
+                    )
+
+                    if (onDeleteAccountClick != null) {
+                        FajrSecondaryButton(
+                            text = "حذف الحساب والبيانات نهائياً ⚠️",
+                            onClick = { showDeleteAccountConfirm = true },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(Spacing.xxl))
             }
@@ -314,6 +327,20 @@ fun SettingsScreen(
                     onLogoutClick()
                 },
                 onDismiss = { showLogoutConfirm = false }
+            )
+        }
+
+        if (showDeleteAccountConfirm && onDeleteAccountClick != null) {
+            FajrDestructiveDialog(
+                title = "حذف الحساب نهائياً ⚠️",
+                message = "هل أنت تأكد من رغبتك في حذف حسابك وبياناتك نهائياً؟ هذا الإجراء سيحذف ملفك وسجلاتك من السحابة ولا يمكن التراجع عنه.",
+                confirmText = "نعم، احذف الحساب الآن",
+                dismissText = "إلغاء",
+                onConfirm = {
+                    showDeleteAccountConfirm = false
+                    onDeleteAccountClick()
+                },
+                onDismiss = { showDeleteAccountConfirm = false }
             )
         }
     }

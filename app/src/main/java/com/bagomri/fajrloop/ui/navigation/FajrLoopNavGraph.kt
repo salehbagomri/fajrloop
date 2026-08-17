@@ -671,6 +671,17 @@ fun FajrLoopNavGraph(
                         popUpTo(0) { inclusive = true }
                     }
                 },
+                onDeleteAccountClick = {
+                    AuthManager.deleteUserAccount { success, msg ->
+                        loginViewModel.resetLoginState()
+                        mainViewModel.clearUserDataOnLogout()
+                        halqaViewModel.clearHalqaData()
+                        Toast.makeText(context, "تم حذف حسابك وبياناتك بنجاح 🗑️", Toast.LENGTH_LONG).show()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                },
                 onBackClick = { navController.popBackStack() }
             )
         }
