@@ -169,12 +169,13 @@ fun HalqaDetailsSheet(
 
             Spacer(modifier = Modifier.height(Spacing.lg))
 
-            FajrSecondaryButton(
-                text = "اختبار منبه الحلقة (رنين بعد دقيقة) 🧪",
-                onClick = onTestAlarmClick,
-                leadingIcon = Icons.Outlined.Timer,
-                modifier = Modifier.fillMaxWidth()
-            )
+            // TODO: إظهار زر اختبار المنبه عند الحاجة للتطوير مستقبلاً
+            // FajrSecondaryButton(
+            //     text = "اختبار منبه الحلقة (رنين بعد دقيقة) 🧪",
+            //     onClick = onTestAlarmClick,
+            //     leadingIcon = Icons.Outlined.Timer,
+            //     modifier = Modifier.fillMaxWidth()
+            // )
 
             Spacer(modifier = Modifier.height(Spacing.sm))
 
