@@ -54,9 +54,11 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
         val credentialManager = CredentialManager.create(context)
 
+        val webClientId = getWebClientId(context)
+
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(WEB_CLIENT_ID)
+            .setServerClientId(webClientId)
             .setAutoSelectEnabled(false)
             .build()
 
@@ -117,8 +119,9 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun triggerLegacySignIn(context: Context, onFallbackLegacy: (Intent) -> Unit) {
         try {
+            val webClientId = getWebClientId(context)
             val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(WEB_CLIENT_ID)
+                .requestIdToken(webClientId)
                 .requestEmail()
                 .build()
             val googleSignInClient = GoogleSignIn.getClient(context, gso)
@@ -157,5 +160,19 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 Log.e(TAG, "Firebase auth failed", e)
                 _errorMessageFlow.value = "فشل Firebase Auth: ${e.localizedMessage}"
             }
+    }
+
+    private fun getWebClientId(context: Context): String {
+        return try {
+            val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+            if (resId != 0) {
+                val id = context.getString(resId)
+                if (id.isNotEmpty()) id else WEB_CLIENT_ID
+            } else {
+                WEB_CLIENT_ID
+            }
+        } catch (e: Exception) {
+            WEB_CLIENT_ID
+        }
     }
 }
