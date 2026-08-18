@@ -15,11 +15,27 @@
       },
       "oauth_client": [
         {
+          "client_id": "866668685561-2hd6e342rr5t3uduaotk08799ekbks07.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bagomri.fajrloop",
+            "certificate_hash": "64576271761df10350e724070836eb3bf426117a"
+          }
+        },
+        {
           "client_id": "866668685561-ivpn03uhi4dfgc08sfg5fa56lbnogkfs.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.bagomri.fajrloop",
             "certificate_hash": "22d8ee8968c79334584a7090b6312aed6d3e7bce"
+          }
+        },
+        {
+          "client_id": "866668685561-juhtegqed3e8g1mv8o71i8m0u3bttnck.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bagomri.fajrloop",
+            "certificate_hash": "083bea1e1a0cd2be2b1bd2ed6612a8a1fdbae269"
           }
         },
         {
