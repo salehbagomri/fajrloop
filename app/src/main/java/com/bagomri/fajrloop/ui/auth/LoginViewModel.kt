@@ -42,15 +42,20 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     private val _errorMessageFlow = MutableStateFlow<String?>(null)
     val errorMessageFlow: StateFlow<String?> = _errorMessageFlow.asStateFlow()
 
+    private val _loadingMessageFlow = MutableStateFlow<String?>(null)
+    val loadingMessageFlow: StateFlow<String?> = _loadingMessageFlow.asStateFlow()
+
     fun resetLoginState() {
         _loginSuccessFlow.value = false
         _errorMessageFlow.value = null
         _isLoadingFlow.value = false
+        _loadingMessageFlow.value = null
     }
 
     fun startGoogleSignInFlow(context: Context, onFallbackLegacy: (Intent) -> Unit) {
         _isLoadingFlow.value = true
         _errorMessageFlow.value = null
+        _loadingMessageFlow.value = "جاري الاتصال بـ Google..."
 
         val credentialManager = CredentialManager.create(context)
 
@@ -92,9 +97,11 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 Log.d(TAG, "Sign-In cancelled by user")
             } catch (e: TimeoutCancellationException) {
                 Log.w(TAG, "CredentialManager timed out, launching legacy GoogleSignInClient fallback")
+                _loadingMessageFlow.value = "جاري فتح اختيار الحساب..."
                 triggerLegacySignIn(context, onFallbackLegacy)
             } catch (e: Exception) {
                 Log.w(TAG, "CredentialManager failed (${e::class.simpleName}), launching legacy GoogleSignInClient fallback", e)
+                _loadingMessageFlow.value = "جاري فتح اختيار الحساب..."
                 triggerLegacySignIn(context, onFallbackLegacy)
             }
         }
@@ -136,13 +143,16 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
+        _loadingMessageFlow.value = "جاري التحقق من هويتك..."
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         FirebaseAuth.getInstance().signInWithCredential(credential)
             .addOnSuccessListener { authResult ->
                 val user = authResult.user
                 if (user != null) {
+                    _loadingMessageFlow.value = "جاري إعداد ملفك الشخصي..."
                     AuthManager.checkOrCreateUserProfile(user) { success ->
                         _isLoadingFlow.value = false
+                        _loadingMessageFlow.value = null
                         if (success) {
                             _loginSuccessFlow.value = true
                         } else {

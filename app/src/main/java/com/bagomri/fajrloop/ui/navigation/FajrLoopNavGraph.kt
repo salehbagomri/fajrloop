@@ -100,6 +100,7 @@ fun FajrLoopNavGraph(
             val isLoading by loginViewModel.isLoadingFlow.collectAsState()
             val loginSuccess by loginViewModel.loginSuccessFlow.collectAsState()
             val errorMessage by loginViewModel.errorMessageFlow.collectAsState()
+            val loadingMessage by loginViewModel.loadingMessageFlow.collectAsState()
 
             LaunchedEffect(loginSuccess) {
                 if (loginSuccess) {
@@ -113,17 +114,13 @@ fun FajrLoopNavGraph(
                 }
             }
 
-            LaunchedEffect(errorMessage) {
-                errorMessage?.let { msg ->
-                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                }
-            }
-
             LoginScreen(
                 onGoogleSignInClick = {
                     loginViewModel.startGoogleSignInFlow(context, onFallbackLegacyLogin)
                 },
-                isLoading = isLoading
+                isLoading = isLoading,
+                loadingMessage = loadingMessage,
+                errorMessage = errorMessage
             )
         }
 

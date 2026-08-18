@@ -1,12 +1,24 @@
 package com.bagomri.fajrloop.ui.auth
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +39,8 @@ import com.bagomri.fajrloop.ui.theme.Spacing
 fun LoginScreen(
     onGoogleSignInClick: () -> Unit,
     isLoading: Boolean,
+    loadingMessage: String? = null,
+    errorMessage: String? = null,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -40,10 +54,9 @@ fun LoginScreen(
                 .padding(horizontal = Spacing.xxl, vertical = Spacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Spacer فوق الشعار لتحقيق التوسيط الرأسي للمنطقة العلوية
             Spacer(modifier = Modifier.weight(1f))
 
-            // App Logo & Text Block (متوسط أفقياً ورأسياً)
+            // App Logo & Text Block
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
@@ -77,10 +90,46 @@ fun LoginScreen(
                 )
             }
 
-            // Spacer تحت الشعار والنصوص
             Spacer(modifier = Modifier.weight(1f))
 
-            // Sign-in card (في أسفل الصفحة)
+            // Error message card (in-screen)
+            AnimatedVisibility(
+                visible = errorMessage != null,
+                enter = fadeIn(tween(300)),
+                exit = fadeOut(tween(300))
+            ) {
+                if (errorMessage != null) {
+                    FajrCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = Spacing.md)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Spacing.md),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Warning,
+                                contentDescription = null,
+                                tint = Color(0xFFFF6B6B),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = errorMessage,
+                                fontFamily = PpNmArabic,
+                                fontSize = 13.sp,
+                                color = Color(0xFFFF6B6B),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Sign-in card
             FajrCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -111,12 +160,7 @@ fun LoginScreen(
                     )
 
                     if (isLoading) {
-                        CircularProgressIndicator(
-                            color = FajrLoopColors.Primary,
-                            modifier = Modifier
-                                .size(44.dp)
-                                .padding(vertical = Spacing.xs)
-                        )
+                        LoadingSignInState(message = loadingMessage)
                     } else {
                         Button(
                             onClick = onGoogleSignInClick,
@@ -169,6 +213,41 @@ fun LoginScreen(
     }
 }
 
+@Composable
+private fun LoadingSignInState(message: String?) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.92f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+        modifier = Modifier.padding(vertical = Spacing.xs)
+    ) {
+        CircularProgressIndicator(
+            color = FajrLoopColors.Primary,
+            strokeWidth = 3.dp,
+            modifier = Modifier
+                .size(44.dp)
+                .scale(scale)
+        )
+        Text(
+            text = message ?: "جاري تسجيل الدخول...",
+            fontFamily = PpNmArabic,
+            fontSize = 14.sp,
+            color = FajrLoopColors.TextSecondary,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 @Preview
 @Composable
 private fun LoginScreenPreview() {
@@ -179,3 +258,17 @@ private fun LoginScreenPreview() {
         )
     }
 }
+
+@Preview
+@Composable
+private fun LoginScreenLoadingPreview() {
+    FajrLoopTheme {
+        LoginScreen(
+            onGoogleSignInClick = {},
+            isLoading = true,
+            loadingMessage = "جاري التحقق من هويتك..."
+        )
+    }
+}
+
+
