@@ -81,8 +81,8 @@ object FajrAlarmAutoScheduler {
 
         val adjustedToday = when (type) {
             "before" -> prayerTimes.fajr - offsetMillis
-            "after" -> prayerTimes.fajr + offsetMillis
-            else -> prayerTimes.fajr
+            "after"  -> prayerTimes.fajr + offsetMillis
+            else     -> prayerTimes.fajr
         }
 
         val localNextFajr = if (adjustedToday > now) {
@@ -91,9 +91,15 @@ object FajrAlarmAutoScheduler {
             val tomorrowTimes = prayerTimesRepository.getPrayerTimesForDate(Date(now + 86_400_000L))
             when (type) {
                 "before" -> tomorrowTimes.fajr - offsetMillis
-                "after" -> tomorrowTimes.fajr + offsetMillis
-                else -> tomorrowTimes.fajr
+                "after"  -> tomorrowTimes.fajr + offsetMillis
+                else     -> tomorrowTimes.fajr
             }
+        }
+
+        // ✅ الإصلاح 1: مزامنة وقت فجر العضو لـ Firebase لتفعيل ميزة "الفجر الموحد"
+        if (!halqaId.isNullOrEmpty()) {
+            syncMemberFajrTime(context, halqaId, localNextFajr)
+            Log.d(TAG, "☀️ Synced own fajrTimeMillis to Firebase: ${Date(localNextFajr)}")
         }
 
         // قراءة توقيت الفجر الأبكر الموحد للحلقة المخزن
@@ -119,19 +125,25 @@ object FajrAlarmAutoScheduler {
     }
 
     /**
-     * تفعيل العامل الدوري من WorkManager الذي يضمن فحص وجدولة المنبه كل 6 ساعات حتى في غياب فتح التطبيق
+     * تفعيل العامل الدوري من WorkManager.
+     * ✅ الإصلاح 2: تم تقليل الدورية من 6 ساعات إلى 2 ساعة لتقليل احتمال فوت الجدولة قبل الفجر.
+     * @param forceReplace إذا true يستبدل العامل الموجود (يستخدم بعد الإقلاع).
      */
-    fun startPeriodicRescheduler(context: Context) {
+    fun startPeriodicRescheduler(context: Context, forceReplace: Boolean = false) {
         try {
-            val workRequest = PeriodicWorkRequestBuilder<FajrAlarmWorker>(6, TimeUnit.HOURS)
+            val workRequest = PeriodicWorkRequestBuilder<FajrAlarmWorker>(2, TimeUnit.HOURS)
                 .build()
+
+            // بعد الإقلاع نستبدل العامل القديم لضمان تفعيل الدورية الجديدة (2 ساعات)
+            val policy = if (forceReplace) ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE
+                         else ExistingPeriodicWorkPolicy.KEEP
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 PERIODIC_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                policy,
                 workRequest
             )
-            Log.d(TAG, "🔄 Periodic Fajr Alarm WorkManager registered (every 6h)")
+            Log.d(TAG, "🔄 Periodic Fajr Alarm WorkManager registered (every 2h, forceReplace=$forceReplace)")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start periodic rescheduler", e)
         }

@@ -76,7 +76,8 @@ class MainActivity : ComponentActivity() {
         if (AuthManager.isUserSignedIn()) {
             FcmTokenManager.registerToken()
             com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.scheduleNextFajrAlarm(this)
-            com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.startPeriodicRescheduler(this)
+            // forceReplace=true: يضمن ترحيل المستخدمين الحاليين من دورية 6h إلى 2h عند أول تشغيل
+            com.bagomri.fajrloop.alarm.FajrAlarmAutoScheduler.startPeriodicRescheduler(this, forceReplace = true)
         }
 
         val startDestination = determineStartDestination()
