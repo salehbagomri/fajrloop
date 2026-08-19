@@ -30,6 +30,7 @@ import com.bagomri.fajrloop.ui.stats.StatsViewModel
 import com.bagomri.fajrloop.ui.theme.FajrLoopTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
+import com.bagomri.fajrloop.util.OemBatteryHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 
 import androidx.activity.enableEdgeToEdge
@@ -151,10 +152,14 @@ class MainActivity : ComponentActivity() {
         } else true
         val overlaysGranted = Settings.canDrawOverlays(this)
 
+        // OEM: نقرأ من SharedPreferences إذا زار المستخدم صفحة إعدادات الماركة
+        val oemPrefs = getSharedPreferences("oem_settings", Context.MODE_PRIVATE)
+        val oemVisited = oemPrefs.getBoolean("oem_settings_visited", false)
+
         val allGranted = notifGranted && exactAlarmGranted && batteryGranted && fullScreenGranted && overlaysGranted
         allPermissionsGrantedState.value = allGranted
 
-        permissionsListState.value = listOf(
+        val items = mutableListOf(
             PermissionItemData(
                 id = "notifications",
                 title = "إشعارات التطبيق",
@@ -217,6 +222,33 @@ class MainActivity : ComponentActivity() {
                 }
             )
         )
+
+        // إضافة عنصر OEM فقط للأجهزة التي تحتاجه (Honor/Huawei/Samsung)
+        if (OemBatteryHelper.requiresOemSettings()) {
+            items.add(
+                PermissionItemData(
+                    id = "oem_battery",
+                    title = OemBatteryHelper.getOemLabel() ?: "إعدادات التشغيل الخلفي",
+                    description = OemBatteryHelper.getOemDescription()
+                        ?: "فعّل خيارات التشغيل في الخلفية لضمان رنين المنبه",
+                    isGranted = oemVisited,
+                    onRequest = {
+                        // نحفظ أن المستخدم زار الصفحة
+                        oemPrefs.edit().putBoolean("oem_settings_visited", true).apply()
+                        try {
+                            startActivity(OemBatteryHelper.getOemIntent(this))
+                        } catch (e: Exception) {
+                            startActivity(
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.parse("package:$packageName"))
+                            )
+                        }
+                    }
+                )
+            )
+        }
+
+        permissionsListState.value = items
     }
 
     private fun hasAllCriticalPermissions(): Boolean {

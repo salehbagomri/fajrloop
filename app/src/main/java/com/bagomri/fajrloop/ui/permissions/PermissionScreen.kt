@@ -48,11 +48,12 @@ data class PermissionItemData(
 private fun getPermissionIcon(id: String): ImageVector {
     return when (id) {
         "notifications" -> Icons.Outlined.Notifications
-        "exact_alarm" -> Icons.Outlined.Alarm
-        "battery" -> Icons.Outlined.BatterySaver
-        "fullscreen" -> Icons.Outlined.PhonelinkRing
-        "overlays" -> Icons.Outlined.Layers
-        else -> Icons.Outlined.Security
+        "exact_alarm"   -> Icons.Outlined.Alarm
+        "battery"       -> Icons.Outlined.BatterySaver
+        "fullscreen"    -> Icons.Outlined.PhonelinkRing
+        "overlays"      -> Icons.Outlined.Layers
+        "oem_battery"   -> Icons.Outlined.PhoneAndroid
+        else            -> Icons.Outlined.Security
     }
 }
 
@@ -232,6 +233,9 @@ private fun PermissionCardRow(
     modifier: Modifier = Modifier
 ) {
     val icon = getPermissionIcon(item.id)
+    val isOem = item.id == "oem_battery"
+    // لون برتقالي للعناصر التي تحتاج إجراءً يدوياً (OEM)
+    val accentColor = if (isOem && !item.isGranted) FajrLoopColors.Warning else FajrLoopColors.Primary
 
     FajrCard(
         modifier = modifier
@@ -251,14 +255,14 @@ private fun PermissionCardRow(
                     .clip(RoundedCornerShape(Radius.md))
                     .background(
                         if (item.isGranted) FajrLoopColors.Success.copy(alpha = 0.12f)
-                        else FajrLoopColors.PrimaryContainer
+                        else accentColor.copy(alpha = 0.12f)
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = if (item.isGranted) FajrLoopColors.Success else FajrLoopColors.Primary,
+                    tint = if (item.isGranted) FajrLoopColors.Success else accentColor,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -294,7 +298,7 @@ private fun PermissionCardRow(
                     .clip(RoundedCornerShape(Radius.sm))
                     .background(
                         if (item.isGranted) FajrLoopColors.Success.copy(alpha = 0.15f)
-                        else FajrLoopColors.Primary
+                        else accentColor
                     )
                     .padding(horizontal = Spacing.md, vertical = Spacing.xs)
             ) {
@@ -314,7 +318,7 @@ private fun PermissionCardRow(
                         Spacer(modifier = Modifier.width(4.dp))
                     }
                     Text(
-                        text = if (item.isGranted) "ممنوحة" else "تفعيل",
+                        text = if (item.isGranted) "ممنوحة" else if (isOem) "فتح" else "تفعيل",
                         fontFamily = PpNmArabic,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
