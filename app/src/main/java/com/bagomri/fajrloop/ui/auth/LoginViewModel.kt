@@ -1,30 +1,18 @@
 package com.bagomri.fajrloop.ui.auth
 
-import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import androidx.credentials.CredentialManager
-import androidx.credentials.CustomCredential
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
 import com.bagomri.fajrloop.auth.AuthManager
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -52,79 +40,11 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         _loadingMessageFlow.value = null
     }
 
-    fun startGoogleSignInFlow(context: Context, onFallbackLegacy: (Intent) -> Unit) {
+    fun startGoogleSignInFlow(context: Context, onSignInIntent: (Intent) -> Unit) {
         _isLoadingFlow.value = true
         _errorMessageFlow.value = null
-        _loadingMessageFlow.value = "جاري الاتصال بـ Google..."
+        _loadingMessageFlow.value = "جاري فتح اختيار الحساب..."
 
-        val credentialManager = CredentialManager.create(context)
-
-        val webClientId = getWebClientId(context)
-
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(webClientId)
-            .setAutoSelectEnabled(false)
-            .build()
-
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
-            .build()
-
-        viewModelScope.launch {
-            try {
-                val result = withTimeout(3_000L) {
-                    credentialManager.getCredential(context, request)
-                }
-
-                val credential = result.credential
-                when {
-                    credential is GoogleIdTokenCredential -> {
-                        firebaseAuthWithGoogle(credential.idToken)
-                    }
-                    credential is CustomCredential &&
-                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL -> {
-                        val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                        firebaseAuthWithGoogle(googleCredential.idToken)
-                    }
-                    else -> {
-                        Log.w(TAG, "Unexpected credential type, falling back to legacy sign-in")
-                        triggerLegacySignIn(context, onFallbackLegacy)
-                    }
-                }
-            } catch (e: GetCredentialCancellationException) {
-                _isLoadingFlow.value = false
-                Log.d(TAG, "Sign-In cancelled by user")
-            } catch (e: TimeoutCancellationException) {
-                Log.w(TAG, "CredentialManager timed out, launching legacy GoogleSignInClient fallback")
-                _loadingMessageFlow.value = "جاري فتح اختيار الحساب..."
-                triggerLegacySignIn(context, onFallbackLegacy)
-            } catch (e: Exception) {
-                Log.w(TAG, "CredentialManager failed (${e::class.simpleName}), launching legacy GoogleSignInClient fallback", e)
-                _loadingMessageFlow.value = "جاري فتح اختيار الحساب..."
-                triggerLegacySignIn(context, onFallbackLegacy)
-            }
-        }
-    }
-
-    fun handleLegacySignInResult(idToken: String?, statusCode: Int?) {
-        if (!idToken.isNullOrEmpty()) {
-            firebaseAuthWithGoogle(idToken)
-        } else {
-            _isLoadingFlow.value = false
-            if (statusCode != null) {
-                _errorMessageFlow.value = "فشل تسجيل الدخول عبر قوقل (رمز $statusCode)"
-            } else {
-                _errorMessageFlow.value = "فشل الحصول على رمز التفويض من قوقل"
-            }
-        }
-    }
-
-    fun onLegacySignInCancelled() {
-        _isLoadingFlow.value = false
-    }
-
-    private fun triggerLegacySignIn(context: Context, onFallbackLegacy: (Intent) -> Unit) {
         try {
             val webClientId = getWebClientId(context)
             val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -132,17 +52,43 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 .requestEmail()
                 .build()
             val googleSignInClient = GoogleSignIn.getClient(context, gso)
+            // نفرغ الجلسة أولاً لإظهار قائمة الحسابات دائماً
             googleSignInClient.signOut().addOnCompleteListener {
-                onFallbackLegacy(googleSignInClient.signInIntent)
+                _isLoadingFlow.value = false
+                _loadingMessageFlow.value = null
+                onSignInIntent(googleSignInClient.signInIntent)
             }
         } catch (e: Exception) {
             _isLoadingFlow.value = false
-            Log.e(TAG, "Failed to start legacy Google Sign-In", e)
+            _loadingMessageFlow.value = null
+            Log.e(TAG, "Failed to start Google Sign-In", e)
             _errorMessageFlow.value = "خطأ أثناء فتح حسابات قوقل: ${e.localizedMessage}"
         }
     }
 
+    fun handleSignInResult(idToken: String?, statusCode: Int?) {
+        if (!idToken.isNullOrEmpty()) {
+            firebaseAuthWithGoogle(idToken)
+        } else {
+            _isLoadingFlow.value = false
+            _errorMessageFlow.value = if (statusCode != null)
+                "فشل تسجيل الدخول عبر قوقل (رمز $statusCode)"
+            else
+                "فشل الحصول على رمز التفويض من قوقل"
+        }
+    }
+
+    fun onSignInCancelled() {
+        _isLoadingFlow.value = false
+        _loadingMessageFlow.value = null
+    }
+
+    // دالة للتوافق مع الكود القديم في NavGraph
+    fun handleLegacySignInResult(idToken: String?, statusCode: Int?) = handleSignInResult(idToken, statusCode)
+    fun onLegacySignInCancelled() = onSignInCancelled()
+
     private fun firebaseAuthWithGoogle(idToken: String) {
+        _isLoadingFlow.value = true
         _loadingMessageFlow.value = "جاري التحقق من هويتك..."
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         FirebaseAuth.getInstance().signInWithCredential(credential)
@@ -167,8 +113,9 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             }
             .addOnFailureListener { e ->
                 _isLoadingFlow.value = false
+                _loadingMessageFlow.value = null
                 Log.e(TAG, "Firebase auth failed", e)
-                _errorMessageFlow.value = "فشل Firebase Auth: ${e.localizedMessage}"
+                _errorMessageFlow.value = "فشل تسجيل الدخول: ${e.localizedMessage}"
             }
     }
 
