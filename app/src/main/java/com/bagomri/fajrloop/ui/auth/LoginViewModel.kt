@@ -41,9 +41,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun startGoogleSignInFlow(context: Context, onSignInIntent: (Intent) -> Unit) {
-        _isLoadingFlow.value = true
         _errorMessageFlow.value = null
-        _loadingMessageFlow.value = "جاري فتح اختيار الحساب..."
 
         try {
             val webClientId = getWebClientId(context)
@@ -54,13 +52,9 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             val googleSignInClient = GoogleSignIn.getClient(context, gso)
             // نفرغ الجلسة أولاً لإظهار قائمة الحسابات دائماً
             googleSignInClient.signOut().addOnCompleteListener {
-                _isLoadingFlow.value = false
-                _loadingMessageFlow.value = null
                 onSignInIntent(googleSignInClient.signInIntent)
             }
         } catch (e: Exception) {
-            _isLoadingFlow.value = false
-            _loadingMessageFlow.value = null
             Log.e(TAG, "Failed to start Google Sign-In", e)
             _errorMessageFlow.value = "خطأ أثناء فتح حسابات قوقل: ${e.localizedMessage}"
         }
