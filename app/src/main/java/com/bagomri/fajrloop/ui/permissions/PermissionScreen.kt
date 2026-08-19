@@ -16,6 +16,10 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,6 +70,10 @@ fun PermissionScreen(
 ) {
     val grantedCount = permissions.count { it.isGranted }
     val totalCount = permissions.size
+
+    // حالة Dialog إعدادات OEM
+    var showOemDialog by remember { mutableStateOf(false) }
+    var oemOnRequest by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         FajrBackground(modifier = Modifier.fillMaxSize())
@@ -160,7 +168,7 @@ fun PermissionScreen(
 
             Spacer(modifier = Modifier.height(Spacing.lg))
 
-            // Permissions List
+            // قائمة الصلاحيات
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
@@ -168,8 +176,30 @@ fun PermissionScreen(
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
                 items(permissions, key = { it.id }) { item ->
-                    PermissionCardRow(item = item)
+                    // عنصر OEM يفتح Dialog تعليمي بدلاً من فتح الإعدادات مباشرة
+                    if (item.id == "oem_battery" && !item.isGranted) {
+                        PermissionCardRow(
+                            item = item.copy(
+                                onRequest = {
+                                    oemOnRequest = item.onRequest
+                                    showOemDialog = true
+                                }
+                            )
+                        )
+                    } else {
+                        PermissionCardRow(item = item)
+                    }
                 }
+            }
+
+            // Dialog تعليمي خاص بإعدادات OEM
+            if (showOemDialog) {
+                OemBatteryDialog(
+                    onOpenSettings = {
+                        oemOnRequest?.invoke()
+                    },
+                    onDismiss = { showOemDialog = false }
+                )
             }
 
             Spacer(modifier = Modifier.height(Spacing.md))
